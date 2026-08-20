@@ -1,0 +1,359 @@
+﻿intercambiador_id,cantidad_infraestructura,cantidad_modos,modos,nombre_referencias,radio_cluster_m,ferrocarril,subte,autobus,fluvial,tranvia,score_intercambiador
+1,19,2,AUTOBUS|FERROCARRIL,San Isidro C | Est. San Isidro | Terminal San Isidro | Marquez y Centenario | Disco San Isidro | Municipalidad de San Isidro | Centenario y Primera Junta | Estación San Isidro | Palma y Centenario | Centenario y 3 de Febrero,460.0299165979217,1,0,1,0,0,65.0
+2,3,2,AUTOBUS|FERROCARRIL,Martínez,6.220894675801833,1,0,1,0,0,41.0
+3,5,2,AUTOBUS|FERROCARRIL,La Lucila | Estación La Lucila | Rawson y Anchorena,129.0831758303568,1,0,1,0,0,45.0
+4,7,2,AUTOBUS|FERROCARRIL,Olivos | Libertador y Corrientes | Estación Olivos | Sturiza y Rosales,136.97535040559575,1,0,1,0,0,49.0
+5,11,2,AUTOBUS|FERROCARRIL,Vicente López | Est. Vicente López | Azcuénaga y Roca | Estación Vicente López | Melgar y Segurola | Azcuénaga y Güemes | Libertador y Melo | Libertador y Roca,291.4507248433454,1,0,1,0,0,57.0
+6,10,2,AUTOBUS|FERROCARRIL,Rivadavia | Estación Rivadavia | Escuela Raggio | Est. Rivadavia | Libertador y Pico,118.64264906994947,1,0,1,0,0,55.0
+7,5,2,AUTOBUS|FERROCARRIL,Virreyes | Terminal de Ómnibus E.C.S.F.,66.42065062123687,1,0,1,0,0,45.0
+8,15,3,AUTOBUS|FERROCARRIL|FLUVIAL,Tigre | Estación Tigre | Estación Fluvial | Catamaranes Tigre | Cazón y Montes de Oca | Cazón y Bourdieu | Puente Sacriste | Estación Fluvial Domingo Faustino Sarmiento | Estación Fluvial Internacional Tigre,221.86961078950202,1,0,1,1,0,82.5
+9,3,2,AUTOBUS|FERROCARRIL,Carupá,8.60292382395367,1,0,1,0,0,41.0
+10,21,3,AUTOBUS|FERROCARRIL|SUBTE,Estación Urquiza | Juan Manuel de Rosas | General Urquiza | Monroe y Díaz Colodrero | Triunvirato y Olazábal | Díaz Colodrero y Cullen | Monroe y Pacheco | Est. J.M.Rosas | Roosevelt y Bucarelli | Bucarelli y Blanco Encalada,296.40036782494616,1,1,1,0,0,82.5
+11,3,2,AUTOBUS|FERROCARRIL,Colegiales,9.30945927717672,1,0,1,0,0,41.0
+12,9,2,AUTOBUS|FERROCARRIL,Pueyrredón | Griveo y Artigas | General Juan Martín de Pueyrredón | Artigas y Griveo | Ladines y Artigas | Artigas y San Alberto | Estación Pueyrredón,204.67629077532905,1,0,1,0,0,53.0
+13,18,2,AUTOBUS|FERROCARRIL,Devoto | Est. Devoto (FCSM) | Sanabria y Del Carril | Nueva York y Gualeguaychú | Nueva York y Sanabria | Plaza Arenales sur | Gutiérrez y Nueva York | Nueva York y Enciso | Nueva York y Fernández de Enciso | Segurola y Pedro Morán,250.97007181625347,1,0,1,0,0,65.0
+14,10,2,AUTOBUS|FERROCARRIL,Sáenz Peña | Barrera Sáenz Peña | Est. Sáenz Peña | Chile y Nuestra Señora del Carmen | San Pedro y Las Heras | Las Heras y San Pedro,191.44116866718016,1,0,1,0,0,55.0
+15,9,2,AUTOBUS|FERROCARRIL,Borges | Plaza Vicente López y Planes | Alberdi y Estrada | Alberdi y Wineberg | Rioja y Alberdi | Tren de la Costa,225.9699006266026,1,0,1,0,0,53.0
+16,4,2,AUTOBUS|FERROCARRIL,Juan Anchorena | Tren de la Costa,31.758976912016077,1,0,1,0,0,43.0
+17,4,2,AUTOBUS|FERROCARRIL,Punta Chica | Tren de la Costa,40.18778952174111,1,0,1,0,0,43.0
+18,5,2,AUTOBUS|FERROCARRIL,San Isidro R | Pedro de Mendoza y Centenera | Tren de la Costa,117.70931655665149,1,0,1,0,0,45.0
+19,76,2,AUTOBUS|FERROCARRIL,Patricias Argentinas y Ángel Gallardo | Ángel Gallardo | Malabia - Osvaldo Pugliese | Camargo y Juan B. Justo | Camargo y Serrano | Corrientes | Malabia y Corrientes | Acevedo y Corrientes | Thames y Corrientes | Hospital de Oncología,1084.277217917317,1,0,1,0,0,65.0
+20,24,2,AUTOBUS|FERROCARRIL,Liniers | Madero y Juan B. Justo | J.B. Justo y Gana | Carrefour | Avenida Juan B. Justo | General Paz y Juan B. Justo | Gana y Bynon | Terminal 106 Liniers | Juan B. Justo y Gallardo | Gallardo,466.0150064522046,1,0,1,0,0,65.0
+21,27,2,AUTOBUS|FERROCARRIL,Merlo | Perón y Colón | Perón y Sarandí | Perón y Libertador | Libertador y Perón | Libertador y Suipacha | Moreno y Salta | Estación Merlo | Barrera Libertad | Balbín y Jujuy,477.9590011311646,1,0,1,0,0,65.0
+22,8,2,AUTOBUS|FERROCARRIL,Castelar | Estación Castelar,137.31187290239546,1,0,1,0,0,51.0
+23,2,2,AUTOBUS|FERROCARRIL,Morón,1.7294590468062008,1,0,1,0,0,39.0
+24,4,2,AUTOBUS|FERROCARRIL,Villa Soldati | 2991 General Fructuoso Rivera | a González Catán | a Doctor Antonio Sáenz,112.78205697317541,1,0,1,0,0,43.0
+25,2,2,AUTOBUS|FERROCARRIL,Presidente Illia | a González Catán,2.5059071078819604,1,0,1,0,0,39.0
+26,37,3,AUTOBUS|FERROCARRIL|SUBTE,Hospital Churruca | Parque Patricios | Boedo | Deán Funes y Caseros | Deán Funes / Zavaleta | La Rioja / Monteagudo | Parque de los Patricios | Plazoleta Coronel Pringles | La Rioja y Caseros | Caseros y Virrey Liniers,653.5826050391092,1,1,1,0,0,82.5
+27,3,2,AUTOBUS|FERROCARRIL,Flores,8.183487431459477,1,0,1,0,0,41.0
+28,8,2,AUTOBUS|FERROCARRIL,Lynch | Coronel Lynch | Segurola y Mosconi | Segurola y Mistral,271.66251049290906,1,0,1,0,0,51.0
+29,11,2,AUTOBUS|FERROCARRIL,Villa Lugano | Lugano | Dellepiane y Murguiondo | Dellepiane Sur y Murguiondo | Plaza Nicolás Granada | Somellera y Murguiondo | Aquino y Murguiondo | Zelarrayan y Murguiondo | Murguiondo 4050 | a González Catán,273.29879698468295,1,0,1,0,0,57.0
+30,8,2,AUTOBUS|FERROCARRIL,Sarandí | Mitre y Suipichise | Estación Sarandí | Mitre y Cucha Cucha | Mitre y Mujeres Argentinas | Escalada y Mitre,255.93851341086534,1,0,1,0,0,51.0
+31,8,2,AUTOBUS|FERROCARRIL,Berazategui | Estación Berazategui | Cristalería Rigolleau,203.22990349300207,1,0,1,0,0,51.0
+32,5,2,AUTOBUS|FERROCARRIL,Plátanos | Estación Plátanos,58.67460101884275,1,0,1,0,0,45.0
+33,3,2,AUTOBUS|FERROCARRIL,Pereyra,6.486933060033403,1,0,1,0,0,41.0
+34,12,2,AUTOBUS|FERROCARRIL,Villa Elisa | Estación Villa Elisa | a Constitución | a La Plata,135.90157669239724,1,0,1,0,0,59.0
+35,4,2,AUTOBUS|FERROCARRIL,Ringuelet | Linea NORTE,103.7760325526737,1,0,1,0,0,43.0
+36,5,2,AUTOBUS|FERROCARRIL,Tolosa,26.000766717338944,1,0,1,0,0,45.0
+37,8,2,AUTOBUS|FERROCARRIL,Glew | Estación Glew | Est. Glew | Terminal Línea 404,113.40610453850283,1,0,1,0,0,51.0
+38,16,2,AUTOBUS|FERROCARRIL,Ezeiza | Estación Ezeiza | Ruta 205 y Laure | Est. Ezeiza | French y Perón | French y Centenario | Centenario y Balcarce | Ruta 205 y Zenavila,303.7084742768107,1,0,1,0,0,65.0
+39,22,2,AUTOBUS|FERROCARRIL,Marinos del Fournier | Estación Fournier | Rivera y Paunero | Rivera y Constituyentes | Rivera y Pedernera | Cabildo y Rivera | General Pintos y Cabildo | Balanco Encalada y Pedernera | Balanco Encalada y Paunero | Pedernera y Araoz,769.6952250280882,1,0,1,0,0,65.0
+40,5,2,AUTOBUS|FERROCARRIL,William Morris | William Case Morris | William C. Morris,70.292471889888,1,0,1,0,0,45.0
+41,3,2,AUTOBUS|FERROCARRIL,Villa Astolfi,6.971445170582769,1,0,1,0,0,41.0
+42,13,2,AUTOBUS|FERROCARRIL,General Lemos | Lemos / Ruta 8 | Estación General Lemos | Estación Lemos | Illia y Binda | Parador Larga Distancia Lemos,129.49436274748822,1,0,1,0,0,61.0
+43,2,2,AUTOBUS|FERROCARRIL,Juan B. de La Salle,2.758842743588809,1,0,1,0,0,39.0
+44,3,2,AUTOBUS|FERROCARRIL,Saldías,6.192281753046693,1,0,1,0,0,41.0
+45,4,2,AUTOBUS|TRANVIA,Balbastro | Balbastro - Cementerio de Flores | Balbastro y Lafuente,98.20137738351596,0,0,1,0,1,43.0
+46,5,2,AUTOBUS|TRANVIA,Mariano Acosta | Mariano Acosta - Barrio Ramón Carrillo | Avenida Castañares,7.802615057678949,0,0,1,0,1,45.0
+47,9,2,AUTOBUS|TRANVIA,Nuestra Señora de Fátima | Ana María Janer | Janer y Acosta,82.68671462569509,0,0,1,0,1,53.0
+48,4,2,AUTOBUS|TRANVIA,Gabino Ezeiza | Roca y Larrazábal,70.32636176113995,0,0,1,0,1,43.0
+49,5,2,AUTOBUS|FERROCARRIL,Juan B. Justo | Estación Juan B. Justo | Laprida y Valle Grande,159.00442338528774,1,0,1,0,0,45.0
+50,5,2,AUTOBUS|FERROCARRIL,Las Barrancas | Elcano y Aguirre | Tren de la Costa,89.18440134988687,1,0,1,0,0,45.0
+51,3,2,AUTOBUS|FERROCARRIL,Tierras Altas,7.095680367741139,1,0,1,0,0,41.0
+52,5,2,AUTOBUS|FERROCARRIL,Don Torcuato | Est. Don Torcuato | Estación Don Torcuato,42.92706841837838,1,0,1,0,0,45.0
+53,4,2,AUTOBUS|FERROCARRIL,Vicealmirante Montes | Est. Vicealmirante Montes,64.44247985743996,1,0,1,0,0,43.0
+54,8,2,AUTOBUS|FERROCARRIL,Boulogne Sur Mer | Est. Boulogne | Estación Boulogne,108.06899550292886,1,0,1,0,0,51.0
+55,12,2,AUTOBUS|FERROCARRIL,Villa Adelina | Independencia / A. Guido | V. Vertiz / R. Rojas | Est. Villa Adelina | Avenida de Mayo y V. Vértiz | Estación Villa Adelina | Quiroga - Martín Rodríguez | Rodríguez y Paraná | Virrey Vértiz y El Indio,249.98364757125762,1,0,1,0,0,59.0
+56,10,2,AUTOBUS|FERROCARRIL,Munro | Marconi y Alem | Marconi y Rivadavia | Hernández y Armenia | Belgrano y Marconi | Vélez Sarsfield | Marconi y Armenia,294.6173013048499,1,0,1,0,0,55.0
+57,4,2,AUTOBUS|FERROCARRIL,Padilla | Lavalle y Del Campo,96.42530241356539,1,0,1,0,0,43.0
+58,7,2,AUTOBUS|FERROCARRIL,Del Viso a Villa Rosa | Del Viso a Retiro | Del Viso | Estación Del Viso,107.81617867133596,1,0,1,0,0,49.0
+59,6,2,AUTOBUS|FERROCARRIL,Manuel Alberti a Villa Rosa | Manuel Alberti a Retiro | Manuel Alberti | Estación Alberti,101.25689407007445,1,0,1,0,0,47.0
+60,38,2,AUTOBUS|FERROCARRIL,Floresta | Avenida Rivadavia | Carrasco y Rivadavia | Rivadavia y Carrasco | Rivadavia y Gualeguaychú | Rivadavia y Goya | Estación Floresta | Plazoleta Vicente Bellini | C. de la Barca - Donizetti | Rivadavia y Olivieri,861.0377521452323,1,0,1,0,0,65.0
+61,7,2,AUTOBUS|FERROCARRIL,Bartolomé Mitre | Estación Bartolomé Mitre | Est. B. Mitre | Estaciones Mitre y Maipú | Maipú y Villate,71.98730366255548,1,0,1,0,0,49.0
+62,17,2,AUTOBUS|FERROCARRIL,Avenida Maipú | Ugarte y Maipú | Alberdi y Sarmiento | Maipú y Ugarte | Maipú y Sáenz Peña | Maipú y Gutiérrez | Maipú y Corrientes | Alberdi y Maipú | Municipalidad de Vicente López | Sáenz Peña y Maipú,358.64034189853004,1,0,1,0,0,65.0
+63,9,3,AUTOBUS|FERROCARRIL|SUBTE,Intendente Saguier | Plaza de los Virreyes - Eva Perón | Plaza de los Virreyes | Lafuente y Primera Junta | Línea E,123.4711487341293,1,1,1,0,0,70.5
+64,11,2,AUTOBUS|FERROCARRIL,3 de Febrero | Avenida Dorrego | Hipódromo | Estación 3 de Febrero | Bullrich y Libertador | Libertador y Dorrego,200.53314442894506,1,0,1,0,0,57.0
+65,2,2,AUTOBUS|FERROCARRIL,Villa Luro,2.4610267439045646,1,0,1,0,0,39.0
+66,52,3,AUTOBUS|FERROCARRIL|SUBTE,Primera Junta | Acoyte | Rivadavia y Acoyte | Rivadavia y Colpayo | Acoyte y Rivadavia | Neuquén - Aráoz Alfaro | Sanatorio Méndez | Shopping Caballito | Acoyte y Avellaneda | Av.Avellaneda,754.5394105158897,1,1,1,0,0,82.5
+67,3,2,AUTOBUS|FERROCARRIL,Varela,4.478151591432836,1,0,1,0,0,41.0
+68,8,3,AUTOBUS|FERROCARRIL|SUBTE,Medalla Milagrosa | Avenida Carabobo | Avenida Eva Perón | Barrio Bolivar | Eva Perón y Pumacahua | Línea E,146.39588240206112,1,1,1,0,0,68.5
+69,6,2,AUTOBUS|FERROCARRIL,José María Moreno | José María Moreno y Directorio | Directorio y José María Moreno,30.157857725850214,1,0,1,0,0,47.0
+70,16,2,AUTOBUS|FERROCARRIL,Avenida La Plata | Calvo y Muñiz | Goyena y Senillosa | Avenida La Plata y Carlos Calvo | Avenida Directorio - San Juan | Avenida La Plata y Constitución | Avenida La Plata y Pavón | Garay y Avenida La Plata | San Juan y Mármol | San Juan y Avenida La Plata,447.8521118067686,1,0,1,0,0,65.0
+71,18,3,AUTOBUS|FERROCARRIL|SUBTE,Boedo | Carlos Calvo y Boedo | Castro Barros | Humberto I y Maza | Humberto I y Virrey Liniers | Maza y Carlos Calvo | Avenida San Juan | Colombres y San Juan | San Juan y Bocayuva | San Juan y Virrey Liniers,468.17878743877765,1,1,1,0,0,82.5
+72,33,3,AUTOBUS|FERROCARRIL|SUBTE,Jujuy | Humberto I | Pichincha | Humberto I y Jujuy | Humberto I y Catamarca | Avenida San Juan | Jujuy y Carlos Calvo | San Juan y Pichincha | San Juan y Jujuy | San Juan y Alberti,623.3119645620641,1,1,1,0,0,82.5
+73,11,2,AUTOBUS|FERROCARRIL,Entre Ríos - Rodolfo Walsh | Autopista 25 de Mayo | Plazoleta Storni | San Juan y Entre Ríos | San Juan y Sarandí | Avenida San Juan | Entre Ríos y San Juan | Avenida Entre Ríos,243.78497055410492,1,0,1,0,0,57.0
+74,133,3,AUTOBUS|FERROCARRIL|SUBTE,Constitución | Plaza Constitución | Plaza Garay | Parque Lezama | Garay y Chacabuco | Garay y Bolívar | 15 de Noviembre y Salta | 15 de Noviembre y San José | Salta y 15 de Noviembre | Salta y Brasil,1558.5675883662188,1,1,1,0,0,82.5
+75,5,2,AUTOBUS|FERROCARRIL,San Juan | San Juan y Tacuarí | Av. San Juan,76.84253983427116,1,0,1,0,0,45.0
+76,53,3,AUTOBUS|FERROCARRIL|SUBTE,Independencia - Santa Mama Antula | Independencia (C) | San José | Independencia | Belgrano | Estados Unidos | Venezuela | México | Chile | Moreno,738.8756056065929,1,1,1,0,0,82.5
+77,218,3,AUTOBUS|FERROCARRIL|SUBTE,Belgrano | Plaza de Mayo | Bolívar | Perú | 9 de Julio | Diagonal Norte | Piedras | Lima | Sáenz Peña | Congreso,1562.0822213550857,1,1,1,0,0,82.5
+78,6,3,AUTOBUS|FERROCARRIL|SUBTE,Florida | Corrientes y Maipú | Avenida Corrientes | Línea B,121.65644717382796,1,1,1,0,0,64.5
+79,27,2,AUTOBUS|FERROCARRIL,General Urquiza | Humberto I y 24 de Noviembre | Humberto I y La Rioja | Avenida San Juan | Hospital Ramos Mejía | Independencia y Loria | Independencia y Urquiza | San Juan y La Rioja | San Juan y 24 de Noviembre | Cochabamba y 24 de Noviembre,445.97307039274267,1,0,1,0,0,65.0
+80,112,4,AUTOBUS|FERROCARRIL|FLUVIAL|SUBTE,Leandro N. Alem | Plaza San Martín | Terminal de Ómnibus Retiro | Catalinas | Correo Central | Retiro (E) | Retiro | Antártida Argentina y Luisoni | Terminal Retiro | Avenida de los Inmigrantes,1345.521999906658,1,1,1,1,0,100.0
+81,23,2,AUTOBUS|FERROCARRIL,Tribunales - Teatro Colón | Teatro Colón | Bus Turistico Parada 25 | Paraguay | Obelisco Norte | Córdoba | Talcahuano y Paraguay | Plaza Lavalle | Plaza Libertad | Córdoba y Paraná,395.9766427226675,1,0,1,0,0,65.0
+82,51,3,AUTOBUS|FERROCARRIL|SUBTE,Callao - Raquel Liberman | Facultad de Medicina | Pasteur - AMIA | Plaza Rodriguez Peña | Tucumán y Ayacucho | Callao (D) | Córdoba y Callao | Plaza Houssay | Avenida Córdoba | Sarmiento y Pasteur,711.2456338257175,1,1,1,0,0,82.5
+83,42,3,AUTOBUS|FERROCARRIL|SUBTE,Bulnes | Scalabrini Ortiz | Agüero | Alto Palermo | Santa Fe y Scalabrini Ortiz | Santa Fe y Salguero | Santa Fe y Bustamante | Jardín Botánico | Santa Fe y Gallo | Santa Fe y Anchorena,901.2085070067789,1,1,1,0,0,82.5
+84,140,3,AUTOBUS|FERROCARRIL|SUBTE,Pueyrredón | Once - 30 de Diciembre | Venezuela | Santa Fe - Carlos Jáuregui | Corrientes | Córdoba | Pueyrredón y Sarmiento | Plaza Miserere | Once | Terminal Once,1617.4908275378139,1,1,1,0,0,82.5
+85,24,3,AUTOBUS|FERROCARRIL|SUBTE,Plaza Italia | Palermo | Regimiento de Patricios | Pacífico | Zoológico | Jardín Botánico | Thames y Güemes | Darragueyra | Juan B. Justo | Oro,578.7982296361141,1,1,1,0,0,82.5
+86,11,3,AUTOBUS|FERROCARRIL|SUBTE,Ministro Carranza | Avenida Dorrego | Luis María Campos y Arévalo | Estación Carranza | Línea D,229.11802032037863,1,1,1,0,0,74.5
+87,68,3,AUTOBUS|FERROCARRIL|SUBTE,Olleros | José Hernández | Juramento | Lacroze y Cabildo | Echeverría y Cabildo | Plaza Belgrano | Echeverría y O'Higgins | Barrio Chino | Arcos y Mendoza | Cuba y Mendoza,1388.8123770914972,1,1,1,0,0,82.5
+88,49,3,AUTOBUS|FERROCARRIL|SUBTE,Congreso de Tucumán | Puente Saavedra | Estación de Trasbordo Puente Saavedra | Terminal Saavedra | Ramallo y Cabildo | Congreso y Cabildo | Congreso y Ciudad de La Paz | Pedraza y Cabildo | Larralde y Cabildo | San Isidro Labrador,1308.7867692012678,1,1,1,0,0,82.5
+89,5,2,AUTOBUS|FERROCARRIL,Lavalle | Esmeralda y Lavalle | Maipú y Tucumán,117.48213851670484,1,0,1,0,0,45.0
+90,13,2,AUTOBUS|FERROCARRIL,Inclán-Mezquita Al Ahmad | Jujuy | Alberti y Constitución | Garay y Alberti | Avenida Juan de Garay | Avenida Garay | Catamarca y Garay | Jujuy y Constitución | Pavón y Alberti | Matheu y Pavón,245.50153045398037,1,0,1,0,0,61.0
+91,34,3,AUTOBUS|FERROCARRIL|SUBTE,Caseros | Avenida Brasil | Garrahan | Jujuy | Matheu y Castillo | Pichincha y Brasil | Brasil y Alberti | Avenida Jujuy | Brasil y Matheu | Brasil y Jujuy,538.695666279065,1,1,1,0,0,82.5
+92,21,2,AUTOBUS|FERROCARRIL,Alberti | Mitre y Pasteur | Rivadavia y Pasteur | Pasco | Yrigoyen y Pichincha | Alsina y Matheu | Moreno y Alberti | Venezuela y Alberti | Avenida Belgrano | Belgrano y Alberti,583.8125066012409,1,0,1,0,0,65.0
+93,7,2,AUTOBUS|FERROCARRIL,Loria | Mitre y Bustamante | Rivadavia y Bustamante | Rivadavia y Billinghurst | Díaz Vélez y Billinghurst,201.84583314798004,1,0,1,0,0,49.0
+94,7,2,AUTOBUS|FERROCARRIL,Río de Janeiro | Avenida Rivadavia | La Plata y Rivadavia | Avenida La Plata | Rivadavia y Avenida La Plata,96.61797690003095,1,0,1,0,0,49.0
+95,13,2,AUTOBUS|FERROCARRIL,Callao | Avenida Corrientes | Callao y Corrientes | Corrientes y Callao | Sarmiento y Callao | Rodríguez Peña y Perón | Lavalle y Callao | Callao (B),261.3437027822326,1,0,1,0,0,61.0
+96,8,2,AUTOBUS|FERROCARRIL,Carlos Gardel | Abasto | Lavalle y Jean Jaurés | Jean Jaurés y Corrientes | Shopping Abasto | Lavalle y Ecuador,222.60538175747442,1,0,1,0,0,51.0
+97,14,2,AUTOBUS|FERROCARRIL,Medrano - Almagro | Corrientes y Gascón | Avenida Medrano | Corrientes y Medrano | Corrientes y Palestina | Avenida Corrientes | Medrano y Corrientes | Sarmiento y Gascón | Gascón y Corrientes | Corrientes y Acuña de Figueroa,304.7824529097175,1,0,1,0,0,63.0
+98,8,2,AUTOBUS|FERROCARRIL,Dorrego | Guzmán y Leiva | Villa Crespo | Avenida Dorrego | Dorrego y Corrientes,135.51293132631116,1,0,1,0,0,51.0
+99,29,3,AUTOBUS|FERROCARRIL|SUBTE,Federico Lacroze | Lacroze | Barrera Elcano | Parque Los Andes | Cementerio de la Chacarita | 14 de Julio y Triunvirato | Cementerio La Chacarita | Centro de Trasbordo Federico Lacroze | Triunvirato y Zabala | Triunvirato y Céspedes,553.3347750265461,1,1,1,0,0,82.5
+100,6,3,AUTOBUS|FERROCARRIL|SUBTE,Tronador - Villa Ortúzar | Profesorado INSPT UTN | Triunvirato y Heredia | Tronador | Línea B,194.46072256773877,1,1,1,0,0,64.5
+101,8,2,AUTOBUS|FERROCARRIL,Los Incas - Parque Chas | Triunvirato al 3600 | Avenida de Los Incas | Los Incas y Triunvirato | Combate de Malvinas y Triunvirato | Triunvirato y Acha,204.95482215534054,1,0,1,0,0,51.0
+102,10,2,AUTOBUS|FERROCARRIL,Villa del Parque | Nogoyá y Cuenca | Melincué y Cuenca | Estación Villa del Parque | Cuenca y Nogoyá | Andén 1 y 2 | Andén 3,203.43597935323734,1,0,1,0,0,55.0
+103,9,2,AUTOBUS|FERROCARRIL,Ituzaingó | Estación Ituzaingó | Ruta 7 y Medrano | Plaza San Martín | Rondeau y 24 de Octubre,125.27949040068853,1,0,1,0,0,53.0
+104,6,2,AUTOBUS|TRANVIA,General Savio | Soldado de la Frontera | Soldado de la Frontera y Racedo | Soldado de la Frontera y Guerrico,128.66646469824073,0,0,1,0,1,47.0
+105,7,2,AUTOBUS|FERROCARRIL,Antonio Devoto | Fernández de Enciso y Habana | San Nicolás y Fernández de Enciso | Fernández de Enciso y San Nicolás | Estación Devoto (FC Urquiza),154.01881242125808,1,0,1,0,0,49.0
+106,16,3,AUTOBUS|FERROCARRIL|SUBTE,Castro Barros | Gascón y Lezica | Bocayuva y Rivadavia | Rivadavia y Bulnes | Medrano y Rivadavia | Boedo y Rivadavia | Rivadavia y Mario Bravo | Gascón - Bocayuva | Rivadavia y Gascón | Medrano - Castro Barros,341.10564568092224,1,1,1,0,0,82.5
+107,4,2,AUTOBUS|FERROCARRIL,San Andrés | Estación San Andrés,23.211115519012747,1,0,1,0,0,43.0
+108,28,2,AUTOBUS|FERROCARRIL,Rivadavia y Avenida de Mayo | Ramos Mejía | Estación Ramos Mejía | Coto Ramos | Rivadavia y Cabral | Alem y Soler | Avenida de Mayo y Alsina | Barrera Monteagudo | Moreno y Mitre | Av. de Mayo y Belgrano,347.09896064758067,1,0,1,0,0,65.0
+109,3,2,AUTOBUS|FERROCARRIL,Núñez,8.397285902217408,1,0,1,0,0,41.0
+110,5,2,AUTOBUS|FERROCARRIL,Muñiz,38.17863429069863,1,0,1,0,0,45.0
+111,19,2,AUTOBUS|FERROCARRIL,José C. Paz | Granaderos a Caballo y Altube | Plaza Manuel Belgrano | Estación José C. Paz | Santiago de Compostela y Girondo,306.46323790246674,1,0,1,0,0,65.0
+112,9,2,AUTOBUS|FERROCARRIL,Bella Vista | Morón y Piñero | Estación Bella Vista | Ricchieri y San Martín | Morón y 20 de junio,260.7005834059164,1,0,1,0,0,53.0
+113,5,2,AUTOBUS|FERROCARRIL,Sargento Cabral | Rosa y Avellaneda | Estación Sargento Cabral,96.18458539089417,1,0,1,0,0,45.0
+114,14,2,AUTOBUS|FERROCARRIL,Haedo | Haedo (Sarmiento) | Haedo (Roca) | Estación Haedo [Roca] | Rivadavia y Perito Moreno | Estación Haedo | Plaza Dag Hammarskjöld | Remedios de Escalada y Emilio Castro | Constitución y Cesio,282.4584250392643,1,0,1,0,0,63.0
+115,3,2,AUTOBUS|FERROCARRIL,La Tablada,8.429304410915075,1,0,1,0,0,41.0
+116,11,2,AUTOBUS|FERROCARRIL,Agustín De Elía | Kilómetro 12 | Ingeniero Castello | Estación Castello | Ricchieri y Donovan | Est. Castello | Ricchieri y Los Nogales,323.52244998902626,1,0,1,0,0,57.0
+117,3,2,AUTOBUS|FERROCARRIL,Juan XXIII,5.793318255758774,1,0,1,0,0,41.0
+118,4,2,AUTOBUS|FERROCARRIL,Km 34,5.962420003001627,1,0,1,0,0,43.0
+119,3,2,AUTOBUS|FERROCARRIL,José Ingenieros,12.07395756782894,1,0,1,0,0,41.0
+120,115,2,AUTOBUS|FERROCARRIL,Moreno | Centro de Trasbordo Moreno | Mitre y Uruguay | El Carpintero | Piovano y Saavedra | Estación Moreno | Mitre y Camilli | Moreno Shopping Center | Plaza Moreno | Escuela 3,1534.2307648401747,1,0,1,0,0,65.0
+121,7,2,AUTOBUS|FERROCARRIL,Campo de Mayo | RP8 y Pardo | Ruta 8 y Caseros | Pardo y Rosa | Pardo y Dorrego | Pardo y Río Negro,164.34728994071943,1,0,1,0,0,49.0
+122,4,2,AUTOBUS|FERROCARRIL,Teniente Agneta | Puerta 4 | Illia y Sourdeaux,71.95553445727168,1,0,1,0,0,43.0
+123,3,2,AUTOBUS|FERROCARRIL,Capitán Lozano | Estación Lozano,58.5776981356437,1,0,1,0,0,41.0
+124,3,2,AUTOBUS|FERROCARRIL,Sargento Barrufaldi | Est. Barrufaldi,34.82169533410592,1,0,1,0,0,41.0
+125,4,2,AUTOBUS|FERROCARRIL,Ejército de los Andes | Estación Ejército de los Andes | Roca y Bocayuva,79.95310451042405,1,0,1,0,0,43.0
+126,5,2,AUTOBUS|FERROCARRIL,Victoria,44.87179787598425,1,0,1,0,0,45.0
+127,3,2,AUTOBUS|FERROCARRIL,El Talar,8.92308423991112,1,0,1,0,0,41.0
+128,5,2,AUTOBUS|FERROCARRIL,Villa Rosa  a Retiro | Villa Rosa a Retiro | Villa Rosa,15.413842691859042,1,0,1,0,0,45.0
+129,21,2,AUTOBUS|FERROCARRIL,Lomas de Zamora | Estación Lomas de Zamora | Alsina y Fonrouge | Brown y Balcarce | Boedo y Acevedo | Boedo y Alem | Est. Lomas de Zamora | Expreso Villa Galicia San José,291.5396446676262,1,0,1,0,0,65.0
+130,8,2,AUTOBUS|FERROCARRIL,Banfield | Estación Banfield,133.83224313052332,1,0,1,0,0,51.0
+131,4,2,AUTOBUS|FERROCARRIL,Llavallol | Est. Llavallol,70.11419095058933,1,0,1,0,0,43.0
+132,5,2,AUTOBUS|FERROCARRIL,Turdera | Estación Turdera,121.174982578951,1,0,1,0,0,45.0
+133,4,2,AUTOBUS|FERROCARRIL,Remedios de Escalada | Estación Remedios de Escalada,30.86114220291099,1,0,1,0,0,43.0
+134,22,2,AUTOBUS|FERROCARRIL,Lanús | Estación Lanús | Juan Piñeiro y Pavón,236.6997907177953,1,0,1,0,0,65.0
+135,3,2,AUTOBUS|FERROCARRIL,Gerli | Puente Gerli,93.55940764622234,1,0,1,0,0,41.0
+136,13,2,AUTOBUS|FERROCARRIL,Adrogué | Estación Adrogué | Est. Adrogué | Somellera y Spiro | González y Uriburu,212.793875270738,1,0,1,0,0,61.0
+137,25,2,AUTOBUS|FERROCARRIL,Burzaco | Estación Burzaco | 25 de mayo y Alsina | Parque Scout | Mitre y Primo | Mitre y Quintana | Mitre y Burzaco | Mitre y Colón | Mitre y Alsina | Quintana y 25 de mayo,393.90796797612154,1,0,1,0,0,65.0
+138,4,2,AUTOBUS|FERROCARRIL,Guernica,88.41579636528688,1,0,1,0,0,43.0
+139,9,2,AUTOBUS|FERROCARRIL,Longchamps | Est. Longchamps | Estación Longchamps,160.25074957596874,1,0,1,0,0,53.0
+140,49,2,AUTOBUS|FERROCARRIL,San Justo | Peru y Zapiola | Perú y Arieta | Villegas y Arieta | Arieta y Salta | Almafuerte y Villegas | Yrigoyen y Almafuerte | Yrigoyen y Entre Ríos | Plaza de San Justo | Almafuerte y Perú,641.9840011422782,1,0,1,0,0,65.0
+141,7,2,AUTOBUS|FERROCARRIL,Ingeniero S. Brian | América y Cuba | América y Constitución | Constitución y América | América y Argentina,180.93061383340316,1,0,1,0,0,49.0
+142,5,2,AUTOBUS|FERROCARRIL,Aldo Bonzi,22.188757821877577,1,0,1,0,0,45.0
+143,6,2,AUTOBUS|FERROCARRIL,Justo Villegas | Villegas | Crovara y Castillo | Crovara y Bermejo,226.52794972701523,1,0,1,0,0,47.0
+144,6,2,AUTOBUS|FERROCARRIL,Isidro Casanova | Segui y Roma | Estación Isidro Casanova | Islas Malvinas y Segui,167.14051493892225,1,0,1,0,0,47.0
+145,25,2,AUTOBUS|FERROCARRIL,Rafael Castillo | Casares y Beazley | Carlos Casares y Beazley | Granville y Capdevila | Casares y Drago | Carlos Casares y Drago | Beazley y Casares | Casares y Granville | Casares y Chavarría | Casares y Méndez de Andes,346.573865431075,1,0,1,0,0,65.0
+146,3,2,AUTOBUS|FERROCARRIL,Libertad,8.863798227390438,1,0,1,0,0,41.0
+147,5,2,AUTOBUS|FERROCARRIL,Marinos del Crucero General Belgrano,53.26468272963527,1,0,1,0,0,45.0
+148,8,2,AUTOBUS|FERROCARRIL,La Paternal | Trelles y Añasco,122.38119719825454,1,0,1,0,0,51.0
+149,11,2,AUTOBUS|FERROCARRIL,José Mármol | Toll y Mitre | 4 de enero y Bynnon | Barrera Bynnon | Estación José Mármol | Mitre y Erezcano | Mitre y La Rosa | Jacinto Calvo y Bynnon,306.5478653415886,1,0,1,0,0,57.0
+150,4,2,AUTOBUS|FERROCARRIL,Sourigues | Estación Sourigues,96.24263158417392,1,0,1,0,0,43.0
+151,5,2,AUTOBUS|FERROCARRIL,Ranelagh | Estación Ranelagh,91.11004578041596,1,0,1,0,0,45.0
+152,4,2,AUTOBUS|FERROCARRIL,Luis Guillón | Estación Luis Guillón,16.602254557964436,1,0,1,0,0,43.0
+153,22,2,AUTOBUS|FERROCARRIL,Plaza Nueva Pompeya | Avenida Sáenz | Doctor Antonio Sáenz | Sáenz y Famatina | Sáenz | Estación Sáenz | Almafuerte y Sáenz | Rabanal y Sáenz | Sáenz y Beazley | Nuestra Señora de Pompeya,505.98714144428516,1,0,1,0,0,65.0
+154,5,2,AUTOBUS|FERROCARRIL,José María Bosch | Estación Bosch,111.14985394690126,1,0,1,0,0,45.0
+155,5,2,AUTOBUS|FERROCARRIL,Tropezón | Estación Tropezón,46.517283591073955,1,0,1,0,0,45.0
+156,9,2,AUTOBUS|FERROCARRIL,Lourdes | Yrigoyen y Bianchi | Yrigoyen y Canale | Perdriel y Ombú | Estación Lourdes | Oyuela y Carbone,229.12887541925545,1,0,1,0,0,53.0
+157,3,2,AUTOBUS|FERROCARRIL,Fernández Moreno,5.971760294730216,1,0,1,0,0,41.0
+158,11,2,AUTOBUS|FERROCARRIL,Santos Lugares | Estación Santos Lugares | La Plata y Anchordoqui | Carbone y Estrada | Estrada y Carbone | Lage y Sábato | Alpatacal y Anchordoqui,235.2788084508465,1,0,1,0,0,57.0
+159,31,2,AUTOBUS|FERROCARRIL,Caseros | Urquiza y Constitución | Hornos y Urquiza | Belgrano y Hornos | Urquiza y Hornos | Hornos y Moreno | Escuela 45 | Estación Caseros | San Martín y Moreno | Urquiza y San Martín,453.10428271644435,1,0,1,0,0,65.0
+160,17,2,AUTOBUS|FERROCARRIL,El Palomar - Batallón 601 | El Palomar | Bustillo y Urquiza | Bustillo y Galán | Bustillo y Virasoro | Marconi y Bustillo | Terminal El Palomar | Virasoro y Victorica | Plazoleta Güemes | Correo Argentino El Palomar,504.3249585829344,1,0,1,0,0,65.0
+161,6,2,AUTOBUS|FERROCARRIL,Darío Santillán y Maximiliano Kosteki | Estación Avellaneda | Terminal de Omnibus Avellaneda,101.8221537856475,1,0,1,0,0,47.0
+162,12,2,AUTOBUS|FERROCARRIL,Martín Coronado | Carrefour Coronado | Estación Martín Coronado | Plaza Martín Coronado | Wernicke y Cattáneo | Plaza Crucero Belgrano,283.3125095181474,1,0,1,0,0,59.0
+163,7,2,AUTOBUS|FERROCARRIL,Pablo Podestá | Altos de Podestá | Estación Podestá,126.33260050870412,1,0,1,0,0,49.0
+164,3,2,AUTOBUS|FERROCARRIL,Benavídez,24.511461823373917,1,0,1,0,0,41.0
+165,5,2,AUTOBUS|FERROCARRIL,Escobar | Terminal de colectivos,59.890998737391314,1,0,1,0,0,45.0
+166,5,2,AUTOBUS|FERROCARRIL,Miguelete | Estación Miguelete,141.29985506618573,1,0,1,0,0,45.0
+167,20,2,AUTOBUS|FERROCARRIL,San Martín | Lincoln y Saavedra | Ayacucho y Mitre | Ayacucho y Pueyrredón | Mitre y Ayacucho | Estación San Martín | Lincoln y Las Heras | Pueyrredón y Ayacucho | Moreno y 25 de Mayo | Estrada y Las Heras,447.57051059044755,1,0,1,0,0,65.0
+168,3,2,AUTOBUS|FERROCARRIL,Malaver,6.514642151655371,1,0,1,0,0,41.0
+169,5,2,AUTOBUS|FERROCARRIL,Villa Ballester | Estación Villa Ballester | Rodríguez y Alvear,167.21038621359986,1,0,1,0,0,45.0
+170,6,2,AUTOBUS|FERROCARRIL,Chilavert | Independencia y Moreno | Rodríguez y Moreno,180.40213747372556,1,0,1,0,0,47.0
+171,6,2,AUTOBUS|FERROCARRIL,Florida | San Martín y Pellegrini | Florida (Belgrano) | Estación Florida,149.99053561621827,1,0,1,0,0,47.0
+172,4,2,AUTOBUS|FERROCARRIL,Carapachay | Estación Carapachay,105.36193173470863,1,0,1,0,0,43.0
+173,5,2,AUTOBUS|FERROCARRIL,Adolfo Sourdeaux,106.59265316845858,1,0,1,0,0,45.0
+174,6,2,AUTOBUS|FERROCARRIL,Villa de Mayo,115.31912216599203,1,0,1,0,0,47.0
+175,7,2,AUTOBUS|FERROCARRIL,Pablo Nogués,109.94088834122039,1,0,1,0,0,49.0
+176,5,2,AUTOBUS|FERROCARRIL,Grand Bourg,76.59614723337684,1,0,1,0,0,45.0
+177,8,2,AUTOBUS|FERROCARRIL,José León Suárez | Independencia y Washington | Washington e Independencia | Estación José León Suárez | Rodríguez y Washington,173.85598809826996,1,0,1,0,0,51.0
+178,6,2,AUTOBUS|FERROCARRIL,Bancalari | Bancalari R | Estación Bancalari,94.30467294177694,1,0,1,0,0,47.0
+179,3,2,AUTOBUS|FERROCARRIL,General Pacheco,5.652726356208428,1,0,1,0,0,41.0
+180,3,2,AUTOBUS|FERROCARRIL,Ingeniero Maschwitz,6.9343522601755,1,0,1,0,0,41.0
+181,3,2,AUTOBUS|FERROCARRIL,Río Luján,5.222234025632994,1,0,1,0,0,41.0
+182,56,3,AUTOBUS|FERROCARRIL|SUBTE,Carabobo | San Pedrito | San José de Flores | Avenida Rivadavia | Rivadavia y Curapaligüe | Estación Carabobo | Rivadavia y Gavilán | Rivadavia y Terrero | Plaza de Flores | Rivadavia y Pumacahua,1101.4701693332343,1,1,1,0,0,82.5
+183,9,3,AUTOBUS|FERROCARRIL|SUBTE,Puán | Rivadavia y Biedma | Rivadavia y Oroño | Estación Puan | Rivadavia y Miró | Línea A,110.06095566432725,1,1,1,0,0,70.5
+184,7,2,AUTOBUS|FERROCARRIL,Paso del Rey | Estación Paso del Rey | Alcorta y Las Barrancas,115.28122031063697,1,0,1,0,0,49.0
+185,3,2,AUTOBUS|FERROCARRIL,López Camelo,14.829384515091522,1,0,1,0,0,41.0
+186,14,2,AUTOBUS|FERROCARRIL,Garín | Estación Garín,52.139649136440504,1,0,1,0,0,63.0
+187,3,2,AUTOBUS|FERROCARRIL,Matheu,6.519268704996075,1,0,1,0,0,41.0
+188,5,2,AUTOBUS|FERROCARRIL,Maquinista Savio,62.81235698011495,1,0,1,0,0,45.0
+189,3,2,AUTOBUS|TRANVIA,Fernández de la Cruz | Mariano Acosta,52.409532801243024,0,0,1,0,1,41.0
+190,5,2,AUTOBUS|FERROCARRIL,Florida | Florida (Mitre) | Estación Florida Mitre,110.6040505391102,1,0,1,0,0,45.0
+191,13,2,AUTOBUS|FERROCARRIL,Doctor Cetrángolo | Malaver y Juan B. Justo | Malaver y España | Caseros e Italia | Malaver y Caseros | Malaver y Chacabuco | Malaver y J.M. Paz | Malaver y Ayacucho | España y Malaver,400.23058363295803,1,0,1,0,0,61.0
+192,5,2,AUTOBUS|TRANVIA,Somellera | Plaza Carrillo,70.0918032014895,0,0,1,0,1,45.0
+193,5,2,AUTOBUS|TRANVIA,Cecilia Grierson,100.55213790509518,0,0,1,0,1,45.0
+194,66,2,AUTOBUS|FERROCARRIL,Laferrere | Echeverría y López May | Echeverría y Soberanía Nacional | Luro y Obligado | Andrade y Soberanía Nacional | Plaza Laferrere | Est. Laferrere | Echeverría y Obligado | Piedrabuena y Soberanía Nacional | Vernet y Encina,839.1654482561115,1,0,1,0,0,65.0
+195,18,2,AUTOBUS|FERROCARRIL,González Catán | Ruta 21 | Estación González Catán | Ruta 21 y Valle | Ruta 21 y Melián | Simón Pérez y Posamay | Posamay y Puerto Argentino | Posamay y Equiza | Valle y Ruta 21 | Ruta 21 y Larre,390.84238042207124,1,0,1,0,0,65.0
+196,7,2,AUTOBUS|FERROCARRIL,Pilar | Estación Pilar | Pilar Sector Tomás Márquez | Pilar (San Martín) | Estación Pilar Sector Playon,152.51517227643737,1,0,1,0,0,49.0
+197,4,2,AUTOBUS|FERROCARRIL,Coronel Brandsen,67.62826151174033,1,0,1,0,0,43.0
+198,4,2,AUTOBUS|FERROCARRIL,Lobos | Del Sur | Estación Lobos,108.87287452031153,1,0,1,0,0,43.0
+199,3,2,AUTOBUS|FERROCARRIL,Capilla del Señor | Estación Capilla del Señor,28.447185176078648,1,0,1,0,0,41.0
+200,3,2,AUTOBUS|FERROCARRIL,Doctor Francisco Beiró,6.5053305713772716,1,0,1,0,0,41.0
+201,3,2,AUTOBUS|FERROCARRIL,Aristóbulo del Valle,22.31484082441012,1,0,1,0,0,41.0
+202,11,2,AUTOBUS|FERROCARRIL,Universidad Nacional de Luján | Universidad de Luján | Cruce Ruta 5 | Avenida Constitución y San Vicente | Mitre y Constitución,372.37458946890956,1,0,1,0,0,57.0
+203,5,2,AUTOBUS|FERROCARRIL,City Bell | Estación City Bell,79.13968604214537,1,0,1,0,0,45.0
+204,6,2,AUTOBUS|FERROCARRIL,El Jagüel | Estación El Jagüel | Ruta 205 y Barberena,82.45126195078507,1,0,1,0,0,47.0
+205,16,2,AUTOBUS|FERROCARRIL,Est. Monte Grande | Monte Grande | Dardo Rocha y Alem | General Rodríguez y Arana | Est. Monte Grande Sur | Est. Monte Grande Norte | Liniers Bus | Monte Grande Bus,264.58325690754305,1,0,1,0,0,65.0
+206,5,2,AUTOBUS|FERROCARRIL,La Reja | Estación La Reja | Est La Reja,85.40955515907235,1,0,1,0,0,45.0
+207,5,2,AUTOBUS|FERROCARRIL,Francisco Álvarez | Estación Francisco Álvarez | Plaza de la Libertad,85.48491600310805,1,0,1,0,0,45.0
+208,4,2,AUTOBUS|FERROCARRIL,Ingeniero Pablo Marín | Estación Marín,92.51464922012467,1,0,1,0,0,43.0
+209,9,2,AUTOBUS|FERROCARRIL,General Rodríguez | Estación General Rodríguez | Est. General Rodríguez | Yrigoyen y San Martín | Carlos Pellegrini,160.07024314998839,1,0,1,0,0,53.0
+210,5,2,AUTOBUS|FERROCARRIL,Las Malvinas | Estación Las Malvinas | Cabral y Espora,118.46309750128964,1,0,1,0,0,45.0
+211,3,2,AUTOBUS|FERROCARRIL,Gowland,6.811859850165213,1,0,1,0,0,41.0
+212,3,2,AUTOBUS|FERROCARRIL,Olivera,7.739723339808367,1,0,1,0,0,41.0
+213,3,2,AUTOBUS|FERROCARRIL,Jáuregui,10.01414617282132,1,0,1,0,0,41.0
+214,5,2,AUTOBUS|FERROCARRIL,Lezica y Torrezuri | Barrio Los Laureles,79.30451152713844,1,0,1,0,0,45.0
+215,7,2,AUTOBUS|FERROCARRIL,San Fernando C | Lavalle y 9 de Julio | Besares e Yrigoyen | 9 de Julio y Besares | Plaza San Martín,193.4324597076151,1,0,1,0,0,49.0
+216,23,2,AUTOBUS|FERROCARRIL,La Plata | 1 y 46 | 43 y 116 | Avenida 1 y Avenida 44 | 80 y 116 | 80 y 115 | Estación de Trenes | Estación La Plata | FC Roca,350.8373142696797,1,0,1,0,0,65.0
+217,3,2,AUTOBUS|FERROCARRIL,Arquitectura | FC Roca,48.62277808236199,1,0,1,0,0,41.0
+218,4,2,AUTOBUS|FERROCARRIL,Informática | FC Roca,98.34967411829395,1,0,1,0,0,43.0
+219,9,2,AUTOBUS|FLUVIAL,Puente Avellaneda | Puente Nicolas Avellaneda | Mendoza y Brown | Puente Transbordador Nicolás Avellaneda | Botero del Riachuelo,82.29797096924071,0,0,1,1,0,53.0
+220,7,2,AUTOBUS|FERROCARRIL,Policlínico | 72 y 1 | 1 y 71,141.63696981556404,1,0,1,0,0,49.0
+221,3,2,AUTOBUS|FERROCARRIL,Diagonal 73,65.63219973262336,1,0,1,0,0,41.0
+222,6,2,AUTOBUS|FERROCARRIL,Luján | Estación Luján | Avenida España y Güemes | Casey y Sparapani,128.31415684099744,1,0,1,0,0,47.0
+223,2,2,AUTOBUS|FERROCARRIL,Zapiola,20.609447136875666,1,0,1,0,0,39.0
+224,2,2,AUTOBUS|FERROCARRIL,Uribelarrea,3.4149623516416194,1,0,1,0,0,39.0
+225,6,2,AUTOBUS|FERROCARRIL,Cañuelas | Doctor Ignacio Arieta,36.45110248013428,1,0,1,0,0,47.0
+226,47,3,AUTOBUS|FERROCARRIL|SUBTE,Recoleta | Las Heras | Rodríguez Peña y Juncal | Callao y Juncal | Callao y Pacheco de Melo | Facultad de Ingeniería | Las Heras y Laprida | Las Heras y Uriburu | Las Heras y Callao | Las Heras y Pueyrredón,688.828521770158,1,1,1,0,0,82.5
+227,18,2,AUTOBUS|FERROCARRIL,Hurlingham | Rubén Darío | Estación Hurlingham | Estación Rubén Darío | Hurlingham Club | Jauretche y Newbery | Roca y Crucero Belgrano,298.1921072237817,1,0,1,0,0,65.0
+228,4,2,AUTOBUS|FERROCARRIL,Jorge Newbery,85.98959252966671,1,0,1,0,0,43.0
+229,6,2,AUTOBUS|FERROCARRIL,Tapiales | Terminal Tapiales | Estación Tapiales | Rutatlántica,78.55967029775049,1,0,1,0,0,47.0
+230,4,2,AUTOBUS|FERROCARRIL,Marcos Paz (Belgrano) | Marcos Paz - Braian Toledo,26.894497652970088,1,0,1,0,0,43.0
+231,4,2,AUTOBUS|FERROCARRIL,Ingeniero Otamendi | Ingeniero Romulo Otamendi,7.461014014308588,1,0,1,0,0,43.0
+232,58,2,AUTOBUS|FERROCARRIL,Morón | Plaza La Roche | 25 de Mayo y Brown | Salta al 200 | Uruguay y Buen Viaje | Uruguay y Pellegrini | 9 de Julio y Brown | Brown y 25 de Mayo | 9 de Julio y Bartolomé Mitre | Cabildo y Machado,783.8703925569102,1,0,1,0,0,65.0
+233,8,2,AUTOBUS|FERROCARRIL,Ezpeleta | San Martín y Sobral | Estación Ezpeleta,220.03678762280214,1,0,1,0,0,51.0
+234,2,2,AUTOBUS|FERROCARRIL,20 de Junio,26.9309503423763,1,0,1,0,0,39.0
+235,5,2,AUTOBUS|FERROCARRIL,Rafael Calzada,27.292111477756436,1,0,1,0,0,45.0
+236,12,2,AUTOBUS|FERROCARRIL,Alejandro Korn,122.38989399118486,1,0,1,0,0,59.0
+237,3,2,AUTOBUS|FERROCARRIL,Doctor Albert Schweitzer,5.574458331313361,1,0,1,0,0,41.0
+238,4,2,AUTOBUS|FERROCARRIL,Don Bosco | Estación Don Bosco,32.3714439828506,1,0,1,0,0,43.0
+239,2,2,AUTOBUS|FERROCARRIL,La Noria,3.378050143395997,1,0,1,0,0,39.0
+240,4,2,AUTOBUS|FERROCARRIL,Tristán Suárez | Estación Tristán Suárez,56.51317963571866,1,0,1,0,0,43.0
+241,4,2,AUTOBUS|FERROCARRIL,Máximo Paz | Estación Máximo Paz,68.91725208928308,1,0,1,0,0,43.0
+242,3,2,AUTOBUS|FERROCARRIL,Querandí,8.343002814606345,1,0,1,0,0,41.0
+243,10,2,AUTOBUS|FERROCARRIL,Villa Madero | Vélez y Blanco Encalada | Estación Villa Madero | Rosetti y Álvarez | Blanco Encalada y Rosetti | La Bajada y General Paz | a González Catán,251.3075413701521,1,0,1,0,0,55.0
+244,6,2,AUTOBUS|FERROCARRIL,Merlo Gómez | Estación Merlo Gómez | Stevenson y Jordán,82.09843025669215,1,0,1,0,0,47.0
+245,4,2,AUTOBUS|FERROCARRIL,San Fernando R | Tren de la Costa,81.53670016321114,1,0,1,0,0,43.0
+246,20,2,AUTOBUS|FERROCARRIL,Canal San Fernando | Italia y Brown | Tren de la Costa,199.98755467064606,1,0,1,0,0,65.0
+247,3,2,AUTOBUS|FERROCARRIL,Marina Nueva,6.902403311710866,1,0,1,0,0,41.0
+248,3,2,AUTOBUS|FERROCARRIL,General Hornos,8.19626111317743,1,0,1,0,0,41.0
+249,4,2,AUTOBUS|FERROCARRIL,Marcos Paz | Marcos Paz (Sarmiento),30.59476314573286,1,0,1,0,0,43.0
+250,3,2,AUTOBUS|FERROCARRIL,Tomás Jofré,16.688262625231257,1,0,1,0,0,41.0
+251,5,2,AUTOBUS|FERROCARRIL,Villars | Estación Villars,38.96093639894298,1,0,1,0,0,45.0
+252,3,2,AUTOBUS|FERROCARRIL,Doctor Domingo Cabred,8.756922086727089,1,0,1,0,0,41.0
+253,14,2,AUTOBUS|FERROCARRIL,San Antonio de Padua | Godoy Cruz y 12 de Octubre | Sullivan | Rivadavia y Echeverría | Ayacucho e Italia | Noguera y Volta | Padua,243.72742577603978,1,0,1,0,0,63.0
+254,4,2,AUTOBUS|FERROCARRIL,Los Polvorines,43.704943971656036,1,0,1,0,0,43.0
+255,3,2,AUTOBUS|FERROCARRIL,Villa Domínico,7.459906237183387,1,0,1,0,0,41.0
+256,4,2,AUTOBUS|FERROCARRIL,Wilde,66.19002771201365,1,0,1,0,0,43.0
+257,5,2,AUTOBUS|FERROCARRIL,Villa España | Estación Villa España,43.11881905980582,1,0,1,0,0,45.0
+258,6,2,AUTOBUS|FERROCARRIL,Guillermo Enrique Hudson | Estación Hudson,158.94165335081257,1,0,1,0,0,47.0
+259,5,2,AUTOBUS|FERROCARRIL,Carlos Spegazzini | Estación Spegazzini,84.39299564923495,1,0,1,0,0,45.0
+260,5,2,AUTOBUS|FERROCARRIL,Unión Ferroviaria | Estación Unión Ferroviaria,64.01162306618825,1,0,1,0,0,45.0
+261,11,2,AUTOBUS|FERROCARRIL,Temperley | Estación Temperley,193.59211874951302,1,0,1,0,0,57.0
+262,14,2,AUTOBUS|FERROCARRIL,Independencia | Centro de Trasbordo González Catán | Km. 29 | VTV González Catán,186.46193156192842,1,0,1,0,0,63.0
+263,5,2,AUTOBUS|FERROCARRIL,Intendente Pedro P. Turner,61.999793607049114,1,0,1,0,0,45.0
+264,5,2,AUTOBUS|FERROCARRIL,Juan María Gutiérrez | Estación Gutiérrez (Sur) | Estación Gutiérrez (Norte),73.83239557561045,1,0,1,0,0,45.0
+265,5,3,AUTOBUS|FERROCARRIL|TRANVIA,Presidente Illia | Laguna | a Doctor Antonio Sáenz,108.93629251673597,1,0,1,0,1,62.5
+266,7,2,AUTOBUS|FERROCARRIL,José Artigas | Estación Artigas | Est. Artigas | Del Campo y 14 de Julio | Elcano y Del Campo,128.59112235460418,1,0,1,0,0,49.0
+267,2,2,AUTOBUS|FERROCARRIL,Pedro Arata,2.495882849059639,1,0,1,0,0,39.0
+268,2,2,AUTOBUS|FERROCARRIL,Zamudio,2.959319410291309,1,0,1,0,0,39.0
+269,5,2,AUTOBUS|FERROCARRIL,Belgrano R | Freire y La Pampa | Estación Belgrano R,100.34775029022636,1,0,1,0,0,45.0
+270,7,2,AUTOBUS|FERROCARRIL,Bernal | Estación Bernal | Uriburu y Sáenz Peña,88.98519071798776,1,0,1,0,0,49.0
+271,3,2,AUTOBUS|FERROCARRIL,Doctor Luis María Drago,5.966325155220043,1,0,1,0,0,41.0
+272,67,2,AUTOBUS|FERROCARRIL,Luis María Saavedra | Balbín y Mariano Acha | Donado y Balbín | Parque Sarmiento | Donado y Deheza | Pico y Valdenegro | Pico y Lugones | Pico y Machain | Balbín y General Paz | Balbín y Donado,852.911685946001,1,0,1,0,0,65.0
+273,3,2,AUTOBUS|FERROCARRIL,Coghlan,5.764522547830317,1,0,1,0,0,41.0
+274,2,2,AUTOBUS|FERROCARRIL,Acassuso | Accasuso,11.94763192338317,1,0,1,0,0,39.0
+275,7,2,AUTOBUS|TRANVIA,Centro Cívico Lugano | Barrio Savio | Centro Cívico | Soldado de la Frontera y Conrado Villegas | Soldado de la Frontera 5200,172.09631993803563,0,0,1,0,1,49.0
+276,4,2,AUTOBUS|TRANVIA,Pola,4.59250614518792,0,0,1,0,1,43.0
+277,4,2,AUTOBUS|FERROCARRIL,Empalme Lobos,50.2352864611592,1,0,1,0,0,43.0
+278,4,2,AUTOBUS|FERROCARRIL,Los Cardales | Estacion Los Cardales,42.213634753978994,1,0,1,0,0,43.0
+279,3,2,AUTOBUS|FERROCARRIL,Altamira,13.650659822194527,1,0,1,0,0,41.0
+280,8,2,AUTOBUS|FERROCARRIL,"Kilómetro 34,5 | Parada Km 34,500 | Ezeiza y Eduardo Costa | Costa y Bettinoti | Bettinoti y Costa | Bettinoti y Benavente",236.6124713973207,1,0,1,0,0,51.0
+281,9,2,AUTOBUS|FERROCARRIL,Agustín Ferrari | Balbín y Los Jazmines | Balbín y Las Violetas | Estación Ferrari | Ducasse y 20 de Junio,184.32459782255646,1,0,1,0,0,53.0
+282,4,2,AUTOBUS|FERROCARRIL,Vicente Casares | Estación Vicente Casares,35.678312516780935,1,0,1,0,0,43.0
+283,5,2,AUTOBUS|FERROCARRIL,Hospitales | Hospitales - Ringo Bonavena | Uspallata y Almafuerte,65.35067815045335,1,0,1,0,0,45.0
+284,11,3,AUTOBUS|FERROCARRIL|SUBTE,Triunvirato y Juramento | Triunvirato y La Pampa | Echeverría | La Pampa | Echeverría y Triunvirato | La Pampa y Triunvirato | Triunvirato y Echeverría | Línea B,231.6185921598993,1,1,1,0,0,74.5
+285,8,2,AUTOBUS|FERROCARRIL,Libertador y Roma | Libertador | Estacion Libertador | Tren de la Costa,140.52340259010936,1,0,1,0,0,51.0
+286,5,2,AUTOBUS|FERROCARRIL,Mariano Acosta | Estación Mariano Acosta,35.91300209946702,1,0,1,0,0,45.0
+287,5,2,AUTOBUS|FERROCARRIL,Manzanares | Estación Manzanares Norte | Estación Manzanares Sur,82.41096999718765,1,0,1,0,0,45.0
+288,5,2,AUTOBUS|FERROCARRIL,Presidente Derqui | Estación Derqui | Estación Presidente Derqui,75.38112745033474,1,0,1,0,0,45.0
+289,3,2,AUTOBUS|FERROCARRIL,Sol y Verde,7.053225492311496,1,0,1,0,0,41.0
+290,2,2,AUTOBUS|FERROCARRIL,Pedro Arata,2.4806357793447935,1,0,1,0,0,39.0
+291,10,2,AUTOBUS|FERROCARRIL,Estación Lisandro de la Torre | Lacroze y Migueletes | Migueletes y Teodoro García | Avenida Olleros | Lisandro de la Torre | Libertador y Teodoro García,236.6632880367105,1,0,1,0,0,55.0
+292,2,2,AUTOBUS|FERROCARRIL,Medicina,0.3653747676884082,1,0,1,0,0,39.0
+293,2,2,AUTOBUS|FERROCARRIL,Periodismo,0.5589389593447823,1,0,1,0,0,39.0
+294,4,2,AUTOBUS|FERROCARRIL,Hospital Español,56.8085782131806,1,0,1,0,0,43.0
+295,8,2,AUTOBUS|FERROCARRIL,María Eva Duarte | Est. Eva Duarte | Ruta 21 y Colegiales,204.13592601195634,1,0,1,0,0,51.0
+296,32,2,AUTOBUS|FERROCARRIL,El Libertador | Nueva York y San Martín | Avenida San Martín | Beiró y Campana | Beiró y San Martín | Del Carril y Campana | Cuenca y Beiró | Habana y Campana | Morán y Campana | Morán y San Martín,663.3535565752398,1,0,1,0,0,65.0
+297,12,2,AUTOBUS|FERROCARRIL,Quilmes | Avenida Hipólito Yrigoyen 575-599 | Estación Quilmes,218.65213050420638,1,0,1,0,0,59.0
+298,16,2,AUTOBUS|FERROCARRIL,Instituto Santa Ana | Barrancas de Belgrano | Estación Belgrano C | Juramento y Montañeses | Juramento y Libertador | Barrio Chino | Belgrano C | Juramento | Echeverría y Montañeses,236.6624239096905,1,0,1,0,0,65.0
+299,5,2,AUTOBUS|FERROCARRIL,Alejandro Petión | Estación Petión,125.39734496655821,1,0,1,0,0,45.0
+300,5,2,AUTOBUS|TRANVIA,Ana Díaz | Larrazábal,84.27122887013763,0,0,1,0,1,45.0
+301,16,2,AUTOBUS|FERROCARRIL,Florencio Varela | Perón y Pringles | Pringles y Perón | Lavalle y Entre Rios | Fonrouge y Lavalle | Estación Varela (Sur) | Belgrano y López y Planes,293.75585260487287,1,0,1,0,0,65.0
+302,3,2,AUTOBUS|FERROCARRIL,Bosques,7.4772434175911195,1,0,1,0,0,41.0
+303,6,2,AUTOBUS|FERROCARRIL,Santa Sofía | Estación Santa Sofía,140.46416821274408,1,0,1,0,0,47.0
+304,3,2,AUTOBUS|FERROCARRIL,Ingeniero Dante Ardigó,6.123551061708804,1,0,1,0,0,41.0
+305,4,2,AUTOBUS|FERROCARRIL,La Fraternidad,94.50163215427496,1,0,1,0,0,43.0
+306,17,2,AUTOBUS|FERROCARRIL,Estación Beccar | Beccar | Est. Beccar | Centenario y General Mosconi | Intendente Neyer / F. Varela | Posadas / Sarandí | Centenario y Posadas | Centenario y Mosconi | Centenario y Florencio Varela | Centenario y Lonardi,468.04792581309044,1,0,1,0,0,65.0
+307,8,2,AUTOBUS|FERROCARRIL,Claypole,125.64291482926855,1,0,1,0,0,51.0
+308,5,2,AUTOBUS|FERROCARRIL,Manuel B. Gonnet | Manuel Bernardo Gonnet | Estación Gonnet,76.46772415911413,1,0,1,0,0,45.0
+309,3,2,AUTOBUS|FERROCARRIL,Santa Catalina,7.6955076023914275,1,0,1,0,0,41.0
+310,15,2,AUTOBUS|FERROCARRIL,Ciudadela | Rivadavia y Porrini | Rivadavia y Alianza | Juana de Arco y 25 de Mayo | Estación Ciudadela | Payador Castro y Rivadavia | Maldonado y Rivadavia | Santa Juana de Arco y Chacabuco | Vieytes y Rivadavia,346.73509700932806,1,0,1,0,0,65.0
+311,25,2,AUTOBUS|FERROCARRIL,San Miguel | Plaza San Miguel | Tribulato y Perón | Perón y España | Est. San Miguel | Perón y Tribulato | Sarmiento y Tribulato | Balbín y Perón | Tribulato y Paunero | Alem y Tribulato,289.75897830698057,1,0,1,0,0,65.0
+312,4,2,AUTOBUS|FERROCARRIL,Ricardo Levene | Estación Ricardo Levene,78.01564808306208,1,0,1,0,0,43.0
+313,3,2,AUTOBUS|FERROCARRIL,Lozano,14.37738634680317,1,0,1,0,0,41.0
+314,4,2,AUTOBUS|FERROCARRIL,Estación Zeballos | Estanislao S. Zeballos,110.20095476548678,1,0,1,0,0,43.0
+315,9,2,AUTOBUS|SUBTE,Santa Fe y Carranza | Regimiento de Patricios | Terminal Plaza Falucho | Fitz Roy y Charcas | Fitz Roy | Plaza Falucho | Línea D,175.19059470636424,0,1,1,0,0,53.0
+316,14,2,AUTOBUS|FERROCARRIL,71 y 7 | 7 y 72 | 72 y 5 | 72 y 6 | 72 y 7 | 7 y 70 | Avenida 7,274.4405676409993,1,0,1,0,0,63.0
+317,21,2,AUTOBUS|FERROCARRIL,Estación terminal | 71 y 17 | 70 y 19 | 71 y 18 | 19 y 70 | 71 y 19 | Estación Meridiano V | 72 y 18 | 72 y 19 | 19 y 71,245.93556896838092,1,0,1,0,0,65.0
+318,37,2,AUTOBUS|FERROCARRIL,72 y 21 | 22 y 72 | 74 y 21 | 72 y 23 | 22 y 73 | 23 y 72 | 74 y 22 | 22 y 74 | 24 y 72 | 23 y 74,594.8345241575079,1,0,1,0,0,65.0
+319,9,2,AUTOBUS|SUBTE,Pringles y Córdoba | Cabrera y Pringles | Gascón y Córdoba | Cabrera y Gascón | Córdoba y Palestina | Córdoba y Lavalleja | Gascón y Gorriti | Club Hacoaj | Línea B,232.5786255609551,0,1,1,0,0,53.0
+320,9,2,AUTOBUS|SUBTE,Florida | Córdoba 400 | Córdoba y Esmeralda | Maipú | Galerías Pacífico | Avenida Córdoba | Línea C,263.3055154067361,0,1,1,0,0,53.0
+321,3,2,AUTOBUS|FERROCARRIL,Kloosterman,5.582379849642147,1,0,1,0,0,41.0
+322,6,2,AUTOBUS|FERROCARRIL,72 y 11 | Circunvalación,104.98215121176104,1,0,1,0,0,47.0
+323,7,2,AUTOBUS|FERROCARRIL,31 y 60 | 31 y 61 | 31 y 62 | Avenida 60,183.60900380346087,1,0,1,0,0,49.0
+324,5,2,AUTOBUS|FERROCARRIL,31 y 66 | 31 y 67 | Avenida 66,100.56660348395876,1,0,1,0,0,45.0
+325,7,2,AUTOBUS|FERROCARRIL,31 y 71 | 72 y 30 | Cementerio,138.2362393597282,1,0,1,0,0,49.0
+326,3,2,AUTOBUS|TRANVIA,Nicolás Descalzi,4.68963632007526,0,0,1,0,1,41.0
+327,9,2,AUTOBUS|FERROCARRIL,Plaza San Martín | General San Martín | Santa Fe y Esmeralda | Santa Fe y Maipú | Avenida Santa Fe | Palacio Paz,121.17524126796773,1,0,1,0,0,53.0
+328,3,2,AUTOBUS|FERROCARRIL,Ciudad Universitaria,7.780048672670652,1,0,1,0,0,41.0
+329,4,2,AUTOBUS|TRANVIA,Escalada,38.15355902819199,0,0,1,0,1,43.0
+330,9,2,AUTOBUS|FERROCARRIL,Campion y Forest | Forest y Alico | Sánchez de Mendeville | Estación Mendeville | Bufano y Alico,160.20318884625982,1,0,1,0,0,53.0
+331,11,2,AUTOBUS|FERROCARRIL,Tortuguitas | Directorio y Misiones | Directorio y Lynch | Tortuguitas a Retiro | Tortuguitas a Villa Rosa,220.15679044548003,1,0,1,0,0,57.0
+332,3,2,AUTOBUS|FERROCARRIL,Caballito,7.987719381541644,1,0,1,0,0,41.0
+333,3,2,AUTOBUS|FERROCARRIL,Speratti,4.851078899280425,1,0,1,0,0,41.0
+334,5,2,AUTOBUS|FERROCARRIL,Villa de Luján y 29 de Septiembre | Terminal Norte | Norte,101.11551136745045,1,0,1,0,0,45.0
+335,5,2,AUTOBUS|FERROCARRIL,29 de Septiembre y Villarino | 29 de Septiembre y Bidegain | Empalme Bosque,66.15563164812981,1,0,1,0,0,45.0
+336,11,2,AUTOBUS|FERROCARRIL,Delta | 721 | Puerto de Frutos | Tren de la Costa,307.8017766279561,1,0,1,0,0,57.0
+337,5,2,AUTOBUS|FERROCARRIL,Cecilia Grierson a Villa Rosa | Cecilia Grierson | Cecilia Grierson a Retiro,44.120151401048176,1,0,1,0,0,45.0
+338,2,2,AUTOBUS|FLUVIAL,Terminal Fluviomarítima Colonia,50.71396437635931,0,0,1,1,0,39.0
+339,5,2,AUTOBUS|FERROCARRIL,Hospital Ezeiza | Ruta 205 y Las Lilas,95.47368192457908,1,0,1,0,0,45.0
+340,19,3,AUTOBUS|FERROCARRIL|TRANVIA,Pedro Goyena y Emilio Mitre | Emilio Mitre | Goyena y Víctor Martínez | Goyena y V. Martínez | Tramway Histórico de Buenos Aires | Directorio y Emilio Mitre | Parque Chacabuco | Avenida Eva Perón | Mitre y Directorio | Taller Polvorín,385.7343423788175,1,0,1,0,1,82.5
+341,4,2,AUTOBUS|FLUVIAL,721 | Turismo Las Palmas | Tigre Trans | Cooperativa Transdelta,81.29656290460672,0,0,1,1,0,43.0
+342,4,2,AUTOBUS|FERROCARRIL,Hipólito Yrigoyen,23.78958167154067,1,0,1,0,0,43.0
+343,6,2,AUTOBUS|FERROCARRIL,General Las Heras | Estación Las Heras,77.64205174444673,1,0,1,0,0,47.0
+344,5,2,AUTOBUS|FERROCARRIL,Zelaya | Estación Zelaya | Vicente Arroyo y Carrión,103.32896947678103,1,0,1,0,0,45.0
+345,2,2,AUTOBUS|FERROCARRIL,Domselaar,6.42559725606997,1,0,1,0,0,39.0
+346,4,2,AUTOBUS|TRANVIA,Parque de la Ciudad,4.733054617957486,0,0,1,0,1,43.0
+347,4,2,AUTOBUS|FERROCARRIL,Doctor Antonio Sáenz | Perito Moreno y Maderna | Andenes 3&4 | Andén 5,129.94475580018423,1,0,1,0,0,43.0
+348,3,2,AUTOBUS|SUBTE,Autopista Dellepiane | Acosta y Zuviría | Línea E,92.1236608169943,0,1,1,0,0,41.0
+349,3,2,AUTOBUS|SUBTE,Del Barco Centenera y Zuviría | Centenera y Zuviría | Línea E,69.97447964246794,0,1,1,0,0,41.0
+350,3,2,AUTOBUS|SUBTE,Directorio y Senillosa | Directorio y Doblas | Línea E,90.60188543668556,0,1,1,0,0,41.0
+351,2,2,AUTOBUS|FLUVIAL,Buenos Aires | Colonia Express,18.89972424347318,0,0,1,1,0,39.0
+352,2,2,AUTOBUS|FLUVIAL,,11.355721373706501,0,0,1,1,0,39.0
+353,3,2,AUTOBUS|FERROCARRIL,Maquinista Ricardo Cal | Apeadero Maquinista Cal,46.59728150280133,1,0,1,0,0,41.0
+354,3,2,AUTOBUS|FERROCARRIL,Elcano y Saenz Peña | Pedro de Mendoza y Saenz Peña | Tren de la Costa,37.1468627125883,1,0,1,0,0,41.0
+355,4,2,AUTOBUS|FERROCARRIL,Hospital Cuenca Alta Néstor Kirchner,52.325491811637946,1,0,1,0,0,43.0
+356,2,2,AUTOBUS|FLUVIAL,Terminal de Cruceros | Terminal de Cruceros Quinquela Martín,44.518851707584155,0,0,1,1,0,39.0
+357,2,2,AUTOBUS|FERROCARRIL,Destilería,1.9890498891441535,1,0,1,0,0,39.0
+358,4,2,AUTOBUS|SUBTE,Terminal de Ómnibus Dellepiane | Línea E,83.59895580490618,0,1,1,0,0,43.0

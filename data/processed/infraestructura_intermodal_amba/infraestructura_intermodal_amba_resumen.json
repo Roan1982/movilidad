@@ -1,117 +1,215 @@
 {
   "proyecto": "Análisis de movilidad SUBE AMBA",
   "script": "21_construir_infraestructura_intermodal_amba.py",
-  "fecha_ejecucion": "2026-08-20T18:06:10.525945-03:00",
+  "version": "2.0",
+  "fecha_ejecucion": "2026-08-20T18:26:10.345753",
   "bbox": "-35.20,-59.40,-34.20,-57.80",
-  "crs": "EPSG:4326",
+  "crs_original": "EPSG:4326",
   "crs_metrico": "EPSG:22185",
-  "infraestructuras": 17559,
-  "osm_ids_unicos": 17559,
+  "radio_intercambiador_m": 150,
+  "infraestructuras": 18344,
+  "intercambiadores": 358,
+  "osm_ids_unicos": 18344,
   "tipos": {
-    "PLATAFORMA_TRANSPORTE_PUBLICO": 10691,
-    "PARADA_TRANSPORTE_PUBLICO": 6127,
-    "PARADA_FERROVIARIA": 376,
-    "ESTACION_FERROVIARIA": 97,
-    "ESTACION_SUBTE": 79,
-    "ESTACION_LIGERO": 64,
-    "TERMINAL_AUTOBUS": 61,
-    "TERMINAL_FLUVIAL": 28,
+    "PLATAFORMA_TRANSPORTE_PUBLICO": 11369,
+    "PARADA_TRANSPORTE_PUBLICO": 6201,
+    "PARADA_FERROVIARIA": 377,
+    "ESTACION_FERROVIARIA": 96,
+    "ESTACION_SUBTE": 90,
+    "ESTACION_LIGERO": 76,
+    "TERMINAL_AUTOBUS": 55,
+    "TERMINAL_FLUVIAL": 31,
     "PARADA_TRANVIA": 18,
-    "ESTACION_TRANSPORTE_PUBLICO": 18
+    "ESTACION_TRANSPORTE_PUBLICO": 18,
+    "RUTA_FLUVIAL": 13
   },
   "modos": {
-    "OTRO": 16818,
-    "FERROCARRIL": 537,
-    "SUBTE": 79,
-    "AUTOBUS": 61,
-    "FLUVIAL": 28,
+    "AUTOBUS": 17625,
+    "FERROCARRIL": 549,
+    "SUBTE": 90,
+    "FLUVIAL": 44,
     "TRANVIA": 18,
     "MULTIMODAL": 18
   },
   "categorias": {
-    "OTRO": 16818,
-    "FERROVIARIO": 634,
-    "AUTOMOTOR": 61,
-    "FLUVIAL": 28,
+    "AUTOMOTOR": 17625,
+    "FERROVIARIO": 657,
+    "FLUVIAL": 44,
     "INTERMODAL": 18
   },
+  "intercambiadores_por_cantidad_de_modos": {
+    "2": 328,
+    "3": 29,
+    "4": 1
+  },
+  "top_10_intercambiadores": [
+    {
+      "intercambiador_id": 80,
+      "score": 100.0,
+      "cantidad_infraestructura": 112,
+      "cantidad_modos": 4,
+      "modos": "AUTOBUS|FERROCARRIL|FLUVIAL|SUBTE",
+      "nombre_referencias": "Leandro N. Alem | Plaza San Martín | Terminal de Ómnibus Retiro | Catalinas | Correo Central | Retiro (E) | Retiro | Antártida Argentina y Luisoni | Terminal Retiro | Avenida de los Inmigrantes"
+    },
+    {
+      "intercambiador_id": 76,
+      "score": 82.5,
+      "cantidad_infraestructura": 53,
+      "cantidad_modos": 3,
+      "modos": "AUTOBUS|FERROCARRIL|SUBTE",
+      "nombre_referencias": "Independencia - Santa Mama Antula | Independencia (C) | San José | Independencia | Belgrano | Estados Unidos | Venezuela | México | Chile | Moreno"
+    },
+    {
+      "intercambiador_id": 26,
+      "score": 82.5,
+      "cantidad_infraestructura": 37,
+      "cantidad_modos": 3,
+      "modos": "AUTOBUS|FERROCARRIL|SUBTE",
+      "nombre_referencias": "Hospital Churruca | Parque Patricios | Boedo | Deán Funes y Caseros | Deán Funes / Zavaleta | La Rioja / Monteagudo | Parque de los Patricios | Plazoleta Coronel Pringles | La Rioja y Caseros | Caseros y Virrey Liniers"
+    },
+    {
+      "intercambiador_id": 66,
+      "score": 82.5,
+      "cantidad_infraestructura": 52,
+      "cantidad_modos": 3,
+      "modos": "AUTOBUS|FERROCARRIL|SUBTE",
+      "nombre_referencias": "Primera Junta | Acoyte | Rivadavia y Acoyte | Rivadavia y Colpayo | Acoyte y Rivadavia | Neuquén - Aráoz Alfaro | Sanatorio Méndez | Shopping Caballito | Acoyte y Avellaneda | Av.Avellaneda"
+    },
+    {
+      "intercambiador_id": 71,
+      "score": 82.5,
+      "cantidad_infraestructura": 18,
+      "cantidad_modos": 3,
+      "modos": "AUTOBUS|FERROCARRIL|SUBTE",
+      "nombre_referencias": "Boedo | Carlos Calvo y Boedo | Castro Barros | Humberto I y Maza | Humberto I y Virrey Liniers | Maza y Carlos Calvo | Avenida San Juan | Colombres y San Juan | San Juan y Bocayuva | San Juan y Virrey Liniers"
+    },
+    {
+      "intercambiador_id": 72,
+      "score": 82.5,
+      "cantidad_infraestructura": 33,
+      "cantidad_modos": 3,
+      "modos": "AUTOBUS|FERROCARRIL|SUBTE",
+      "nombre_referencias": "Jujuy | Humberto I | Pichincha | Humberto I y Jujuy | Humberto I y Catamarca | Avenida San Juan | Jujuy y Carlos Calvo | San Juan y Pichincha | San Juan y Jujuy | San Juan y Alberti"
+    },
+    {
+      "intercambiador_id": 74,
+      "score": 82.5,
+      "cantidad_infraestructura": 133,
+      "cantidad_modos": 3,
+      "modos": "AUTOBUS|FERROCARRIL|SUBTE",
+      "nombre_referencias": "Constitución | Plaza Constitución | Plaza Garay | Parque Lezama | Garay y Chacabuco | Garay y Bolívar | 15 de Noviembre y Salta | 15 de Noviembre y San José | Salta y 15 de Noviembre | Salta y Brasil"
+    },
+    {
+      "intercambiador_id": 91,
+      "score": 82.5,
+      "cantidad_infraestructura": 34,
+      "cantidad_modos": 3,
+      "modos": "AUTOBUS|FERROCARRIL|SUBTE",
+      "nombre_referencias": "Caseros | Avenida Brasil | Garrahan | Jujuy | Matheu y Castillo | Pichincha y Brasil | Brasil y Alberti | Avenida Jujuy | Brasil y Matheu | Brasil y Jujuy"
+    },
+    {
+      "intercambiador_id": 88,
+      "score": 82.5,
+      "cantidad_infraestructura": 49,
+      "cantidad_modos": 3,
+      "modos": "AUTOBUS|FERROCARRIL|SUBTE",
+      "nombre_referencias": "Congreso de Tucumán | Puente Saavedra | Estación de Trasbordo Puente Saavedra | Terminal Saavedra | Ramallo y Cabildo | Congreso y Cabildo | Congreso y Ciudad de La Paz | Pedraza y Cabildo | Larralde y Cabildo | San Isidro Labrador"
+    },
+    {
+      "intercambiador_id": 87,
+      "score": 82.5,
+      "cantidad_infraestructura": 68,
+      "cantidad_modos": 3,
+      "modos": "AUTOBUS|FERROCARRIL|SUBTE",
+      "nombre_referencias": "Olleros | José Hernández | Juramento | Lacroze y Cabildo | Echeverría y Cabildo | Plaza Belgrano | Echeverría y O'Higgins | Barrio Chino | Arcos y Mendoza | Cuba y Mendoza"
+    }
+  ],
   "centralidades_analizadas": 144,
   "centralidades_por_intermodalidad": {
-    "INTERMODALIDAD_MEDIA": 68,
-    "INTERMODALIDAD_ALTA": 58,
-    "INTERMODALIDAD_MUY_ALTA": 11,
-    "SIN_INFRAESTRUCTURA_500M": 4,
-    "INTERMODALIDAD_BAJA": 3
+    "INTERMODALIDAD_MEDIA": 71,
+    "INTERMODALIDAD_BAJA": 47,
+    "INTERMODALIDAD_MUY_ALTA": 24,
+    "SIN_INFRAESTRUCTURA_500M": 2
   },
   "top_10_centralidades_intermodalidad": [
     {
-      "nodo_id": "84",
-      "score": 90.0,
-      "infra_500m": 10,
-      "modos_500m": 4,
+      "nodo_id": 1,
+      "score": 100.0,
+      "infra_500m": 4044,
+      "modos_500m": 5,
+      "intercambiadores_500m": 80,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     },
     {
-      "nodo_id": "1",
-      "score": 75.0,
-      "infra_500m": 24,
+      "nodo_id": 94,
+      "score": 82.5,
+      "infra_500m": 41,
       "modos_500m": 3,
+      "intercambiadores_500m": 4,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     },
     {
-      "nodo_id": "7",
-      "score": 75.0,
-      "infra_500m": 37,
+      "nodo_id": 76,
+      "score": 82.5,
+      "infra_500m": 82,
       "modos_500m": 3,
+      "intercambiadores_500m": 7,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     },
     {
-      "nodo_id": "5",
-      "score": 75.0,
-      "infra_500m": 22,
+      "nodo_id": 69,
+      "score": 82.5,
+      "infra_500m": 43,
       "modos_500m": 3,
+      "intercambiadores_500m": 3,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     },
     {
-      "nodo_id": "4",
-      "score": 75.0,
-      "infra_500m": 27,
-      "modos_500m": 3,
+      "nodo_id": 2,
+      "score": 65.0,
+      "infra_500m": 115,
+      "modos_500m": 2,
+      "intercambiadores_500m": 2,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     },
     {
-      "nodo_id": "71",
-      "score": 75.0,
-      "infra_500m": 20,
-      "modos_500m": 3,
+      "nodo_id": 6,
+      "score": 65.0,
+      "infra_500m": 221,
+      "modos_500m": 2,
+      "intercambiadores_500m": 2,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     },
     {
-      "nodo_id": "63",
-      "score": 75.0,
-      "infra_500m": 23,
-      "modos_500m": 3,
+      "nodo_id": 14,
+      "score": 65.0,
+      "infra_500m": 111,
+      "modos_500m": 2,
+      "intercambiadores_500m": 3,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     },
     {
-      "nodo_id": "11",
-      "score": 75.0,
-      "infra_500m": 12,
-      "modos_500m": 3,
+      "nodo_id": 17,
+      "score": 65.0,
+      "infra_500m": 244,
+      "modos_500m": 2,
+      "intercambiadores_500m": 2,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     },
     {
-      "nodo_id": "46",
-      "score": 75.0,
-      "infra_500m": 14,
-      "modos_500m": 3,
+      "nodo_id": 54,
+      "score": 65.0,
+      "infra_500m": 136,
+      "modos_500m": 2,
+      "intercambiadores_500m": 4,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     },
     {
-      "nodo_id": "94",
-      "score": 75.0,
-      "infra_500m": 11,
-      "modos_500m": 3,
+      "nodo_id": 91,
+      "score": 65.0,
+      "infra_500m": 73,
+      "modos_500m": 2,
+      "intercambiadores_500m": 2,
       "categoria": "INTERMODALIDAD_MUY_ALTA"
     }
   ]
