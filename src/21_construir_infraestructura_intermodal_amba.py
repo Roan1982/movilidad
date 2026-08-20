@@ -1,23 +1,21 @@
 # -*- coding: utf-8 -*-
 """
 21_construir_infraestructura_intermodal_amba.py
+VERSION 3.0 - CONSOLIDACIÓN FÍSICA
 
 Construye un inventario de infraestructura de transporte del AMBA a partir
- de OpenStreetMap / Overpass y calcula intermodalidad alrededor de las
-144 centralidades SUBE.
+de OpenStreetMap / Overpass.
 
-Mejoras de esta versión:
-- Índices GeoPandas completamente normalizados para evitar KeyError del sindex.
-- Cache local de la respuesta Overpass: si la consulta falla, se reutiliza la
-  última respuesta válida.
-- Deduplicación OSM y espacial conservadora.
-- Detección explícita de intercambiadores intermodales.
-- No se cuenta OTRO como modo de transporte.
-- Indicadores a 250 / 500 / 1000 m.
-- Capa independiente de intercambiadores.
-- Enriquecimiento de las 144 centralidades SUBE.
-- GeoParquet, GeoPackage, CSV y JSON.
-- Mapas y gráficos de control.
+Esta versión separa explícitamente:
+    1) objetos OSM
+    2) instalaciones físicas
+    3) intercambiadores intermodales
+    4) centralidades SUBE
+
+Objetivo metodológico:
+no contar cada platform / stop_position como una infraestructura
+independiente. Los objetos OSM se consolidan en instalaciones físicas
+antes de calcular densidad e intermodalidad.
 
 No requiere scipy.
 """
@@ -37,13 +35,19 @@ import requests
 from shapely.geometry import Point
 from shapely.ops import unary_union
 
+
 # ============================================================================
-# CONFIGURACIÓN
+# CONFIGURACION
 # ============================================================================
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-OUTPUT_DIR = PROJECT_ROOT / "data" / "processed" / "infraestructura_intermodal_amba"
+OUTPUT_DIR = (
+    PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "infraestructura_intermodal_amba"
+)
 
 CENTRALIDADES_PATH = (
     PROJECT_ROOT
@@ -57,25 +61,31 @@ OVERPASS_URLS = [
     "https://overpass.kumi.systems/api/interpreter",
 ]
 
-OVERPASS_CACHE = OUTPUT_DIR / "overpass_infraestructura_intermodal_amba.json"
+OVERPASS_CACHE = (
+    OUTPUT_DIR / "overpass_infraestructura_intermodal_amba.json"
+)
 
-# sur, oeste, norte, este
 AMBA_BBOX = "-35.20,-59.40,-34.20,-57.80"
 
 CRS_WGS84 = "EPSG:4326"
 CRS_METRICO = "EPSG:22185"
 
-RADIOS_INTERMODALIDAD_M = [250, 500, 1000]
-RADIO_CENTRALIDAD_M = 1000
-
-# Radio para agrupar infraestructura físicamente próxima.
-RADIO_INTERCAMBIADOR_M = 150
-
-# Mínimo de modos de transporte distintos para considerar un intercambiador.
-MIN_MODOS_INTERCAMBIADOR = 2
-
 REQUEST_TIMEOUT = 300
 MAX_RETRIES = 3
+
+RADIOS_INTERMODALIDAD_M = [250, 500, 1000]
+
+# Consolidacion de objetos OSM.
+RADIO_INSTALACION_NOMBRADA_M = 100
+RADIO_INSTALACION_SIN_NOMBRE_M = 60
+
+# Elementos auxiliares (platform / stop_position) se absorben dentro
+# de instalaciones existentes si estan suficientemente cerca.
+RADIO_ADHESION_A_INSTALACION_M = 100
+
+# Intercambiador: dos o mas instalaciones de modos distintos.
+RADIO_INTERCAMBIADOR_M = 150
+MIN_MODOS_INTERCAMBIADOR = 2
 
 MODOS_VALIDOS = {
     "FERROCARRIL",
@@ -85,10 +95,37 @@ MODOS_VALIDOS = {
     "TRANVIA",
 }
 
+TIPOS_ANCLA = {
+    "ESTACION_FERROVIARIA",
+    "PARADA_FERROVIARIA",
+    "ESTACION_SUBTE",
+    "PARADA_TRANVIA",
+    "ESTACION_LIGERO",
+    "TERMINAL_AUTOBUS",
+    "TERMINAL_FLUVIAL",
+    "ESTACION_TRANSPORTE_PUBLICO",
+    "RUTA_FLUVIAL",
+}
+
+TIPOS_AUXILIARES = {
+    "PLATAFORMA_TRANSPORTE_PUBLICO",
+    "PARADA_TRANSPORTE_PUBLICO",
+}
+
+# Pesos metodologicos: la diversidad modal domina sobre la cantidad bruta
+# de objetos OSM.
+PESO_MODO = {
+    "FERROCARRIL": 25.0,
+    "SUBTE": 25.0,
+    "AUTOBUS": 15.0,
+    "FLUVIAL": 25.0,
+    "TRANVIA": 15.0,
+}
+
+
 # ============================================================================
 # UTILIDADES
 # ============================================================================
-
 
 def titulo(texto: str) -> None:
     print()
@@ -102,6 +139,10 @@ def subtitulo(texto: str) -> None:
     print("-" * 78)
     print(texto)
     print("-" * 78)
+
+
+def resetear_indices(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    return gdf.copy().reset_index(drop=True)
 
 
 def safe_int(valor: Any) -> int | None:
@@ -123,10 +164,17 @@ def safe_float(valor: Any) -> float | None:
 
 
 def normalizar_texto(valor: Any) -> str:
-    if valor is None or pd.isna(valor):
+    if valor is None:
         return ""
 
+    try:
+        if pd.isna(valor):
+            return ""
+    except Exception:
+        pass
+
     texto = str(valor).strip().lower()
+
     reemplazos = {
         "á": "a",
         "é": "e",
@@ -143,27 +191,36 @@ def normalizar_texto(valor: Any) -> str:
     return texto
 
 
-def resetear_indices(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    """Garantiza que el índice coincida con posiciones iloc 0..n-1."""
-    salida = gdf.copy()
-    salida = salida.reset_index(drop=True)
-    return salida
+def nombres_unicos(serie: pd.Series, limite: int = 12) -> str:
+    salida = []
+    vistos = set()
+
+    for valor in serie.dropna().astype(str):
+        valor = valor.strip()
+        clave = normalizar_texto(valor)
+
+        if not clave or clave in vistos:
+            continue
+
+        vistos.add(clave)
+        salida.append(valor)
+
+        if len(salida) >= limite:
+            break
+
+    return " | ".join(salida)
 
 
-def valores_unicos_texto(serie: pd.Series) -> list[str]:
-    return sorted(
-        {
-            str(v)
-            for v in serie.dropna()
-            if str(v).strip() and str(v) != "nan"
-        }
-    )
+def consultar_vecinos(sindex, geometry, radio_m: float) -> list[int]:
+    return [int(x) for x in sindex.query(
+        geometry.buffer(radio_m),
+        predicate="intersects",
+    )]
 
 
 # ============================================================================
 # OVERPASS
 # ============================================================================
-
 
 def construir_query_overpass() -> str:
     return f"""
@@ -207,12 +264,8 @@ out center tags;
 
 def guardar_cache_overpass(datos: dict) -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    try:
-        with OVERPASS_CACHE.open("w", encoding="utf-8") as archivo:
-            json.dump(datos, archivo, ensure_ascii=False)
-        print(f"Respuesta cruda guardada:\n{OVERPASS_CACHE}")
-    except Exception as exc:
-        print(f"ADVERTENCIA: no se pudo guardar cache Overpass: {exc}")
+    with OVERPASS_CACHE.open("w", encoding="utf-8") as archivo:
+        json.dump(datos, archivo, ensure_ascii=False)
 
 
 def cargar_cache_overpass() -> dict | None:
@@ -223,13 +276,12 @@ def cargar_cache_overpass() -> dict | None:
         with OVERPASS_CACHE.open("r", encoding="utf-8") as archivo:
             datos = json.load(archivo)
 
-        if not isinstance(datos, dict) or "elements" not in datos:
-            return None
-
-        return datos
+        if isinstance(datos, dict) and "elements" in datos:
+            return datos
     except Exception as exc:
-        print(f"ADVERTENCIA: cache Overpass inválida: {exc}")
-        return None
+        print(f"ADVERTENCIA: cache inválida: {exc}")
+
+    return None
 
 
 def consultar_overpass() -> dict:
@@ -249,7 +301,7 @@ def consultar_overpass() -> dict:
                     endpoint,
                     data={"data": query},
                     headers={
-                        "User-Agent": "analisis-movilidad-amba/2.0",
+                        "User-Agent": "analisis-movilidad-amba/3.0",
                     },
                     timeout=REQUEST_TIMEOUT,
                 )
@@ -260,111 +312,195 @@ def consultar_overpass() -> dict:
                 datos = respuesta.json()
 
                 if "elements" not in datos:
-                    raise RuntimeError("La respuesta no contiene 'elements'.")
+                    raise RuntimeError(
+                        "La respuesta de Overpass no contiene 'elements'."
+                    )
 
-                print(f"Elementos recibidos: {len(datos['elements']):,}")
+                print(
+                    f"Elementos recibidos: "
+                    f"{len(datos['elements']):,}"
+                )
+
                 guardar_cache_overpass(datos)
+                print(f"Respuesta cruda guardada:\n{OVERPASS_CACHE}")
+
                 return datos
 
             except Exception as exc:
                 ultimo_error = exc
-                print(f"Error: {type(exc).__name__}: {exc}")
+                print(
+                    f"Error: {type(exc).__name__}: {exc}"
+                )
                 time.sleep(2)
 
-    # Fallback importante: no perdemos una ejecución anterior válida.
     cache = cargar_cache_overpass()
+
     if cache is not None:
         print()
-        print("ADVERTENCIA: Overpass no respondió correctamente.")
-        print("Se utilizará la última respuesta cacheada válida.")
-        print(f"Elementos cacheados: {len(cache.get('elements', [])):,}")
+        print(
+            "ADVERTENCIA: Overpass no respondió correctamente."
+        )
+        print(
+            "Se utilizará la última respuesta cacheada válida."
+        )
+        print(
+            f"Elementos cacheados: "
+            f"{len(cache.get('elements', [])):,}"
+        )
         return cache
 
     raise RuntimeError(
-        "No fue posible consultar Overpass y no existe una cache válida. "
+        "No fue posible consultar Overpass y no existe cache válida. "
         f"Último error: {ultimo_error}"
     )
 
 
 # ============================================================================
-# CLASIFICACIÓN OSM
+# CLASIFICACION OSM
 # ============================================================================
 
-
-def clasificar_elemento(tags: dict) -> tuple[str, str, str]:
+def clasificar_elemento(
+    tags: dict,
+) -> tuple[str, str, str]:
     railway = normalizar_texto(tags.get("railway"))
     amenity = normalizar_texto(tags.get("amenity"))
-    public_transport = normalizar_texto(tags.get("public_transport"))
+    public_transport = normalizar_texto(
+        tags.get("public_transport")
+    )
     route = normalizar_texto(tags.get("route"))
 
     if railway == "station":
-        return "ESTACION_FERROVIARIA", "FERROCARRIL", "FERROVIARIO"
+        return (
+            "ESTACION_FERROVIARIA",
+            "FERROCARRIL",
+            "FERROVIARIO",
+        )
 
     if railway == "halt":
-        return "PARADA_FERROVIARIA", "FERROCARRIL", "FERROVIARIO"
+        return (
+            "PARADA_FERROVIARIA",
+            "FERROCARRIL",
+            "FERROVIARIO",
+        )
 
     if railway == "subway":
-        return "ESTACION_SUBTE", "SUBTE", "FERROVIARIO"
+        return (
+            "ESTACION_SUBTE",
+            "SUBTE",
+            "FERROVIARIO",
+        )
 
     if railway == "tram_stop":
-        return "PARADA_TRANVIA", "TRANVIA", "FERROVIARIO"
+        return (
+            "PARADA_TRANVIA",
+            "TRANVIA",
+            "FERROVIARIO",
+        )
 
     if railway == "light_rail":
-        return "ESTACION_LIGERO", "FERROCARRIL", "FERROVIARIO"
+        return (
+            "ESTACION_LIGERO",
+            "FERROCARRIL",
+            "FERROVIARIO",
+        )
 
     if railway == "stop":
-        return "PARADA_FERROVIARIA", "FERROCARRIL", "FERROVIARIO"
+        return (
+            "PARADA_FERROVIARIA",
+            "FERROCARRIL",
+            "FERROVIARIO",
+        )
 
     if amenity == "bus_station":
-        return "TERMINAL_AUTOBUS", "AUTOBUS", "AUTOMOTOR"
+        return (
+            "TERMINAL_AUTOBUS",
+            "AUTOBUS",
+            "AUTOMOTOR",
+        )
 
     if amenity == "ferry_terminal":
-        return "TERMINAL_FLUVIAL", "FLUVIAL", "FLUVIAL"
+        return (
+            "TERMINAL_FLUVIAL",
+            "FLUVIAL",
+            "FLUVIAL",
+        )
 
     if route == "ferry":
-        return "RUTA_FLUVIAL", "FLUVIAL", "FLUVIAL"
+        return (
+            "RUTA_FLUVIAL",
+            "FLUVIAL",
+            "FLUVIAL",
+        )
 
-    # public_transport=station puede ser ferroviario, subte o terminal.
-    # Sin información adicional se conserva como MULTIMODAL.
     if public_transport == "station":
-        return "ESTACION_TRANSPORTE_PUBLICO", "MULTIMODAL", "INTERMODAL"
+        return (
+            "ESTACION_TRANSPORTE_PUBLICO",
+            "MULTIMODAL",
+            "INTERMODAL",
+        )
 
     if public_transport == "stop_position":
-        return "PARADA_TRANSPORTE_PUBLICO", "AUTOBUS", "AUTOMOTOR"
+        return (
+            "PARADA_TRANSPORTE_PUBLICO",
+            "AUTOBUS",
+            "AUTOMOTOR",
+        )
 
     if public_transport == "platform":
-        return "PLATAFORMA_TRANSPORTE_PUBLICO", "AUTOBUS", "AUTOMOTOR"
+        return (
+            "PLATAFORMA_TRANSPORTE_PUBLICO",
+            "AUTOBUS",
+            "AUTOMOTOR",
+        )
 
-    return "OTRA_INFRAESTRUCTURA", "OTRO", "OTRO"
+    return (
+        "OTRA_INFRAESTRUCTURA",
+        "OTRO",
+        "OTRO",
+    )
 
 
 def extraer_nombre(tags: dict) -> str | None:
-    for campo in ("name", "official_name", "short_name", "alt_name"):
+    for campo in (
+        "name",
+        "official_name",
+        "short_name",
+        "alt_name",
+    ):
         valor = tags.get(campo)
+
         if valor:
             return str(valor).strip()
+
     return None
 
 
 def extraer_operador(tags: dict) -> str | None:
-    for campo in ("operator", "network", "brand"):
+    for campo in (
+        "operator",
+        "network",
+        "brand",
+    ):
         valor = tags.get(campo)
+
         if valor:
             return str(valor).strip()
+
     return None
 
 
 def geometry_from_element(element: dict) -> Point | None:
-    tipo = element.get("type")
-
-    if tipo == "node":
+    if element.get("type") == "node":
         lat = element.get("lat")
         lon = element.get("lon")
+
         if lat is None or lon is None:
             return None
+
         return Point(float(lon), float(lat))
 
     center = element.get("center") or {}
+
     lat = center.get("lat")
     lon = center.get("lon")
 
@@ -375,12 +511,11 @@ def geometry_from_element(element: dict) -> Point | None:
 
 
 # ============================================================================
-# CONSTRUCCIÓN Y NORMALIZACIÓN
+# CONSTRUCCION
 # ============================================================================
 
-
 def construir_gdf(datos: dict) -> gpd.GeoDataFrame:
-    registros: list[dict[str, Any]] = []
+    registros = []
 
     for element in datos.get("elements", []):
         tags = element.get("tags") or {}
@@ -402,7 +537,9 @@ def construir_gdf(datos: dict) -> gpd.GeoDataFrame:
                 "categoria_intermodal": categoria,
                 "railway": tags.get("railway"),
                 "amenity": tags.get("amenity"),
-                "public_transport": tags.get("public_transport"),
+                "public_transport": tags.get(
+                    "public_transport"
+                ),
                 "route": tags.get("route"),
                 "network": tags.get("network"),
                 "ref": tags.get("ref"),
@@ -413,18 +550,28 @@ def construir_gdf(datos: dict) -> gpd.GeoDataFrame:
         )
 
     if not registros:
-        raise RuntimeError("No se pudieron construir geometrías.")
+        raise RuntimeError(
+            "No se pudieron construir geometrías."
+        )
 
-    gdf = gpd.GeoDataFrame(registros, geometry="geometry", crs=CRS_WGS84)
-    return resetear_indices(gdf)
+    return gpd.GeoDataFrame(
+        registros,
+        geometry="geometry",
+        crs=CRS_WGS84,
+    ).reset_index(drop=True)
 
 
-def normalizar_infraestructura(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+def normalizar_infraestructura(
+    gdf: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
     gdf = resetear_indices(gdf)
 
-    gdf["osm_id"] = pd.to_numeric(gdf["osm_id"], errors="coerce").astype("Int64")
+    gdf["osm_id"] = pd.to_numeric(
+        gdf["osm_id"],
+        errors="coerce",
+    ).astype("Int64")
 
-    columnas_texto = [
+    columnas = [
         "nombre",
         "operador",
         "tipo_infraestructura",
@@ -440,364 +587,958 @@ def normalizar_infraestructura(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         "website",
     ]
 
-    for columna in columnas_texto:
+    for columna in columnas:
         if columna in gdf.columns:
             gdf[columna] = gdf[columna].astype("string")
 
     gdf["nombre_normalizado"] = (
-        gdf["nombre"].fillna("").map(normalizar_texto).astype("string")
+        gdf["nombre"]
+        .fillna("")
+        .map(normalizar_texto)
+        .astype("string")
     )
 
-    gdf["modo_principal"] = gdf["modo_principal"].fillna("OTRO")
-    gdf["tipo_infraestructura"] = gdf["tipo_infraestructura"].fillna(
-        "OTRA_INFRAESTRUCTURA"
+    gdf["modo_principal"] = (
+        gdf["modo_principal"]
+        .fillna("OTRO")
+        .astype("string")
     )
 
     return resetear_indices(gdf)
 
 
-def eliminar_duplicados_osm(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    gdf = resetear_indices(gdf)
-
-    antes = len(gdf)
-    gdf = gdf.drop_duplicates(subset=["osm_type", "osm_id"], keep="first")
-    gdf = resetear_indices(gdf)
-
-    print(f"Duplicados OSM eliminados: {antes - len(gdf):,}")
-    return gdf
-
-
-# ============================================================================
-# DEDUPLICACIÓN ESPACIAL
-# ============================================================================
-
-
-def deduplicar_espacialmente(
+def eliminar_duplicados_osm(
     gdf: gpd.GeoDataFrame,
-    tolerancia_m: float = 75,
 ) -> gpd.GeoDataFrame:
-    """
-    Deduplicación conservadora.
+    antes = len(gdf)
 
-    Se fusionan elementos próximos solamente cuando comparten nombre y modo.
-    Si no tienen nombre, no se fusionan: de esta manera no se destruyen
-    paradas diferentes que están físicamente próximas.
-    """
+    salida = gdf.drop_duplicates(
+        subset=["osm_type", "osm_id"],
+        keep="first",
+    )
 
-    if gdf.empty:
-        return resetear_indices(gdf)
+    salida = resetear_indices(salida)
 
-    metric = resetear_indices(gdf.to_crs(CRS_METRICO))
-    metric["geometry"] = metric.geometry.centroid
-    metric = resetear_indices(metric)
+    print(
+        f"Duplicados OSM eliminados: "
+        f"{antes - len(salida):,}"
+    )
 
-    sindex = metric.sindex
-    usados: set[int] = set()
-    resultado: list[pd.Series] = []
+    return salida
 
-    for idx in range(len(metric)):
-        if idx in usados:
-            continue
 
-        row = metric.iloc[idx]
-        candidatos = list(
-            sindex.query(row.geometry.buffer(tolerancia_m), predicate="intersects")
+# ============================================================================
+# VALIDACION
+# ============================================================================
+
+def validar_gdf(
+    gdf: gpd.GeoDataFrame,
+    etiqueta: str,
+    validar_osm: bool = True,
+) -> None:
+    subtitulo(etiqueta)
+
+    nulos = int(gdf.geometry.isna().sum())
+    vacios = int(gdf.geometry.is_empty.sum())
+    invalidos = int((~gdf.geometry.is_valid).sum())
+
+    print(f"Registros: {len(gdf):,}")
+    print(f"Geometrías nulas: {nulos:,}")
+    print(f"Geometrías vacías: {vacios:,}")
+    print(f"Geometrías inválidas: {invalidos:,}")
+
+    if validar_osm and "osm_id" in gdf.columns:
+        duplicados = int(gdf["osm_id"].duplicated().sum())
+        print(f"Duplicados OSM: {duplicados:,}")
+    else:
+        duplicados = 0
+
+    if nulos or vacios or invalidos:
+        raise RuntimeError(
+            f"{etiqueta}: existen geometrías inválidas."
         )
 
-        grupo: list[int] = []
+    if validar_osm and duplicados:
+        raise RuntimeError(
+            f"{etiqueta}: existen OSM IDs duplicados."
+        )
 
-        for candidato in candidatos:
-            candidato = int(candidato)
-            if candidato in usados:
+
+# ============================================================================
+# CONSOLIDACION DE INSTALACIONES
+# ============================================================================
+
+def componentes_por_proximidad(
+    gdf: gpd.GeoDataFrame,
+    radio_m: float,
+) -> list[list[int]]:
+    """
+    Componentes conexas espaciales.
+
+    El spatial index devuelve posiciones; siempre se usa iloc.
+    """
+
+    gdf = resetear_indices(gdf)
+
+    n = len(gdf)
+
+    if n == 0:
+        return []
+
+    sindex = gdf.sindex
+    padre = list(range(n))
+
+    def find(x: int) -> int:
+        while padre[x] != x:
+            padre[x] = padre[padre[x]]
+            x = padre[x]
+        return x
+
+    def union(a: int, b: int) -> None:
+        ra = find(a)
+        rb = find(b)
+
+        if ra != rb:
+            padre[rb] = ra
+
+    for i in range(n):
+        geom = gdf.iloc[i].geometry
+
+        candidatos = sindex.query(
+            geom.buffer(radio_m),
+            predicate="intersects",
+        )
+
+        for j_raw in candidatos:
+            j = int(j_raw)
+
+            if j <= i:
                 continue
 
-            otra = metric.iloc[candidato]
-            distancia = row.geometry.distance(otra.geometry)
+            if geom.distance(gdf.iloc[j].geometry) <= radio_m:
+                union(i, j)
 
-            mismo_modo = row["modo_principal"] == otra["modo_principal"]
-            nombre_a = str(row["nombre_normalizado"] or "")
-            nombre_b = str(otra["nombre_normalizado"] or "")
-            mismo_nombre = bool(nombre_a) and nombre_a == nombre_b
+    grupos = {}
 
-            if distancia <= tolerancia_m and mismo_modo and mismo_nombre:
-                grupo.append(candidato)
+    for i in range(n):
+        raiz = find(i)
+        grupos.setdefault(raiz, []).append(i)
 
-        if not grupo:
-            grupo = [idx]
+    return list(grupos.values())
 
-        usados.update(grupo)
-        base = metric.iloc[grupo[0]].copy()
 
-        ids = sorted(
-            {
-                str(metric.iloc[i]["osm_id"])
-                for i in grupo
-                if pd.notna(metric.iloc[i]["osm_id"])
-            }
+def construir_instalacion(
+    sub: gpd.GeoDataFrame,
+    instalacion_id: int,
+    metodo: str,
+) -> dict[str, Any]:
+    modos = sorted(
+        set(sub["modo_principal"].dropna().astype(str))
+        & MODOS_VALIDOS
+    )
+
+    tipos = sorted(
+        set(sub["tipo_infraestructura"].dropna().astype(str))
+    )
+
+    nombres = nombres_unicos(sub["nombre"])
+
+    union = unary_union(
+        list(sub.geometry)
+    )
+
+    centroide = union.centroid
+
+    conteo_por_modo = {
+        modo: int(
+            (sub["modo_principal"] == modo).sum()
         )
-
-        base["osm_ids"] = ",".join(ids)
-        base["cantidad_elementos_osm"] = len(grupo)
-        resultado.append(base)
-
-    salida = gpd.GeoDataFrame(resultado, geometry="geometry", crs=CRS_METRICO)
-    salida = salida.to_crs(CRS_WGS84)
-    return resetear_indices(salida)
-
-
-# ============================================================================
-# INDICADORES DE INFRAESTRUCTURA
-# ============================================================================
-
-
-def calcular_indicadores(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    gdf = resetear_indices(gdf)
-
-    for modo in MODOS_VALIDOS:
-        nombre_columna = "modo_bin_" + normalizar_texto(modo)
-        gdf[nombre_columna] = (gdf["modo_principal"] == modo).astype(int)
-
-    gdf["es_modo_transporte"] = gdf["modo_principal"].isin(MODOS_VALIDOS).astype(int)
-    gdf["es_intermodal"] = (gdf["categoria_intermodal"] == "INTERMODAL").astype(int)
-
-    pesos = {
-        "FERROCARRIL": 1.0,
-        "SUBTE": 1.0,
-        "AUTOBUS": 0.8,
-        "FLUVIAL": 1.0,
-        "TRANVIA": 0.8,
+        for modo in MODOS_VALIDOS
     }
 
-    gdf["score_infraestructura"] = gdf["modo_principal"].map(pesos).fillna(0.0)
+    return {
+        "instalacion_id": instalacion_id,
+        "metodo_consolidacion": metodo,
+        "cantidad_objetos_osm": int(len(sub)),
+        "cantidad_modos": len(modos),
+        "modos": "|".join(modos),
+        "nombre_principal": (
+            nombres.split(" | ")[0]
+            if nombres
+            else None
+        ),
+        "nombres_referencias": nombres,
+        "tipos": "|".join(tipos),
+        "ferrocarril": conteo_por_modo["FERROCARRIL"],
+        "subte": conteo_por_modo["SUBTE"],
+        "autobus": conteo_por_modo["AUTOBUS"],
+        "fluvial": conteo_por_modo["FLUVIAL"],
+        "tranvia": conteo_por_modo["TRANVIA"],
+        "geometry": centroide,
+    }
 
-    return resetear_indices(gdf)
+
+def consolidar_instalaciones(
+    infraestructura: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+    """
+    Convierte objetos OSM en instalaciones físicas.
+
+    Estrategia:
+
+    A) elementos ancla:
+       estaciones, terminales, paradas ferroviarias, etc.
+
+       Se agrupan por mismo nombre + modo dentro de 100 m.
+
+    B) elementos auxiliares:
+       platform / stop_position.
+
+       Se absorben en la instalación más cercana dentro de 100 m,
+       preferentemente de su mismo modo.
+
+    C) elementos restantes:
+       se agrupan espacialmente por modo dentro de 60 m.
+
+    D) elementos sin modo válido:
+       se conservan como instalaciones aisladas.
+
+    Esto evita que miles de objetos OSM auxiliares dominen el indicador.
+    """
+
+    titulo("CONSOLIDANDO OBJETOS OSM EN INSTALACIONES FÍSICAS")
+
+    original = resetear_indices(
+        infraestructura.to_crs(CRS_METRICO)
+    )
+
+    original["_asignado"] = False
+    original["_instalacion_tmp"] = pd.NA
+
+    instalaciones = []
+    siguiente_id = 1
+
+    # ------------------------------------------------------------------
+    # A. ANCLAS NOMBRADAS
+    # ------------------------------------------------------------------
+
+    anclas = original[
+        original["tipo_infraestructura"].isin(TIPOS_ANCLA)
+        & original["nombre_normalizado"].fillna("").ne("")
+        & original["modo_principal"].isin(MODOS_VALIDOS)
+    ].copy()
+
+    anclas = resetear_indices(anclas)
+
+    print(
+        f"Elementos ancla nombrados: {len(anclas):,}"
+    )
+
+    if not anclas.empty:
+        grupos_nombre = []
+
+        # Agrupar por nombre + modo.
+        for _, bloque in anclas.groupby(
+            ["nombre_normalizado", "modo_principal"],
+            sort=False,
+        ):
+            bloque = resetear_indices(bloque)
+
+            grupos = componentes_por_proximidad(
+                bloque,
+                RADIO_INSTALACION_NOMBRADA_M,
+            )
+
+            for grupo in grupos:
+                indices_originales = (
+                    bloque.iloc[grupo].index.to_list()
+                )
+                grupos_nombre.append(
+                    indices_originales
+                )
+
+        for indices in grupos_nombre:
+            sub = original.iloc[indices].copy()
+
+            instalaciones.append(
+                construir_instalacion(
+                    sub,
+                    siguiente_id,
+                    "ANCLA_NOMBRE_MODO",
+                )
+            )
+
+            original.loc[
+                indices,
+                "_asignado"
+            ] = True
+
+            original.loc[
+                indices,
+                "_instalacion_tmp"
+            ] = siguiente_id
+
+            siguiente_id += 1
+
+    # ------------------------------------------------------------------
+    # B. ANCLAS SIN NOMBRE
+    # ------------------------------------------------------------------
+
+    anclas_sin_nombre = original[
+        (~original["_asignado"])
+        & original["tipo_infraestructura"].isin(TIPOS_ANCLA)
+        & original["modo_principal"].isin(MODOS_VALIDOS)
+    ].copy()
+
+    anclas_sin_nombre = resetear_indices(
+        anclas_sin_nombre
+    )
+
+    print(
+        f"Anclas sin nombre: {len(anclas_sin_nombre):,}"
+    )
+
+    if not anclas_sin_nombre.empty:
+        grupos = componentes_por_proximidad(
+            anclas_sin_nombre,
+            RADIO_INSTALACION_SIN_NOMBRE_M,
+        )
+
+        for grupo in grupos:
+            sub = anclas_sin_nombre.iloc[grupo].copy()
+
+            ids_originales = sub.index.to_list()
+
+            instalaciones.append(
+                construir_instalacion(
+                    original.iloc[ids_originales],
+                    siguiente_id,
+                    "ANCLA_ESPACIAL",
+                )
+            )
+
+            original.loc[
+                ids_originales,
+                "_asignado"
+            ] = True
+
+            original.loc[
+                ids_originales,
+                "_instalacion_tmp"
+            ] = siguiente_id
+
+            siguiente_id += 1
+
+    # ------------------------------------------------------------------
+    # C. AUXILIARES -> INSTALACION EXISTENTE
+    # ------------------------------------------------------------------
+
+    auxiliares = original[
+        (~original["_asignado"])
+        & original["tipo_infraestructura"].isin(
+            TIPOS_AUXILIARES
+        )
+        & original["modo_principal"].isin(
+            MODOS_VALIDOS
+        )
+    ].copy()
+
+    auxiliares = resetear_indices(auxiliares)
+
+    print(
+        f"Elementos auxiliares pendientes: "
+        f"{len(auxiliares):,}"
+    )
+
+    # GeoDataFrame temporal de instalaciones.
+    if instalaciones:
+        instalaciones_gdf = gpd.GeoDataFrame(
+            instalaciones,
+            geometry="geometry",
+            crs=CRS_METRICO,
+        )
+    else:
+        instalaciones_gdf = gpd.GeoDataFrame(
+            columns=["instalacion_id", "geometry"],
+            geometry="geometry",
+            crs=CRS_METRICO,
+        )
+
+    instalaciones_gdf = resetear_indices(
+        instalaciones_gdf
+    )
+
+    if not auxiliares.empty and not instalaciones_gdf.empty:
+        sindex = instalaciones_gdf.sindex
+
+        for pos in range(len(auxiliares)):
+            aux = auxiliares.iloc[pos]
+
+            candidatos = consultar_vecinos(
+                sindex,
+                aux.geometry,
+                RADIO_ADHESION_A_INSTALACION_M,
+            )
+
+            if not candidatos:
+                continue
+
+            mejor = None
+            mejor_distancia = float("inf")
+
+            for cand in candidatos:
+                instalacion = instalaciones_gdf.iloc[cand]
+
+                # Preferencia fuerte por mismo modo.
+                mismo_modo = (
+                    aux["modo_principal"]
+                    == instalacion["modos"]
+                )
+
+                distancia = aux.geometry.distance(
+                    instalacion.geometry
+                )
+
+                penalizacion = (
+                    0
+                    if mismo_modo
+                    else 1000
+                )
+
+                distancia_ponderada = (
+                    distancia + penalizacion
+                )
+
+                if distancia_ponderada < mejor_distancia:
+                    mejor_distancia = distancia_ponderada
+                    mejor = cand
+
+            if mejor is not None:
+                instalacion_id = int(
+                    instalaciones_gdf.iloc[mejor][
+                        "instalacion_id"
+                    ]
+                )
+
+                original_idx = int(
+                    auxiliares.index[pos]
+                )
+
+                original.loc[
+                    original_idx,
+                    "_asignado"
+                ] = True
+
+                original.loc[
+                    original_idx,
+                    "_instalacion_tmp"
+                ] = instalacion_id
+
+    # ------------------------------------------------------------------
+    # D. RESTANTES -> CLUSTERS POR MODO
+    # ------------------------------------------------------------------
+
+    restantes = original[
+        ~original["_asignado"]
+        & original["modo_principal"].isin(
+            MODOS_VALIDOS
+        )
+    ].copy()
+
+    restantes = resetear_indices(restantes)
+
+    print(
+        f"Elementos restantes para clustering: "
+        f"{len(restantes):,}"
+    )
+
+    if not restantes.empty:
+        for modo, bloque in restantes.groupby(
+            "modo_principal",
+            sort=False,
+        ):
+            bloque = resetear_indices(bloque)
+
+            grupos = componentes_por_proximidad(
+                bloque,
+                RADIO_INSTALACION_SIN_NOMBRE_M,
+            )
+
+            for grupo in grupos:
+                ids_originales = bloque.iloc[
+                    grupo
+                ].index.to_list()
+
+                sub = original.iloc[
+                    ids_originales
+                ].copy()
+
+                instalaciones.append(
+                    construir_instalacion(
+                        sub,
+                        siguiente_id,
+                        "CLUSTER_MODO",
+                    )
+                )
+
+                original.loc[
+                    ids_originales,
+                    "_asignado"
+                ] = True
+
+                original.loc[
+                    ids_originales,
+                    "_instalacion_tmp"
+                ] = siguiente_id
+
+                siguiente_id += 1
+
+    # ------------------------------------------------------------------
+    # E. OBJETOS SIN MODO
+    # ------------------------------------------------------------------
+
+    otros = original[
+        ~original["_asignado"]
+    ].copy()
+
+    otros = resetear_indices(otros)
+
+    print(
+        f"Objetos sin instalación asignada: "
+        f"{len(otros):,}"
+    )
+
+    for pos in range(len(otros)):
+        sub = otros.iloc[[pos]].copy()
+
+        instalaciones.append(
+            construir_instalacion(
+                sub,
+                siguiente_id,
+                "AISLADO",
+            )
+        )
+
+        siguiente_id += 1
+
+    # ------------------------------------------------------------------
+    # F. FINAL
+    # ------------------------------------------------------------------
+
+    if not instalaciones:
+        raise RuntimeError(
+            "No se pudieron construir instalaciones."
+        )
+
+    salida = gpd.GeoDataFrame(
+        instalaciones,
+        geometry="geometry",
+        crs=CRS_METRICO,
+    )
+
+    salida = salida.to_crs(CRS_WGS84)
+    salida = resetear_indices(salida)
+
+    # Indicadores.
+    salida["es_intermodal"] = (
+        salida["cantidad_modos"] >= 2
+    ).astype(int)
+
+    salida["score_instalacion"] = (
+        salida["cantidad_modos"].clip(
+            upper=4
+        )
+        / 4.0
+        * 70.0
+        + salida["cantidad_objetos_osm"].clip(
+            upper=10
+        )
+        / 10.0
+        * 30.0
+    ).round(2)
+
+    print()
+    print(
+        f"Instalaciones físicas consolidadas: "
+        f"{len(salida):,}"
+    )
+
+    print(
+        f"Reducción respecto de objetos OSM: "
+        f"{len(infraestructura) - len(salida):,}"
+    )
+
+    print()
+    print("INSTALACIONES POR MODO")
+
+    for modo, cantidad in (
+        salida["modos"]
+        .replace("", "SIN_MODO")
+        .value_counts()
+        .head(20)
+        .items()
+    ):
+        print(
+            f"  {str(modo):35s} {int(cantidad):8,d}"
+        )
+
+    return salida
 
 
 # ============================================================================
 # INTERCAMBIADORES
 # ============================================================================
 
-
-def _componentes_proximos(
-    infra: gpd.GeoDataFrame,
-    radio_m: float,
-) -> list[list[int]]:
-    """
-    Componentes conexas de elementos a <= radio_m.
-
-    Importante: el resultado del spatial index se trata como posición iloc,
-    nunca como etiqueta loc. Esto elimina el KeyError observado.
-    """
-
-    infra = resetear_indices(infra)
-    n = len(infra)
-
-    if n == 0:
-        return []
-
-    sindex = infra.sindex
-    padre = list(range(n))
-
-    def encontrar(x: int) -> int:
-        while padre[x] != x:
-            padre[x] = padre[padre[x]]
-            x = padre[x]
-        return x
-
-    def unir(a: int, b: int) -> None:
-        ra = encontrar(a)
-        rb = encontrar(b)
-        if ra != rb:
-            padre[rb] = ra
-
-    for i in range(n):
-        geom = infra.iloc[i].geometry
-        candidatos = list(
-            sindex.query(geom.buffer(radio_m), predicate="intersects")
-        )
-
-        for j_raw in candidatos:
-            j = int(j_raw)
-            if j <= i:
-                continue
-
-            distancia = geom.distance(infra.iloc[j].geometry)
-            if distancia <= radio_m:
-                unir(i, j)
-
-    grupos: dict[int, list[int]] = {}
-    for i in range(n):
-        raiz = encontrar(i)
-        grupos.setdefault(raiz, []).append(i)
-
-    return list(grupos.values())
-
-
 def detectar_intercambiadores(
-    infraestructura: gpd.GeoDataFrame,
+    instalaciones: gpd.GeoDataFrame,
     radio_m: float = RADIO_INTERCAMBIADOR_M,
 ) -> gpd.GeoDataFrame:
     """
-    Detecta clusters de infraestructura donde existen al menos dos modos
-    válidos distintos dentro del radio configurado.
+    Detecta clusters de INSTALACIONES, no de objetos OSM.
+
+    Cada instalación cuenta una sola vez por modo.
     """
 
-    infra = resetear_indices(infraestructura.to_crs(CRS_METRICO))
-    infra = infra[infra["modo_principal"].isin(MODOS_VALIDOS)].copy()
+    titulo(
+        "DETECTANDO INTERCAMBIADORES ENTRE INSTALACIONES"
+    )
+
+    infra = resetear_indices(
+        instalaciones.to_crs(CRS_METRICO)
+    )
+
+    infra = infra[
+        infra["cantidad_modos"] > 0
+    ].copy()
+
     infra = resetear_indices(infra)
 
     if infra.empty:
         return gpd.GeoDataFrame(
-            columns=["intercambiador_id", "modos", "cantidad_infraestructura", "geometry"],
+            columns=[
+                "intercambiador_id",
+                "cantidad_instalaciones",
+                "cantidad_modos",
+                "modos",
+                "geometry",
+            ],
             geometry="geometry",
             crs=CRS_WGS84,
         )
 
-    grupos = _componentes_proximos(infra, radio_m)
-    registros: list[dict[str, Any]] = []
-    intercambiador_id = 0
+    grupos = componentes_por_proximidad(
+        infra,
+        radio_m,
+    )
+
+    registros = []
+    intercambiador_id = 1
 
     for grupo in grupos:
         sub = infra.iloc[grupo].copy()
-        modos = sorted(set(sub["modo_principal"].dropna().astype(str)) & MODOS_VALIDOS)
+
+        modos = sorted(
+            set(
+                modo
+                for valor in sub["modos"].dropna().astype(str)
+                for modo in valor.split("|")
+                if modo in MODOS_VALIDOS
+            )
+        )
 
         if len(modos) < MIN_MODOS_INTERCAMBIADOR:
             continue
 
-        intercambiador_id += 1
+        union = unary_union(
+            list(sub.geometry)
+        )
 
-        union = unary_union(list(sub.geometry))
         centroide = union.centroid
 
-        distancias = sub.geometry.distance(centroide)
-        radio_real = float(distancias.max()) if len(distancias) else 0.0
+        distancias = sub.geometry.distance(
+            centroide
+        )
 
-        conteo_por_modo = {
-            modo: int((sub["modo_principal"] == modo).sum())
+        radio_real = (
+            float(distancias.max())
+            if len(distancias)
+            else 0.0
+        )
+
+        conteo_instalaciones = {
+            modo: int(
+                sub["modos"]
+                .fillna("")
+                .str.contains(
+                    modo,
+                    regex=False,
+                )
+                .sum()
+            )
             for modo in MODOS_VALIDOS
-            if int((sub["modo_principal"] == modo).sum()) > 0
         }
 
-        nombres = []
-        for nombre in sub["nombre"].dropna().astype(str):
-            if nombre.strip() and nombre not in nombres:
-                nombres.append(nombre)
+        nombres = nombres_unicos(
+            sub["nombre_principal"]
+        )
+
+        # Score independiente de la cantidad bruta de objetos OSM.
+        score_diversidad = min(
+            len(modos),
+            4,
+        ) / 4.0 * 70.0
+
+        score_instalaciones = min(
+            len(sub),
+            6,
+        ) / 6.0 * 30.0
 
         registros.append(
             {
                 "intercambiador_id": intercambiador_id,
-                "cantidad_infraestructura": len(sub),
+                "cantidad_instalaciones": int(len(sub)),
                 "cantidad_modos": len(modos),
                 "modos": "|".join(modos),
-                "nombre_referencias": " | ".join(nombres[:10]),
-                "radio_cluster_m": radio_real,
-                "ferrocarril": int("FERROCARRIL" in modos),
-                "subte": int("SUBTE" in modos),
-                "autobus": int("AUTOBUS" in modos),
-                "fluvial": int("FLUVIAL" in modos),
-                "tranvia": int("TRANVIA" in modos),
-                "score_intercambiador": min(
-                    100.0,
-                    len(modos) / 4.0 * 70.0
-                    + min(len(sub), 15) / 15.0 * 30.0,
+                "nombre_referencias": nombres,
+                "radio_cluster_m": round(
+                    radio_real,
+                    2,
+                ),
+                "ferrocarril": conteo_instalaciones[
+                    "FERROCARRIL"
+                ],
+                "subte": conteo_instalaciones[
+                    "SUBTE"
+                ],
+                "autobus": conteo_instalaciones[
+                    "AUTOBUS"
+                ],
+                "fluvial": conteo_instalaciones[
+                    "FLUVIAL"
+                ],
+                "tranvia": conteo_instalaciones[
+                    "TRANVIA"
+                ],
+                "score_intercambiador": round(
+                    min(
+                        100.0,
+                        score_diversidad
+                        + score_instalaciones,
+                    ),
+                    2,
                 ),
                 "geometry": centroide,
             }
         )
 
+        intercambiador_id += 1
+
     if not registros:
         return gpd.GeoDataFrame(
-            columns=["intercambiador_id", "modos", "geometry"],
+            columns=[
+                "intercambiador_id",
+                "cantidad_instalaciones",
+                "cantidad_modos",
+                "modos",
+                "geometry",
+            ],
             geometry="geometry",
             crs=CRS_METRICO,
         ).to_crs(CRS_WGS84)
 
-    intercambiadores = gpd.GeoDataFrame(
+    salida = gpd.GeoDataFrame(
         registros,
         geometry="geometry",
         crs=CRS_METRICO,
     )
 
-    intercambiadores = intercambiadores.to_crs(CRS_WGS84)
-    return resetear_indices(intercambiadores)
+    salida = salida.to_crs(CRS_WGS84)
+
+    print(
+        f"Intercambiadores detectados: "
+        f"{len(salida):,}"
+    )
+
+    return resetear_indices(salida)
 
 
 # ============================================================================
 # CENTRALIDADES
 # ============================================================================
 
-
 def cargar_centralidades() -> gpd.GeoDataFrame | None:
     if not CENTRALIDADES_PATH.exists():
-        print("ADVERTENCIA: no se encontró el archivo de centralidades:")
+        print(
+            "ADVERTENCIA: no se encontró:"
+        )
         print(CENTRALIDADES_PATH)
         return None
 
     try:
-        centralidades = gpd.read_parquet(CENTRALIDADES_PATH)
+        centralidades = gpd.read_parquet(
+            CENTRALIDADES_PATH
+        )
     except Exception as exc:
-        print(f"ADVERTENCIA: no se pudieron cargar centralidades: {exc}")
+        print(
+            f"ADVERTENCIA: no se pudieron cargar "
+            f"centralidades: {exc}"
+        )
         return None
 
     if centralidades.empty:
         return None
 
     if centralidades.crs is None:
-        centralidades = centralidades.set_crs(CRS_WGS84)
+        centralidades = centralidades.set_crs(
+            CRS_WGS84
+        )
 
-    centralidades = centralidades.to_crs(CRS_METRICO)
-    centralidades = resetear_indices(centralidades)
+    centralidades = centralidades.to_crs(
+        CRS_METRICO
+    )
+
+    centralidades = resetear_indices(
+        centralidades
+    )
 
     if "nodo_id" not in centralidades.columns:
-        centralidades["nodo_id"] = np.arange(1, len(centralidades) + 1)
+        centralidades["nodo_id"] = np.arange(
+            1,
+            len(centralidades) + 1,
+        )
 
     return centralidades
 
 
-def consultar_vecinos(
-    sindex,
-    geometry,
-    radio_m: float,
-) -> list[int]:
-    """Devuelve posiciones iloc, no etiquetas de índice."""
-    return [int(x) for x in sindex.query(geometry.buffer(radio_m), predicate="intersects")]
+def validar_centralidades(
+    centralidades: gpd.GeoDataFrame,
+) -> None:
+    subtitulo(
+        "VALIDACIÓN DE CENTRALIDADES"
+    )
+
+    duplicados = int(
+        centralidades["nodo_id"].duplicated().sum()
+    )
+
+    invalidas = int(
+        (~centralidades.geometry.is_valid).sum()
+    )
+
+    print(
+        f"Centralidades: {len(centralidades):,}"
+    )
+    print(
+        f"nodo_id duplicados: {duplicados:,}"
+    )
+    print(
+        f"Geometrías inválidas: {invalidas:,}"
+    )
+
+    if duplicados or invalidas:
+        raise RuntimeError(
+            "Las centralidades no superan la validación."
+        )
 
 
 def analizar_centralidades(
     centralidades: gpd.GeoDataFrame,
-    infraestructura: gpd.GeoDataFrame,
+    instalaciones: gpd.GeoDataFrame,
     intercambiadores: gpd.GeoDataFrame,
 ) -> gpd.GeoDataFrame:
-    centros = resetear_indices(centralidades.to_crs(CRS_METRICO))
-    infra = resetear_indices(infraestructura.to_crs(CRS_METRICO))
-    interc = resetear_indices(intercambiadores.to_crs(CRS_METRICO))
+    """
+    Calcula indicadores de intermodalidad usando INSTALACIONES FISICAS.
+
+    Esto es importante: la densidad ya no depende de la cantidad de
+    platform / stop_position individuales de OSM.
+    """
+
+    titulo(
+        "CALCULANDO INTERMODALIDAD DE CENTRALIDADES"
+    )
+
+    centros = resetear_indices(
+        centralidades.to_crs(CRS_METRICO)
+    )
+
+    infra = resetear_indices(
+        instalaciones.to_crs(CRS_METRICO)
+    )
+
+    interc = resetear_indices(
+        intercambiadores.to_crs(CRS_METRICO)
+    )
 
     sindex_infra = infra.sindex
-    sindex_interc = interc.sindex if not interc.empty else None
+    sindex_interc = (
+        interc.sindex
+        if not interc.empty
+        else None
+    )
 
-    resultados: list[dict[str, Any]] = []
+    resultados = []
 
     for pos in range(len(centros)):
         nodo = centros.iloc[pos]
         punto = nodo.geometry
 
-        if pos == 0 or (pos + 1) % 25 == 0 or pos + 1 == len(centros):
-            print(f"Centralidad {pos + 1}/{len(centros)}")
+        if (
+            pos == 0
+            or (pos + 1) % 25 == 0
+            or pos + 1 == len(centros)
+        ):
+            print(
+                f"Centralidad {pos + 1}/"
+                f"{len(centros)}"
+            )
 
-        registro: dict[str, Any] = {"nodo_id": nodo["nodo_id"]}
+        registro = {
+            "nodo_id": nodo["nodo_id"],
+        }
+
+        # --------------------------------------------------------------
+        # RADIOS
+        # --------------------------------------------------------------
 
         for radio in RADIOS_INTERMODALIDAD_M:
-            candidatos = consultar_vecinos(sindex_infra, punto, radio)
+            candidatos = consultar_vecinos(
+                sindex_infra,
+                punto,
+                radio,
+            )
 
             if candidatos:
-                sub = infra.iloc[candidatos]
-                modos = set(sub["modo_principal"].dropna().astype(str)) & MODOS_VALIDOS
+                sub = infra.iloc[
+                    candidatos
+                ]
+
+                modos = {
+                    modo
+                    for valor in (
+                        sub["modos"]
+                        .dropna()
+                        .astype(str)
+                    )
+                    for modo in valor.split("|")
+                    if modo in MODOS_VALIDOS
+                }
+
             else:
                 sub = infra.iloc[[]]
                 modos = set()
 
-            registro[f"infra_{radio}m"] = len(sub)
-            registro[f"modos_{radio}m"] = len(modos)
+            registro[
+                f"instalaciones_{radio}m"
+            ] = int(len(sub))
+
+            # Alias para compatibilidad.
+            registro[
+                f"infra_{radio}m"
+            ] = int(len(sub))
+
+            registro[
+                f"modos_{radio}m"
+            ] = int(len(modos))
 
             for modo, nombre in [
                 ("FERROCARRIL", "ferrocarril"),
@@ -806,102 +1547,297 @@ def analizar_centralidades(
                 ("FLUVIAL", "fluvial"),
                 ("TRANVIA", "tranvia"),
             ]:
-                registro[f"{nombre}_{radio}m"] = int(modo in modos)
+                registro[
+                    f"{nombre}_{radio}m"
+                ] = int(modo in modos)
 
-        # Distancia a infraestructura válida más cercana dentro de 1000 m.
-        candidatos_1000 = consultar_vecinos(sindex_infra, punto, RADIO_CENTRALIDAD_M)
+        # --------------------------------------------------------------
+        # INFRAESTRUCTURA MAS CERCANA
+        # --------------------------------------------------------------
+
+        candidatos_1000 = consultar_vecinos(
+            sindex_infra,
+            punto,
+            1000,
+        )
 
         if candidatos_1000:
-            sub = infra.iloc[candidatos_1000]
-            distancias = sub.geometry.distance(punto)
-            pos_min = int(np.argmin(distancias.to_numpy()))
-            mas_cercano = sub.iloc[pos_min]
+            sub = infra.iloc[
+                candidatos_1000
+            ]
 
-            registro["infraestructuras_1000m"] = len(sub)
-            registro["distancia_infraestructura_m"] = float(distancias.iloc[pos_min])
-            registro["infraestructura_mas_cercana"] = (
-                str(mas_cercano["nombre"])
-                if pd.notna(mas_cercano["nombre"]) and str(mas_cercano["nombre"]).strip()
-                else str(mas_cercano["tipo_infraestructura"])
+            distancias = sub.geometry.distance(
+                punto
             )
-            registro["modo_infraestructura_mas_cercana"] = str(
-                mas_cercano["modo_principal"]
+
+            pos_min = int(
+                np.argmin(
+                    distancias.to_numpy()
+                )
             )
+
+            cercano = sub.iloc[pos_min]
+
+            registro[
+                "distancia_infraestructura_m"
+            ] = float(
+                distancias.iloc[pos_min]
+            )
+
+            registro[
+                "infraestructura_mas_cercana"
+            ] = (
+                str(cercano["nombre_principal"])
+                if pd.notna(
+                    cercano["nombre_principal"]
+                )
+                and str(
+                    cercano["nombre_principal"]
+                ).strip()
+                else str(
+                    cercano["tipos"]
+                )
+            )
+
+            registro[
+                "modo_infraestructura_mas_cercana"
+            ] = str(
+                cercano["modos"]
+            )
+
         else:
-            registro["infraestructuras_1000m"] = 0
-            registro["distancia_infraestructura_m"] = np.nan
-            registro["infraestructura_mas_cercana"] = None
-            registro["modo_infraestructura_mas_cercana"] = None
+            registro[
+                "distancia_infraestructura_m"
+            ] = np.nan
 
-        # Intercambiadores dentro de 1000 m y 500 m.
+            registro[
+                "infraestructura_mas_cercana"
+            ] = None
+
+            registro[
+                "modo_infraestructura_mas_cercana"
+            ] = None
+
+        # --------------------------------------------------------------
+        # INTERCAMBIADORES
+        # --------------------------------------------------------------
+
         if sindex_interc is not None:
-            candidatos_interc_500 = consultar_vecinos(sindex_interc, punto, 500)
-            candidatos_interc_1000 = consultar_vecinos(sindex_interc, punto, 1000)
-        else:
-            candidatos_interc_500 = []
-            candidatos_interc_1000 = []
+            cand500 = consultar_vecinos(
+                sindex_interc,
+                punto,
+                500,
+            )
 
-        registro["intercambiadores_500m"] = len(candidatos_interc_500)
-        registro["intercambiadores_1000m"] = len(candidatos_interc_1000)
-
-        if candidatos_interc_500:
-            sub_i = interc.iloc[candidatos_interc_500]
-            distancias_i = sub_i.geometry.distance(punto)
-            pos_min_i = int(np.argmin(distancias_i.to_numpy()))
-            cercano_i = sub_i.iloc[pos_min_i]
-            registro["distancia_intercambiador_m"] = float(distancias_i.iloc[pos_min_i])
-            registro["intercambiador_mas_cercano_id"] = safe_int(
-                cercano_i["intercambiador_id"]
+            cand1000 = consultar_vecinos(
+                sindex_interc,
+                punto,
+                1000,
             )
         else:
-            registro["distancia_intercambiador_m"] = np.nan
-            registro["intercambiador_mas_cercano_id"] = None
+            cand500 = []
+            cand1000 = []
 
-        # Score 0..100.
-        modos_500 = registro["modos_500m"]
-        infra_500 = registro["infra_500m"]
-        presencia_500 = sum(
-            registro[f"{nombre}_500m"]
-            for nombre in ("ferrocarril", "subte", "autobus", "fluvial", "tranvia")
-        )
+        registro[
+            "intercambiadores_500m"
+        ] = len(cand500)
 
-        score_modos = min(modos_500, 4) / 4.0 * 50.0
-        score_densidad = min(infra_500, 20) / 20.0 * 20.0
-        score_presencia = min(presencia_500, 4) / 4.0 * 20.0
-        score_intercambiador = min(registro["intercambiadores_500m"], 2) / 2.0 * 10.0
+        registro[
+            "intercambiadores_1000m"
+        ] = len(cand1000)
 
-        registro["score_intermodalidad_500m"] = round(
-            min(
-                100.0,
-                score_modos
-                + score_densidad
-                + score_presencia
-                + score_intercambiador,
-            ),
-            2,
-        )
+        if cand500:
+            sub_i = interc.iloc[
+                cand500
+            ]
 
-        if modos_500 >= 4 or registro["intercambiadores_500m"] >= 2:
-            categoria = "INTERMODALIDAD_MUY_ALTA"
-        elif modos_500 >= 3:
-            categoria = "INTERMODALIDAD_ALTA"
-        elif modos_500 == 2:
-            categoria = "INTERMODALIDAD_MEDIA"
-        elif modos_500 == 1:
-            categoria = "INTERMODALIDAD_BAJA"
+            distancias_i = (
+                sub_i.geometry.distance(punto)
+            )
+
+            pos_min_i = int(
+                np.argmin(
+                    distancias_i.to_numpy()
+                )
+            )
+
+            cercano_i = sub_i.iloc[
+                pos_min_i
+            ]
+
+            registro[
+                "distancia_intercambiador_m"
+            ] = float(
+                distancias_i.iloc[pos_min_i]
+            )
+
+            registro[
+                "intercambiador_mas_cercano_id"
+            ] = safe_int(
+                cercano_i[
+                    "intercambiador_id"
+                ]
+            )
+
         else:
-            categoria = "SIN_INFRAESTRUCTURA_500M"
+            registro[
+                "distancia_intercambiador_m"
+            ] = np.nan
 
-        registro["categoria_intermodalidad_500m"] = categoria
+            registro[
+                "intercambiador_mas_cercano_id"
+            ] = None
+
+        # --------------------------------------------------------------
+        # SCORE
+        # --------------------------------------------------------------
+
+        modos_500 = registro[
+            "modos_500m"
+        ]
+
+        presencia = sum(
+            registro[
+                f"{nombre}_500m"
+            ]
+            for nombre in (
+                "ferrocarril",
+                "subte",
+                "autobus",
+                "fluvial",
+                "tranvia",
+            )
+        )
+
+        instalaciones_500 = registro[
+            "instalaciones_500m"
+        ]
+
+        # Diversidad modal: 60%.
+        score_diversidad = (
+            min(modos_500, 4)
+            / 4.0
+            * 60.0
+        )
+
+        # Presencia modal ponderada: 25%.
+        score_presencia = 0.0
+
+        for modo, nombre in [
+            ("FERROCARRIL", "ferrocarril"),
+            ("SUBTE", "subte"),
+            ("AUTOBUS", "autobus"),
+            ("FLUVIAL", "fluvial"),
+            ("TRANVIA", "tranvia"),
+        ]:
+            if registro[
+                f"{nombre}_500m"
+            ]:
+                score_presencia += PESO_MODO[
+                    modo
+                ]
+
+        score_presencia = min(
+            score_presencia,
+            25.0,
+        )
+
+        # Intensidad física: 10%, capada.
+        score_intensidad = (
+            min(
+                instalaciones_500,
+                10,
+            )
+            / 10.0
+            * 10.0
+        )
+
+        # Intercambiador: 5%.
+        score_intercambiador = (
+            min(
+                registro[
+                    "intercambiadores_500m"
+                ],
+                1,
+            )
+            * 5.0
+        )
+
+        score = min(
+            100.0,
+            score_diversidad
+            + score_presencia
+            + score_intensidad
+            + score_intercambiador,
+        )
+
+        registro[
+            "score_intermodalidad_500m"
+        ] = round(score, 2)
+
+        # --------------------------------------------------------------
+        # CATEGORIA
+        # --------------------------------------------------------------
+
+        if (
+            modos_500 >= 4
+            or (
+                modos_500 >= 3
+                and registro[
+                    "intercambiadores_500m"
+                ] >= 1
+            )
+        ):
+            categoria = (
+                "INTERMODALIDAD_MUY_ALTA"
+            )
+
+        elif modos_500 >= 3:
+            categoria = (
+                "INTERMODALIDAD_ALTA"
+            )
+
+        elif modos_500 == 2:
+            categoria = (
+                "INTERMODALIDAD_MEDIA"
+            )
+
+        elif modos_500 == 1:
+            categoria = (
+                "INTERMODALIDAD_BAJA"
+            )
+
+        else:
+            categoria = (
+                "SIN_INFRAESTRUCTURA_500M"
+            )
+
+        registro[
+            "categoria_intermodalidad_500m"
+        ] = categoria
+
         resultados.append(registro)
 
-    indicadores = pd.DataFrame(resultados)
+    indicadores = pd.DataFrame(
+        resultados
+    )
 
-    centros = centros.merge(indicadores, on="nodo_id", how="left")
+    centros = centros.merge(
+        indicadores,
+        on="nodo_id",
+        how="left",
+    )
 
-    centros["ranking_intermodalidad"] = (
-        centros["score_intermodalidad_500m"]
-        .rank(ascending=False, method="min")
+    centros[
+        "ranking_intermodalidad"
+    ] = (
+        centros[
+            "score_intermodalidad_500m"
+        ]
+        .rank(
+            ascending=False,
+            method="min",
+        )
         .astype("Int64")
     )
 
@@ -912,477 +1848,699 @@ def analizar_centralidades(
 # RESUMEN
 # ============================================================================
 
-
 def construir_resumen(
-    infraestructura: gpd.GeoDataFrame,
+    objetos_osm: gpd.GeoDataFrame,
+    instalaciones: gpd.GeoDataFrame,
     intercambiadores: gpd.GeoDataFrame,
     centralidades: gpd.GeoDataFrame | None,
 ) -> dict[str, Any]:
-    resumen: dict[str, Any] = {
-        "proyecto": "Análisis de movilidad SUBE AMBA",
-        "script": "21_construir_infraestructura_intermodal_amba.py",
-        "version": "2.0",
-        "fecha_ejecucion": pd.Timestamp.now().isoformat(),
+    resumen = {
+        "proyecto": (
+            "Análisis de movilidad SUBE AMBA"
+        ),
+        "script": (
+            "21_construir_infraestructura_intermodal_amba.py"
+        ),
+        "version": "3.0",
+        "fecha_ejecucion": (
+            pd.Timestamp.now().isoformat()
+        ),
         "bbox": AMBA_BBOX,
         "crs_original": CRS_WGS84,
         "crs_metrico": CRS_METRICO,
-        "radio_intercambiador_m": RADIO_INTERCAMBIADOR_M,
-        "infraestructuras": int(len(infraestructura)),
-        "intercambiadores": int(len(intercambiadores)),
-        "osm_ids_unicos": int(infraestructura["osm_id"].nunique()),
+        "objetos_osm": int(len(objetos_osm)),
+        "instalaciones_fisicas": int(
+            len(instalaciones)
+        ),
+        "intercambiadores": int(
+            len(intercambiadores)
+        ),
+        "radio_instalacion_nombrada_m": (
+            RADIO_INSTALACION_NOMBRADA_M
+        ),
+        "radio_instalacion_sin_nombre_m": (
+            RADIO_INSTALACION_SIN_NOMBRE_M
+        ),
+        "radio_adhesion_m": (
+            RADIO_ADHESION_A_INSTALACION_M
+        ),
+        "radio_intercambiador_m": (
+            RADIO_INTERCAMBIADOR_M
+        ),
     }
 
-    for columna, clave in [
-        ("tipo_infraestructura", "tipos"),
-        ("modo_principal", "modos"),
-        ("categoria_intermodal", "categorias"),
-    ]:
-        conteo = infraestructura[columna].fillna("SIN_DATO").value_counts().to_dict()
-        resumen[clave] = {str(k): int(v) for k, v in conteo.items()}
+    resumen[
+        "instalaciones_por_cantidad_modos"
+    ] = {
+        str(k): int(v)
+        for k, v in (
+            instalaciones[
+                "cantidad_modos"
+            ]
+            .value_counts()
+            .sort_index()
+            .to_dict()
+            .items()
+        )
+    }
 
-    if not intercambiadores.empty:
-        resumen["intercambiadores_por_cantidad_de_modos"] = {
-            str(k): int(v)
-            for k, v in intercambiadores["cantidad_modos"].value_counts().to_dict().items()
-        }
-        resumen["top_10_intercambiadores"] = []
-        for _, row in intercambiadores.sort_values(
-            "score_intercambiador", ascending=False
-        ).head(10).iterrows():
-            resumen["top_10_intercambiadores"].append(
+    resumen[
+        "intercambiadores_por_cantidad_modos"
+    ] = {
+        str(k): int(v)
+        for k, v in (
+            intercambiadores[
+                "cantidad_modos"
+            ]
+            .value_counts()
+            .sort_index()
+            .to_dict()
+            .items()
+        )
+    }
+
+    if centralidades is not None:
+        resumen[
+            "centralidades_analizadas"
+        ] = int(len(centralidades))
+
+        top = (
+            centralidades
+            .sort_values(
+                "score_intermodalidad_500m",
+                ascending=False,
+            )
+            .head(15)
+        )
+
+        resumen[
+            "top_15_centralidades"
+        ] = []
+
+        for _, row in top.iterrows():
+            resumen[
+                "top_15_centralidades"
+            ].append(
                 {
-                    "intercambiador_id": safe_int(row["intercambiador_id"]),
-                    "score": safe_float(row["score_intercambiador"]),
-                    "cantidad_infraestructura": safe_int(row["cantidad_infraestructura"]),
-                    "cantidad_modos": safe_int(row["cantidad_modos"]),
-                    "modos": str(row["modos"]),
-                    "nombre_referencias": str(row["nombre_referencias"]),
+                    "nodo_id": safe_int(
+                        row["nodo_id"]
+                    ),
+                    "score": safe_float(
+                        row[
+                            "score_intermodalidad_500m"
+                        ]
+                    ),
+                    "instalaciones_500m": safe_int(
+                        row[
+                            "instalaciones_500m"
+                        ]
+                    ),
+                    "modos_500m": safe_int(
+                        row["modos_500m"]
+                    ),
+                    "intercambiadores_500m": (
+                        safe_int(
+                            row[
+                                "intercambiadores_500m"
+                            ]
+                        )
+                    ),
+                    "categoria": str(
+                        row[
+                            "categoria_intermodalidad_500m"
+                        ]
+                    ),
                 }
             )
 
-    if centralidades is not None:
-        resumen["centralidades_analizadas"] = int(len(centralidades))
-
-        if "categoria_intermodalidad_500m" in centralidades.columns:
-            resumen["centralidades_por_intermodalidad"] = {
-                str(k): int(v)
-                for k, v in centralidades["categoria_intermodalidad_500m"]
-                .value_counts()
-                .to_dict()
-                .items()
-            }
-
-        if "score_intermodalidad_500m" in centralidades.columns:
-            resumen["top_10_centralidades_intermodalidad"] = []
-            top = centralidades.sort_values(
-                "score_intermodalidad_500m", ascending=False
-            ).head(10)
-
-            for _, row in top.iterrows():
-                resumen["top_10_centralidades_intermodalidad"].append(
-                    {
-                        "nodo_id": safe_int(row["nodo_id"]),
-                        "score": safe_float(row["score_intermodalidad_500m"]),
-                        "infra_500m": safe_int(row["infra_500m"]),
-                        "modos_500m": safe_int(row["modos_500m"]),
-                        "intercambiadores_500m": safe_int(row["intercambiadores_500m"]),
-                        "categoria": str(row["categoria_intermodalidad_500m"]),
-                    }
-                )
-
     return resumen
-
-
-# ============================================================================
-# VALIDACIONES
-# ============================================================================
-
-
-def validar_infraestructura(gdf: gpd.GeoDataFrame, etiqueta: str) -> None:
-    subtitulo(etiqueta)
-
-    gdf = resetear_indices(gdf)
-
-    nulos = int(gdf.geometry.isna().sum())
-    vacios = int(gdf.geometry.is_empty.sum())
-    invalidos = int((~gdf.geometry.is_valid).sum())
-    duplicados = int(gdf["osm_id"].duplicated().sum())
-
-    print(f"Registros: {len(gdf):,}")
-    print(f"Geometrías nulas: {nulos:,}")
-    print(f"Geometrías vacías: {vacios:,}")
-    print(f"Geometrías inválidas: {invalidos:,}")
-    print(f"Duplicados OSM: {duplicados:,}")
-
-    if nulos or vacios or invalidos:
-        raise RuntimeError("La infraestructura contiene geometrías inválidas.")
-
-
-def validar_centralidades(centralidades: gpd.GeoDataFrame) -> None:
-    subtitulo("VALIDACIÓN DE CENTRALIDADES")
-    duplicados = int(centralidades["nodo_id"].duplicated().sum())
-    invalidas = int((~centralidades.geometry.is_valid).sum())
-    print(f"Centralidades: {len(centralidades):,}")
-    print(f"nodo_id duplicados: {duplicados:,}")
-    print(f"Geometrías inválidas: {invalidas:,}")
-
-    if duplicados or invalidas:
-        raise RuntimeError("Las centralidades no superan la validación.")
 
 
 # ============================================================================
 # SALIDAS
 # ============================================================================
 
-
-def guardar_infraestructura(infraestructura: gpd.GeoDataFrame) -> None:
-    parquet_path = OUTPUT_DIR / "infraestructura_intermodal_amba.parquet"
-    gpkg_path = OUTPUT_DIR / "infraestructura_intermodal_amba.gpkg"
-
-    print("Guardando GeoParquet...")
-    infraestructura.to_parquet(parquet_path, index=False)
-    print(parquet_path)
-
-    print("Guardando GeoPackage...")
-    infraestructura.to_file(
-        gpkg_path,
-        layer="infraestructura",
-        driver="GPKG",
-    )
-    print(gpkg_path)
-
-
-def guardar_intercambiadores(intercambiadores: gpd.GeoDataFrame) -> None:
-    parquet_path = OUTPUT_DIR / "intercambiadores_intermodales_amba.parquet"
-    gpkg_path = OUTPUT_DIR / "infraestructura_intermodal_amba.gpkg"
-
-    intercambiadores.to_parquet(parquet_path, index=False)
-    intercambiadores.to_file(
-        gpkg_path,
-        layer="intercambiadores_intermodales",
+def guardar_gpkg_layer(
+    gdf: gpd.GeoDataFrame,
+    path: Path,
+    layer: str,
+) -> None:
+    gdf.to_file(
+        path,
+        layer=layer,
         driver="GPKG",
     )
 
-    print(f"Intercambiadores:\n{parquet_path}")
 
+def guardar_salidas(
+    objetos_osm: gpd.GeoDataFrame,
+    instalaciones: gpd.GeoDataFrame,
+    intercambiadores: gpd.GeoDataFrame,
+    centralidades: gpd.GeoDataFrame | None,
+    resumen: dict[str, Any],
+) -> None:
+    titulo("GUARDANDO ARCHIVOS")
 
-def guardar_centralidades(centralidades: gpd.GeoDataFrame) -> None:
-    parquet_path = OUTPUT_DIR / "centralidades_intermodalidad_amba.parquet"
-    gpkg_path = OUTPUT_DIR / "infraestructura_intermodal_amba.gpkg"
-
-    centralidades.to_parquet(parquet_path, index=False)
-    centralidades.to_file(
-        gpkg_path,
-        layer="centralidades_intermodalidad",
-        driver="GPKG",
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
     )
 
-    print(f"Centralidades:\n{parquet_path}")
+    gpkg = (
+        OUTPUT_DIR
+        / "infraestructura_intermodal_amba.gpkg"
+    )
 
+    # Objetos OSM normalizados.
+    objetos_osm.to_parquet(
+        OUTPUT_DIR
+        / "objetos_osm_infraestructura_amba.parquet",
+        index=False,
+    )
 
-def guardar_csv(infraestructura: gpd.GeoDataFrame) -> None:
-    tabla = infraestructura.drop(columns="geometry", errors="ignore")
-    path = OUTPUT_DIR / "infraestructura_intermodal_amba.csv"
-    tabla.to_csv(path, index=False, encoding="utf-8-sig")
-    print(f"CSV:\n{path}")
+    # Instalaciones fisicas.
+    instalaciones.to_parquet(
+        OUTPUT_DIR
+        / "instalaciones_transporte_amba.parquet",
+        index=False,
+    )
 
+    instalaciones.drop(
+        columns="geometry",
+        errors="ignore",
+    ).to_csv(
+        OUTPUT_DIR
+        / "instalaciones_transporte_amba.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
 
-def guardar_csv_intercambiadores(intercambiadores: gpd.GeoDataFrame) -> None:
-    tabla = intercambiadores.drop(columns="geometry", errors="ignore")
-    path = OUTPUT_DIR / "intercambiadores_intermodales_amba.csv"
-    tabla.to_csv(path, index=False, encoding="utf-8-sig")
-    print(f"CSV intercambiadores:\n{path}")
+    # Intercambiadores.
+    intercambiadores.to_parquet(
+        OUTPUT_DIR
+        / "intercambiadores_intermodales_amba.parquet",
+        index=False,
+    )
 
+    intercambiadores.drop(
+        columns="geometry",
+        errors="ignore",
+    ).to_csv(
+        OUTPUT_DIR
+        / "intercambiadores_intermodales_amba.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
 
-def guardar_resumen(resumen: dict[str, Any]) -> None:
-    path = OUTPUT_DIR / "infraestructura_intermodal_amba_resumen.json"
-    with path.open("w", encoding="utf-8") as archivo:
-        json.dump(resumen, archivo, ensure_ascii=False, indent=2)
-    print(f"JSON:\n{path}")
+    # Mantener nombres historicos para compatibilidad.
+    instalaciones.to_parquet(
+        OUTPUT_DIR
+        / "infraestructura_intermodal_amba.parquet",
+        index=False,
+    )
+
+    instalaciones.drop(
+        columns="geometry",
+        errors="ignore",
+    ).to_csv(
+        OUTPUT_DIR
+        / "infraestructura_intermodal_amba.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
+
+    # GeoPackage: se sobreescribe limpiamente.
+    if gpkg.exists():
+        try:
+            gpkg.unlink()
+        except Exception:
+            pass
+
+    guardar_gpkg_layer(
+        objetos_osm,
+        gpkg,
+        "objetos_osm",
+    )
+
+    guardar_gpkg_layer(
+        instalaciones,
+        gpkg,
+        "instalaciones",
+    )
+
+    guardar_gpkg_layer(
+        intercambiadores,
+        gpkg,
+        "intercambiadores",
+    )
+
+    if centralidades is not None:
+        centralidades.to_parquet(
+            OUTPUT_DIR
+            / "centralidades_intermodalidad_amba.parquet",
+            index=False,
+        )
+
+        guardar_gpkg_layer(
+            centralidades,
+            gpkg,
+            "centralidades",
+        )
+
+    with (
+        OUTPUT_DIR
+        / "infraestructura_intermodal_amba_resumen.json"
+    ).open(
+        "w",
+        encoding="utf-8",
+    ) as archivo:
+        json.dump(
+            resumen,
+            archivo,
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    print(
+        f"GeoPackage:\n{gpkg}"
+    )
 
 
 # ============================================================================
-# MAPAS Y GRÁFICOS
+# GRAFICOS
 # ============================================================================
-
 
 def importar_matplotlib():
     try:
         import matplotlib.pyplot as plt
         return plt
     except ImportError:
-        print("ADVERTENCIA: Matplotlib no disponible. Se omiten gráficos.")
+        print(
+            "ADVERTENCIA: Matplotlib no disponible."
+        )
         return None
 
 
-def generar_mapa_infraestructura(infraestructura: gpd.GeoDataFrame) -> None:
+def generar_mapa(
+    gdf: gpd.GeoDataFrame,
+    columna: str,
+    titulo_mapa: str,
+    archivo: str,
+    markersize: float = 15,
+) -> None:
+    if gdf.empty:
+        return
+
     plt = importar_matplotlib()
+
     if plt is None:
         return
 
-    fig, ax = plt.subplots(figsize=(14, 11))
-    infraestructura.plot(
-        ax=ax,
-        markersize=5,
-        alpha=0.55,
-        column="modo_principal",
-        legend=True,
+    fig, ax = plt.subplots(
+        figsize=(14, 11)
     )
-    ax.set_title("Infraestructura de transporte - AMBA", fontsize=15)
+
+    gdf.plot(
+        ax=ax,
+        column=columna,
+        markersize=markersize,
+        legend=True,
+        alpha=0.7,
+    )
+
+    ax.set_title(
+        titulo_mapa,
+        fontsize=15,
+    )
+
     ax.set_axis_off()
 
-    path = OUTPUT_DIR / "01_mapa_infraestructura_intermodal.png"
-    fig.savefig(path, dpi=180, bbox_inches="tight")
+    path = OUTPUT_DIR / archivo
+
+    fig.savefig(
+        path,
+        dpi=180,
+        bbox_inches="tight",
+    )
+
     plt.close(fig)
+
     print(f"Mapa:\n{path}")
 
 
-def generar_mapa_intercambiadores(intercambiadores: gpd.GeoDataFrame) -> None:
-    if intercambiadores.empty:
-        print("No hay intercambiadores para mapear.")
-        return
+def generar_graficos(
+    instalaciones: gpd.GeoDataFrame,
+    intercambiadores: gpd.GeoDataFrame,
+    centralidades: gpd.GeoDataFrame | None,
+) -> None:
+    titulo(
+        "GENERANDO MAPAS Y GRÁFICOS"
+    )
 
     plt = importar_matplotlib()
+
     if plt is None:
         return
 
-    fig, ax = plt.subplots(figsize=(14, 11))
-    intercambiadores.plot(
+    # 01 instalaciones.
+    generar_mapa(
+        instalaciones,
+        "cantidad_modos",
+        "Instalaciones físicas de transporte - AMBA",
+        "01_mapa_instalaciones_transporte.png",
+        12,
+    )
+
+    # 02 intercambiadores.
+    if not intercambiadores.empty:
+        generar_mapa(
+            intercambiadores,
+            "cantidad_modos",
+            "Intercambiadores intermodales - AMBA",
+            "02_mapa_intercambiadores_intermodales.png",
+            35,
+        )
+
+    # 03 cantidad de instalaciones por modos.
+    conteo = {}
+
+    for modo in MODOS_VALIDOS:
+        conteo[modo] = int(
+            instalaciones["modos"]
+            .fillna("")
+            .str.contains(
+                modo,
+                regex=False,
+            )
+            .sum()
+        )
+
+    serie = (
+        pd.Series(conteo)
+        .sort_values()
+    )
+
+    fig, ax = plt.subplots(
+        figsize=(11, 7)
+    )
+
+    serie.plot(
+        kind="barh",
         ax=ax,
-        column="cantidad_modos",
-        markersize=30,
-        legend=True,
-    )
-    ax.set_title("Intercambiadores intermodales - AMBA", fontsize=15)
-    ax.set_axis_off()
-
-    path = OUTPUT_DIR / "05_mapa_intercambiadores_intermodales.png"
-    fig.savefig(path, dpi=180, bbox_inches="tight")
-    plt.close(fig)
-    print(f"Mapa:\n{path}")
-
-
-def generar_mapa_centralidades(centralidades: gpd.GeoDataFrame) -> None:
-    if centralidades.empty or "score_intermodalidad_500m" not in centralidades.columns:
-        return
-
-    plt = importar_matplotlib()
-    if plt is None:
-        return
-
-    fig, ax = plt.subplots(figsize=(14, 11))
-    centralidades.plot(
-        ax=ax,
-        column="score_intermodalidad_500m",
-        cmap="viridis",
-        markersize=35,
-        legend=True,
-    )
-    ax.set_title("Centralidades SUBE - Intermodalidad a 500 m", fontsize=15)
-    ax.set_axis_off()
-
-    path = OUTPUT_DIR / "02_centralidades_intermodalidad_500m.png"
-    fig.savefig(path, dpi=180, bbox_inches="tight")
-    plt.close(fig)
-    print(f"Mapa:\n{path}")
-
-
-def generar_grafico_modos(infraestructura: gpd.GeoDataFrame) -> None:
-    plt = importar_matplotlib()
-    if plt is None:
-        return
-
-    conteo = (
-        infraestructura[infraestructura["modo_principal"].isin(MODOS_VALIDOS)]["modo_principal"]
-        .value_counts()
-        .sort_values(ascending=True)
     )
 
-    fig, ax = plt.subplots(figsize=(11, 7))
-    conteo.plot(kind="barh", ax=ax)
-    ax.set_title("Infraestructura por modo de transporte", fontsize=14)
-    ax.set_xlabel("Cantidad de elementos")
-    ax.set_ylabel("Modo")
+    ax.set_title(
+        "Instalaciones físicas por modo"
+    )
 
-    path = OUTPUT_DIR / "03_infraestructura_por_modo.png"
-    fig.savefig(path, dpi=180, bbox_inches="tight")
+    ax.set_xlabel(
+        "Cantidad de instalaciones"
+    )
+
+    path = (
+        OUTPUT_DIR
+        / "03_instalaciones_por_modo.png"
+    )
+
+    fig.savefig(
+        path,
+        dpi=180,
+        bbox_inches="tight",
+    )
+
     plt.close(fig)
+
     print(f"Gráfico:\n{path}")
 
+    # 04 intercambiadores por cantidad de modos.
+    if not intercambiadores.empty:
+        serie_i = (
+            intercambiadores[
+                "cantidad_modos"
+            ]
+            .value_counts()
+            .sort_index()
+        )
 
-def generar_grafico_intermodalidad(centralidades: gpd.GeoDataFrame) -> None:
-    if centralidades.empty or "score_intermodalidad_500m" not in centralidades.columns:
-        return
+        fig, ax = plt.subplots(
+            figsize=(10, 6)
+        )
 
-    plt = importar_matplotlib()
-    if plt is None:
-        return
+        serie_i.plot(
+            kind="bar",
+            ax=ax,
+        )
 
-    valores = centralidades["score_intermodalidad_500m"].dropna()
-    if valores.empty:
-        return
+        ax.set_title(
+            "Intercambiadores por cantidad de modos"
+        )
 
-    fig, ax = plt.subplots(figsize=(11, 7))
-    ax.hist(valores, bins=15)
-    ax.set_title("Distribución del score de intermodalidad", fontsize=14)
-    ax.set_xlabel("Score")
-    ax.set_ylabel("Cantidad de nodos")
+        ax.set_xlabel(
+            "Cantidad de modos"
+        )
 
-    path = OUTPUT_DIR / "04_distribucion_score_intermodalidad.png"
-    fig.savefig(path, dpi=180, bbox_inches="tight")
-    plt.close(fig)
-    print(f"Gráfico:\n{path}")
+        ax.set_ylabel(
+            "Cantidad de intercambiadores"
+        )
 
+        path = (
+            OUTPUT_DIR
+            / "04_intercambiadores_por_modos.png"
+        )
 
-def generar_grafico_intercambiadores(intercambiadores: gpd.GeoDataFrame) -> None:
-    if intercambiadores.empty:
-        return
+        fig.savefig(
+            path,
+            dpi=180,
+            bbox_inches="tight",
+        )
 
-    plt = importar_matplotlib()
-    if plt is None:
-        return
+        plt.close(fig)
 
-    conteo = intercambiadores["cantidad_modos"].value_counts().sort_index()
+        print(f"Gráfico:\n{path}")
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    conteo.plot(kind="bar", ax=ax)
-    ax.set_title("Intercambiadores por cantidad de modos", fontsize=14)
-    ax.set_xlabel("Cantidad de modos")
-    ax.set_ylabel("Cantidad de intercambiadores")
+    # 05 centralidades.
+    if (
+        centralidades is not None
+        and not centralidades.empty
+    ):
+        generar_mapa(
+            centralidades,
+            "score_intermodalidad_500m",
+            "Centralidades SUBE - Intermodalidad a 500 m",
+            "05_centralidades_intermodalidad_500m.png",
+            35,
+        )
 
-    path = OUTPUT_DIR / "06_intercambiadores_por_modos.png"
-    fig.savefig(path, dpi=180, bbox_inches="tight")
-    plt.close(fig)
-    print(f"Gráfico:\n{path}")
+        valores = (
+            centralidades[
+                "score_intermodalidad_500m"
+            ]
+            .dropna()
+        )
+
+        if not valores.empty:
+            fig, ax = plt.subplots(
+                figsize=(11, 7)
+            )
+
+            ax.hist(
+                valores,
+                bins=15,
+            )
+
+            ax.set_title(
+                "Distribución del score de intermodalidad"
+            )
+
+            ax.set_xlabel("Score")
+            ax.set_ylabel(
+                "Cantidad de centralidades"
+            )
+
+            path = (
+                OUTPUT_DIR
+                / "06_distribucion_score_intermodalidad.png"
+            )
+
+            fig.savefig(
+                path,
+                dpi=180,
+                bbox_inches="tight",
+            )
+
+            plt.close(fig)
+
+            print(f"Gráfico:\n{path}")
 
 
 # ============================================================================
 # MAIN
 # ============================================================================
 
-
 def main() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
-    titulo("21 - CONSTRUCCIÓN DE INFRAESTRUCTURA INTERMODAL AMBA")
-    print(f"Proyecto : {PROJECT_ROOT}")
-    print(f"Salida   : {OUTPUT_DIR}")
-    print(f"BBOX     : {AMBA_BBOX}")
-    print(f"CRS      : {CRS_WGS84}")
-    print(f"CRS métrico: {CRS_METRICO}")
-    print(f"Radio intercambiador: {RADIO_INTERCAMBIADOR_M} m")
+    titulo(
+        "21 - CONSOLIDACIÓN DE INFRAESTRUCTURA INTERMODAL AMBA - V3"
+    )
+
+    print(
+        f"Proyecto : {PROJECT_ROOT}"
+    )
+
+    print(
+        f"Salida   : {OUTPUT_DIR}"
+    )
+
+    print(
+        f"BBOX     : {AMBA_BBOX}"
+    )
+
+    print(
+        f"CRS      : {CRS_WGS84}"
+    )
+
+    print(
+        f"CRS métrico: {CRS_METRICO}"
+    )
+
+    print(
+        f"Radio instalación nombrada: "
+        f"{RADIO_INSTALACION_NOMBRADA_M} m"
+    )
+
+    print(
+        f"Radio instalación sin nombre: "
+        f"{RADIO_INSTALACION_SIN_NOMBRE_M} m"
+    )
+
+    print(
+        f"Radio adhesión: "
+        f"{RADIO_ADHESION_A_INSTALACION_M} m"
+    )
+
+    print(
+        f"Radio intercambiador: "
+        f"{RADIO_INTERCAMBIADOR_M} m"
+    )
 
     # ------------------------------------------------------------------
     # 1. OVERPASS
     # ------------------------------------------------------------------
-    titulo("1. CONSULTANDO OPENSTREETMAP / OVERPASS")
+
+    titulo(
+        "1. CONSULTANDO OPENSTREETMAP / OVERPASS"
+    )
+
     datos = consultar_overpass()
 
     # ------------------------------------------------------------------
-    # 2. CONSTRUCCIÓN
+    # 2. OBJETOS OSM
     # ------------------------------------------------------------------
-    titulo("2. CONSTRUYENDO INVENTARIO")
-    infraestructura = construir_gdf(datos)
-    print(f"Elementos construidos: {len(infraestructura):,}")
 
-    infraestructura = normalizar_infraestructura(infraestructura)
-    validar_infraestructura(infraestructura, "VALIDACIÓN DE INFRAESTRUCTURA INICIAL")
-
-    # ------------------------------------------------------------------
-    # 3. DUPLICADOS OSM
-    # ------------------------------------------------------------------
-    titulo("3. ELIMINANDO DUPLICADOS OSM")
-    infraestructura = eliminar_duplicados_osm(infraestructura)
-    validar_infraestructura(infraestructura, "VALIDACIÓN DE INFRAESTRUCTURA POST OSM")
-
-    # ------------------------------------------------------------------
-    # 4. DEDUPLICACIÓN ESPACIAL
-    # ------------------------------------------------------------------
-    titulo("4. DEDUPLICACIÓN ESPACIAL")
-    antes = len(infraestructura)
-    infraestructura = deduplicar_espacialmente(infraestructura, tolerancia_m=75)
-    despues = len(infraestructura)
-    print(f"Antes     : {antes:,}")
-    print(f"Después   : {despues:,}")
-    print(f"Reducidos : {antes - despues:,}")
-
-    infraestructura = resetear_indices(infraestructura)
-
-    # ------------------------------------------------------------------
-    # 5. INDICADORES
-    # ------------------------------------------------------------------
-    titulo("5. CALCULANDO INDICADORES")
-    infraestructura = calcular_indicadores(infraestructura)
-    validar_infraestructura(infraestructura, "VALIDACIÓN DE INFRAESTRUCTURA FINAL")
-
-    # ------------------------------------------------------------------
-    # 6. RESUMEN
-    # ------------------------------------------------------------------
-    subtitulo("RESUMEN DEL INVENTARIO")
-    print(f"Total: {len(infraestructura):,}")
-
-    print("\nPOR MODO")
-    for modo, cantidad in infraestructura["modo_principal"].value_counts().items():
-        print(f"  {str(modo):20s} {int(cantidad):8,d}")
-
-    print("\nPOR TIPO")
-    for tipo, cantidad in infraestructura["tipo_infraestructura"].value_counts().items():
-        print(f"  {str(tipo):35s} {int(cantidad):8,d}")
-
-    # ------------------------------------------------------------------
-    # 7. INTERCAMBIADORES
-    # ------------------------------------------------------------------
-    titulo("7. DETECTANDO INTERCAMBIADORES INTERMODALES")
-    intercambiadores = detectar_intercambiadores(
-        infraestructura,
-        radio_m=RADIO_INTERCAMBIADOR_M,
+    titulo(
+        "2. CONSTRUYENDO OBJETOS OSM NORMALIZADOS"
     )
 
-    print(f"Intercambiadores detectados: {len(intercambiadores):,}")
+    objetos_osm = construir_gdf(
+        datos
+    )
 
-    if not intercambiadores.empty:
-        print("\nTOP 20 INTERCAMBIADORES")
-        columnas = [
-            "intercambiador_id",
-            "score_intercambiador",
-            "cantidad_infraestructura",
-            "cantidad_modos",
-            "modos",
-            "nombre_referencias",
-        ]
-        disponibles = [c for c in columnas if c in intercambiadores.columns]
-        print(
-            intercambiadores[disponibles]
-            .sort_values("score_intercambiador", ascending=False)
-            .head(20)
-            .to_string(index=False)
-        )
+    print(
+        f"Elementos construidos: "
+        f"{len(objetos_osm):,}"
+    )
+
+    objetos_osm = normalizar_infraestructura(
+        objetos_osm
+    )
+
+    validar_gdf(
+        objetos_osm,
+        "VALIDACIÓN DE OBJETOS OSM",
+    )
 
     # ------------------------------------------------------------------
-    # 8. CENTRALIDADES
+    # 3. DUPLICADOS
     # ------------------------------------------------------------------
-    titulo("8. CARGANDO CENTRALIDADES SUBE")
+
+    titulo(
+        "3. ELIMINANDO DUPLICADOS OSM"
+    )
+
+    objetos_osm = eliminar_duplicados_osm(
+        objetos_osm
+    )
+
+    validar_gdf(
+        objetos_osm,
+        "VALIDACIÓN POST OSM",
+    )
+
+    # ------------------------------------------------------------------
+    # 4. INSTALACIONES FISICAS
+    # ------------------------------------------------------------------
+
+    instalaciones = consolidar_instalaciones(
+        objetos_osm
+    )
+
+    validar_gdf(
+        instalaciones,
+        "VALIDACIÓN DE INSTALACIONES FÍSICAS",
+        validar_osm=False,
+    )
+
+    # ------------------------------------------------------------------
+    # 5. INTERCAMBIADORES
+    # ------------------------------------------------------------------
+
+    intercambiadores = detectar_intercambiadores(
+        instalaciones,
+        RADIO_INTERCAMBIADOR_M,
+    )
+
+    # ------------------------------------------------------------------
+    # 6. CENTRALIDADES
+    # ------------------------------------------------------------------
+
+    titulo(
+        "6. CARGANDO CENTRALIDADES SUBE"
+    )
+
     centralidades = cargar_centralidades()
 
     if centralidades is not None:
-        validar_centralidades(centralidades)
-        print(f"Centralidades cargadas: {len(centralidades):,}")
+        validar_centralidades(
+            centralidades
+        )
 
-        titulo("9. CALCULANDO INTERMODALIDAD DE CENTRALIDADES")
+        print(
+            f"Centralidades cargadas: "
+            f"{len(centralidades):,}"
+        )
+
         centralidades = analizar_centralidades(
             centralidades,
-            infraestructura,
+            instalaciones,
             intercambiadores,
         )
 
-        print("\nTOP 15 CENTRALIDADES POR INTERMODALIDAD")
+        print()
+        print(
+            "TOP 20 CENTRALIDADES POR INTERMODALIDAD"
+        )
+
         columnas = [
             "nodo_id",
             "score_intermodalidad_500m",
             "ranking_intermodalidad",
-            "infra_250m",
-            "infra_500m",
-            "infra_1000m",
+            "instalaciones_250m",
+            "instalaciones_500m",
+            "instalaciones_1000m",
             "modos_500m",
             "ferrocarril_500m",
             "subte_500m",
@@ -1391,90 +2549,144 @@ def main() -> None:
             "intercambiadores_500m",
             "categoria_intermodalidad_500m",
         ]
-        disponibles = [c for c in columnas if c in centralidades.columns]
+
+        disponibles = [
+            c
+            for c in columnas
+            if c in centralidades.columns
+        ]
+
         print(
-            centralidades[disponibles]
-            .sort_values("score_intermodalidad_500m", ascending=False)
-            .head(15)
-            .to_string(index=False)
+            centralidades[
+                disponibles
+            ]
+            .sort_values(
+                "score_intermodalidad_500m",
+                ascending=False,
+            )
+            .head(20)
+            .to_string(
+                index=False
+            )
         )
+
     else:
-        print("No se realizó el cruce con centralidades.")
+        print(
+            "No se realizó el cruce con centralidades."
+        )
 
     # ------------------------------------------------------------------
-    # 10. RESUMEN JSON
+    # 7. RESUMEN
     # ------------------------------------------------------------------
-    titulo("10. CONSTRUYENDO RESUMEN JSON")
+
+    titulo(
+        "7. CONSTRUYENDO RESUMEN JSON"
+    )
+
     resumen = construir_resumen(
-        infraestructura,
+        objetos_osm,
+        instalaciones,
         intercambiadores,
         centralidades,
     )
 
     # ------------------------------------------------------------------
-    # 11. GUARDAR
+    # 8. GUARDAR
     # ------------------------------------------------------------------
-    titulo("11. GUARDANDO ARCHIVOS")
-    guardar_infraestructura(infraestructura)
-    guardar_intercambiadores(intercambiadores)
-    guardar_csv(infraestructura)
-    guardar_csv_intercambiadores(intercambiadores)
+
+    guardar_salidas(
+        objetos_osm,
+        instalaciones,
+        intercambiadores,
+        centralidades,
+        resumen,
+    )
+
+    # ------------------------------------------------------------------
+    # 9. GRAFICOS
+    # ------------------------------------------------------------------
+
+    generar_graficos(
+        instalaciones,
+        intercambiadores,
+        centralidades,
+    )
+
+    # ------------------------------------------------------------------
+    # 10. FINAL
+    # ------------------------------------------------------------------
+
+    titulo(
+        "21 - PROCESO FINALIZADO"
+    )
+
+    print(
+        f"Objetos OSM: "
+        f"{len(objetos_osm):,}"
+    )
+
+    print(
+        f"Instalaciones físicas: "
+        f"{len(instalaciones):,}"
+    )
+
+    print(
+        f"Intercambiadores: "
+        f"{len(intercambiadores):,}"
+    )
 
     if centralidades is not None:
-        guardar_centralidades(centralidades)
+        print(
+            f"Centralidades analizadas: "
+            f"{len(centralidades):,}"
+        )
 
-    guardar_resumen(resumen)
+    print()
+    print(
+        "ARCHIVOS GENERADOS"
+    )
 
-    # ------------------------------------------------------------------
-    # 12. GRÁFICOS
-    # ------------------------------------------------------------------
-    titulo("12. GENERANDO MAPAS Y GRÁFICOS")
-    generar_mapa_infraestructura(infraestructura)
-    generar_grafico_modos(infraestructura)
-    generar_mapa_intercambiadores(intercambiadores)
-    generar_grafico_intercambiadores(intercambiadores)
-
-    if centralidades is not None:
-        generar_mapa_centralidades(centralidades)
-        generar_grafico_intermodalidad(centralidades)
-
-    # ------------------------------------------------------------------
-    # FINAL
-    # ------------------------------------------------------------------
-    titulo("21 - PROCESO FINALIZADO")
-    print(f"Infraestructuras finales: {len(infraestructura):,}")
-    print(f"Intercambiadores: {len(intercambiadores):,}")
-
-    if centralidades is not None:
-        print(f"Centralidades analizadas: {len(centralidades):,}")
-
-    print("\nARCHIVOS GENERADOS")
-    for archivo in sorted(OUTPUT_DIR.iterdir()):
+    for archivo in sorted(
+        OUTPUT_DIR.iterdir()
+    ):
         if archivo.is_file():
-            print(f"  {archivo.name}")
+            print(
+                f"  {archivo.name}"
+            )
 
-    print("\nSIGUIENTE ETAPA")
-    print("Cruzar:")
-    print("  SUBE 2025")
-    print("  + centralidades")
-    print("  + infraestructura intermodal")
-    print("  + intercambiadores")
-    print("  + red vial")
-    print("para construir el índice de centralidad estructural.")
+    print()
+    print(
+        "SIGUIENTE ETAPA"
+    )
+
+    print(
+        "Validar las instalaciones e intercambiadores "
+        "contra las 144 centralidades y luego construir "
+        "el índice de centralidad estructural."
+    )
 
 
 if __name__ == "__main__":
     try:
         main()
+
     except KeyboardInterrupt:
-        print("\nProceso cancelado por el usuario.")
+        print(
+            "\nProceso cancelado por el usuario."
+        )
         sys.exit(130)
+
     except Exception as exc:
         print()
         print("=" * 78)
         print("ERROR FATAL")
         print("=" * 78)
-        print(f"{type(exc).__name__}: {exc}")
+        print(
+            f"{type(exc).__name__}: {exc}"
+        )
         print()
-        print("Revisá el mensaje anterior para identificar el paso donde ocurrió el error.")
+        print(
+            "Revisá el mensaje anterior para "
+            "identificar el paso donde ocurrió el error."
+        )
         sys.exit(1)
