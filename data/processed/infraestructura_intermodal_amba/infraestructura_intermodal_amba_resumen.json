@@ -1,0 +1,118 @@
+{
+  "proyecto": "Análisis de movilidad SUBE AMBA",
+  "script": "21_construir_infraestructura_intermodal_amba.py",
+  "fecha_ejecucion": "2026-08-20T18:06:10.525945-03:00",
+  "bbox": "-35.20,-59.40,-34.20,-57.80",
+  "crs": "EPSG:4326",
+  "crs_metrico": "EPSG:22185",
+  "infraestructuras": 17559,
+  "osm_ids_unicos": 17559,
+  "tipos": {
+    "PLATAFORMA_TRANSPORTE_PUBLICO": 10691,
+    "PARADA_TRANSPORTE_PUBLICO": 6127,
+    "PARADA_FERROVIARIA": 376,
+    "ESTACION_FERROVIARIA": 97,
+    "ESTACION_SUBTE": 79,
+    "ESTACION_LIGERO": 64,
+    "TERMINAL_AUTOBUS": 61,
+    "TERMINAL_FLUVIAL": 28,
+    "PARADA_TRANVIA": 18,
+    "ESTACION_TRANSPORTE_PUBLICO": 18
+  },
+  "modos": {
+    "OTRO": 16818,
+    "FERROCARRIL": 537,
+    "SUBTE": 79,
+    "AUTOBUS": 61,
+    "FLUVIAL": 28,
+    "TRANVIA": 18,
+    "MULTIMODAL": 18
+  },
+  "categorias": {
+    "OTRO": 16818,
+    "FERROVIARIO": 634,
+    "AUTOMOTOR": 61,
+    "FLUVIAL": 28,
+    "INTERMODAL": 18
+  },
+  "centralidades_analizadas": 144,
+  "centralidades_por_intermodalidad": {
+    "INTERMODALIDAD_MEDIA": 68,
+    "INTERMODALIDAD_ALTA": 58,
+    "INTERMODALIDAD_MUY_ALTA": 11,
+    "SIN_INFRAESTRUCTURA_500M": 4,
+    "INTERMODALIDAD_BAJA": 3
+  },
+  "top_10_centralidades_intermodalidad": [
+    {
+      "nodo_id": "84",
+      "score": 90.0,
+      "infra_500m": 10,
+      "modos_500m": 4,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    },
+    {
+      "nodo_id": "1",
+      "score": 75.0,
+      "infra_500m": 24,
+      "modos_500m": 3,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    },
+    {
+      "nodo_id": "7",
+      "score": 75.0,
+      "infra_500m": 37,
+      "modos_500m": 3,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    },
+    {
+      "nodo_id": "5",
+      "score": 75.0,
+      "infra_500m": 22,
+      "modos_500m": 3,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    },
+    {
+      "nodo_id": "4",
+      "score": 75.0,
+      "infra_500m": 27,
+      "modos_500m": 3,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    },
+    {
+      "nodo_id": "71",
+      "score": 75.0,
+      "infra_500m": 20,
+      "modos_500m": 3,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    },
+    {
+      "nodo_id": "63",
+      "score": 75.0,
+      "infra_500m": 23,
+      "modos_500m": 3,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    },
+    {
+      "nodo_id": "11",
+      "score": 75.0,
+      "infra_500m": 12,
+      "modos_500m": 3,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    },
+    {
+      "nodo_id": "46",
+      "score": 75.0,
+      "infra_500m": 14,
+      "modos_500m": 3,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    },
+    {
+      "nodo_id": "94",
+      "score": 75.0,
+      "infra_500m": 11,
+      "modos_500m": 3,
+      "categoria": "INTERMODALIDAD_MUY_ALTA"
+    }
+  ]
+}
