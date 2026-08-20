@@ -1,0 +1,424 @@
+{
+  "fuente": {
+    "centralidades": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\sube_2025_centralidades_movilidad.parquet",
+    "h3_centralidades": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\sube_2025_h3_centralidades.parquet",
+    "resumen_original": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\sube_2025_centralidades_resumen.json"
+  },
+  "analisis": {
+    "nodos": 144,
+    "operaciones": 6924079.0,
+    "h3": 1548
+  },
+  "correlaciones": {
+    "operaciones": {
+      "nombre": "Operaciones",
+      "pearson": 0.3036284452133208,
+      "spearman": 0.9551814114439064
+    },
+    "operaciones_por_km2": {
+      "nombre": "Operaciones por km²",
+      "pearson": 0.5421014956545444,
+      "spearman": 0.8078739730270666
+    },
+    "cantidad_corredores": {
+      "nombre": "Cantidad de corredores",
+      "pearson": 0.4787383530027409,
+      "spearman": 0.41922549861913677
+    },
+    "cantidad_clusters": {
+      "nombre": "Cantidad de clusters",
+      "pearson": null,
+      "spearman": null
+    },
+    "cantidad_jurisdicciones": {
+      "nombre": "Cantidad de jurisdicciones",
+      "pearson": 0.27368204557897696,
+      "spearman": 0.2767339947266305
+    },
+    "score_intermodalidad": {
+      "nombre": "Score de intermodalidad",
+      "pearson": 0.5416644997166421,
+      "spearman": 0.507188049251946
+    },
+    "score_demanda": {
+      "nombre": "Score de demanda",
+      "pearson": 0.9450211427273119,
+      "spearman": 0.9551814114439064
+    },
+    "score_densidad": {
+      "nombre": "Score de densidad",
+      "pearson": 0.7936286047010196,
+      "spearman": 0.8078739730270666
+    },
+    "score_conectividad": {
+      "nombre": "Score de conectividad",
+      "pearson": 0.4592676998366335,
+      "spearman": 0.41922549861913677
+    },
+    "score_alcance": {
+      "nombre": "Score de alcance",
+      "pearson": 0.31251285875643503,
+      "spearman": 0.2767339947266305
+    },
+    "score_integracion": {
+      "nombre": "Score de integración",
+      "pearson": null,
+      "spearman": null
+    }
+  },
+  "concentracion": {
+    "top_1": 46.38820556495673,
+    "top_5": 54.384171526639136,
+    "top_10": 63.01918276784537,
+    "top_20": 72.5098890408385,
+    "top_30": 78.06119774196684,
+    "top_50": 85.39989217338508
+  },
+  "distribucion_categorias": {
+    "CENTRALIDAD_BAJA": 72,
+    "CENTRALIDAD_MEDIA": 50,
+    "CENTRALIDAD_ALTA": 19,
+    "CENTRALIDAD_CRITICA": 3
+  },
+  "distribucion_tipos": {
+    "CENTRALIDAD_LOCAL": 102,
+    "CENTRALIDAD_DENSIDAD": 30,
+    "CENTRALIDAD_INTERMODAL": 10,
+    "CENTRALIDAD_METROPOLITANA": 1,
+    "CENTRALIDAD_TERRITORIAL": 1
+  },
+  "distribucion_matriz": {
+    "ALTA_DEMANDA_ALTA_CENTRALIDAD": 67,
+    "BAJA_DEMANDA_BAJA_CENTRALIDAD": 67,
+    "BAJA_DEMANDA_ALTA_CENTRALIDAD": 5,
+    "ALTA_DEMANDA_BAJA_CENTRALIDAD": 5
+  },
+  "distribucion_discrepancias": {
+    "ALINEADO": 60,
+    "CENTRALIDAD_MAYOR_QUE_DEMANDA": 39,
+    "DEMANDA_MAYOR_QUE_CENTRALIDAD": 35,
+    "CENTRALIDAD_MUCHO_MAYOR_QUE_DEMANDA": 7,
+    "DEMANDA_MUCHO_MAYOR_QUE_CENTRALIDAD": 3
+  },
+  "nodo_principal_centralidad": {
+    "nodo_id": 6,
+    "indice": 92.91666666666667,
+    "ranking_centralidad": 1,
+    "ranking_operaciones": 2,
+    "operaciones": 142814.0,
+    "diferencia_ranking": 1,
+    "categoria": "CENTRALIDAD_CRITICA",
+    "tipo": "CENTRALIDAD_INTERMODAL"
+  },
+  "nodo_mayor_demanda": {
+    "nodo_id": 1,
+    "operaciones": 3211956.0,
+    "ranking_operaciones": 1,
+    "ranking_centralidad": 2,
+    "indice_centralidad": 92.32638888888889
+  },
+  "mayor_discrepancia": {
+    "nodo_id": 80,
+    "diferencia_ranking": -42,
+    "diferencia_abs": 42,
+    "ranking_operaciones": 34,
+    "ranking_centralidad": 76
+  },
+  "nodos_baja_demanda_alta_centralidad": [
+    {
+      "nodo_id": 64,
+      "operaciones": 13762.0,
+      "indice_centralidad": 54.6875,
+      "ranking_operaciones": 77,
+      "ranking_centralidad": 56,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_MEDIA"
+    },
+    {
+      "nodo_id": 68,
+      "operaciones": 12952.0,
+      "indice_centralidad": 53.645833333333336,
+      "ranking_operaciones": 80,
+      "ranking_centralidad": 60,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_MEDIA"
+    },
+    {
+      "nodo_id": 69,
+      "operaciones": 12692.0,
+      "indice_centralidad": 53.333333333333336,
+      "ranking_operaciones": 81,
+      "ranking_centralidad": 61,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_MEDIA"
+    },
+    {
+      "nodo_id": 73,
+      "operaciones": 12231.0,
+      "indice_centralidad": 52.8125,
+      "ranking_operaciones": 82,
+      "ranking_centralidad": 65,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_MEDIA"
+    },
+    {
+      "nodo_id": 119,
+      "operaciones": 12015.0,
+      "indice_centralidad": 50.97222222222223,
+      "ranking_operaciones": 85,
+      "ranking_centralidad": 70,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_MEDIA"
+    }
+  ],
+  "nodos_alta_demanda_baja_centralidad": [
+    {
+      "nodo_id": 80,
+      "operaciones": 27924.0,
+      "indice_centralidad": 49.20138888888889,
+      "ranking_operaciones": 34,
+      "ranking_centralidad": 76,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_BAJA"
+    },
+    {
+      "nodo_id": 51,
+      "operaciones": 17976.0,
+      "indice_centralidad": 49.82638888888889,
+      "ranking_operaciones": 64,
+      "ranking_centralidad": 73,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_BAJA"
+    },
+    {
+      "nodo_id": 52,
+      "operaciones": 17621.0,
+      "indice_centralidad": 49.30555555555556,
+      "ranking_operaciones": 66,
+      "ranking_centralidad": 75,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_BAJA"
+    },
+    {
+      "nodo_id": 53,
+      "operaciones": 17407.0,
+      "indice_centralidad": 48.68055555555555,
+      "ranking_operaciones": 68,
+      "ranking_centralidad": 77,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_BAJA"
+    },
+    {
+      "nodo_id": 56,
+      "operaciones": 15452.0,
+      "indice_centralidad": 47.84722222222222,
+      "ranking_operaciones": 71,
+      "ranking_centralidad": 80,
+      "tipo": "CENTRALIDAD_LOCAL",
+      "categoria": "CENTRALIDAD_BAJA"
+    }
+  ],
+  "top10_centralidad": [
+    {
+      "nodo_id": 6,
+      "ranking": 1,
+      "operaciones": 142814.0,
+      "indice_centralidad": 92.91666666666667,
+      "categoria": "CENTRALIDAD_CRITICA",
+      "tipo": "CENTRALIDAD_INTERMODAL",
+      "ranking_operaciones": 2,
+      "diferencia_ranking": 1
+    },
+    {
+      "nodo_id": 1,
+      "ranking": 2,
+      "operaciones": 3211956.0,
+      "indice_centralidad": 92.32638888888889,
+      "categoria": "CENTRALIDAD_CRITICA",
+      "tipo": "CENTRALIDAD_METROPOLITANA",
+      "ranking_operaciones": 1,
+      "diferencia_ranking": -1
+    },
+    {
+      "nodo_id": 14,
+      "ranking": 3,
+      "operaciones": 120167.0,
+      "indice_centralidad": 85.03472222222223,
+      "categoria": "CENTRALIDAD_CRITICA",
+      "tipo": "CENTRALIDAD_INTERMODAL",
+      "ranking_operaciones": 8,
+      "diferencia_ranking": 5
+    },
+    {
+      "nodo_id": 5,
+      "ranking": 4,
+      "operaciones": 128946.0,
+      "indice_centralidad": 81.77083333333334,
+      "categoria": "CENTRALIDAD_ALTA",
+      "tipo": "CENTRALIDAD_INTERMODAL",
+      "ranking_operaciones": 7,
+      "diferencia_ranking": 3
+    },
+    {
+      "nodo_id": 44,
+      "ranking": 5,
+      "operaciones": 75559.0,
+      "indice_centralidad": 80.7638888888889,
+      "categoria": "CENTRALIDAD_ALTA",
+      "tipo": "CENTRALIDAD_INTERMODAL",
+      "ranking_operaciones": 13,
+      "diferencia_ranking": 8
+    },
+    {
+      "nodo_id": 3,
+      "ranking": 6,
+      "operaciones": 136039.0,
+      "indice_centralidad": 80.27777777777779,
+      "categoria": "CENTRALIDAD_ALTA",
+      "tipo": "CENTRALIDAD_DENSIDAD",
+      "ranking_operaciones": 4,
+      "diferencia_ranking": -2
+    },
+    {
+      "nodo_id": 13,
+      "ranking": 7,
+      "operaciones": 55885.0,
+      "indice_centralidad": 78.64583333333334,
+      "categoria": "CENTRALIDAD_ALTA",
+      "tipo": "CENTRALIDAD_INTERMODAL",
+      "ranking_operaciones": 19,
+      "diferencia_ranking": 12
+    },
+    {
+      "nodo_id": 8,
+      "ranking": 8,
+      "operaciones": 105194.0,
+      "indice_centralidad": 77.77777777777779,
+      "categoria": "CENTRALIDAD_ALTA",
+      "tipo": "CENTRALIDAD_DENSIDAD",
+      "ranking_operaciones": 10,
+      "diferencia_ranking": 2
+    },
+    {
+      "nodo_id": 11,
+      "ranking": 9,
+      "operaciones": 79345.0,
+      "indice_centralidad": 77.67361111111113,
+      "categoria": "CENTRALIDAD_ALTA",
+      "tipo": "CENTRALIDAD_DENSIDAD",
+      "ranking_operaciones": 11,
+      "diferencia_ranking": 2
+    },
+    {
+      "nodo_id": 17,
+      "ranking": 10,
+      "operaciones": 129701.0,
+      "indice_centralidad": 77.50000000000001,
+      "categoria": "CENTRALIDAD_ALTA",
+      "tipo": "CENTRALIDAD_INTERMODAL",
+      "ranking_operaciones": 6,
+      "diferencia_ranking": -4
+    }
+  ],
+  "top10_demanda": [
+    {
+      "nodo_id": 1,
+      "ranking_operaciones": 1,
+      "operaciones": 3211956.0,
+      "pct_operaciones": 46.38820556495673,
+      "indice_centralidad": 92.32638888888889,
+      "ranking_centralidad": 2,
+      "categoria": "CENTRALIDAD_CRITICA"
+    },
+    {
+      "nodo_id": 6,
+      "ranking_operaciones": 2,
+      "operaciones": 142814.0,
+      "pct_operaciones": 2.062570343290422,
+      "indice_centralidad": 92.91666666666667,
+      "ranking_centralidad": 1,
+      "categoria": "CENTRALIDAD_CRITICA"
+    },
+    {
+      "nodo_id": 7,
+      "ranking_operaciones": 3,
+      "operaciones": 139991.0,
+      "pct_operaciones": 2.0217995779655316,
+      "indice_centralidad": 75.41666666666667,
+      "ranking_centralidad": 12,
+      "categoria": "CENTRALIDAD_ALTA"
+    },
+    {
+      "nodo_id": 3,
+      "ranking_operaciones": 4,
+      "operaciones": 136039.0,
+      "pct_operaciones": 1.9647233949814842,
+      "indice_centralidad": 80.27777777777779,
+      "ranking_centralidad": 6,
+      "categoria": "CENTRALIDAD_ALTA"
+    },
+    {
+      "nodo_id": 2,
+      "ranking_operaciones": 5,
+      "operaciones": 134803.0,
+      "pct_operaciones": 1.9468726454449754,
+      "indice_centralidad": 75.20833333333334,
+      "ranking_centralidad": 13,
+      "categoria": "CENTRALIDAD_ALTA"
+    },
+    {
+      "nodo_id": 17,
+      "ranking_operaciones": 6,
+      "operaciones": 129701.0,
+      "pct_operaciones": 1.873187755367898,
+      "indice_centralidad": 77.50000000000001,
+      "ranking_centralidad": 10,
+      "categoria": "CENTRALIDAD_ALTA"
+    },
+    {
+      "nodo_id": 5,
+      "ranking_operaciones": 7,
+      "operaciones": 128946.0,
+      "pct_operaciones": 1.8622837781024741,
+      "indice_centralidad": 81.77083333333334,
+      "ranking_centralidad": 4,
+      "categoria": "CENTRALIDAD_ALTA"
+    },
+    {
+      "nodo_id": 14,
+      "ranking_operaciones": 8,
+      "operaciones": 120167.0,
+      "pct_operaciones": 1.7354943523896822,
+      "indice_centralidad": 85.03472222222223,
+      "ranking_centralidad": 3,
+      "categoria": "CENTRALIDAD_CRITICA"
+    },
+    {
+      "nodo_id": 4,
+      "ranking_operaciones": 9,
+      "operaciones": 113887.0,
+      "pct_operaciones": 1.644796369307745,
+      "indice_centralidad": 74.27083333333334,
+      "ranking_centralidad": 15,
+      "categoria": "CENTRALIDAD_ALTA"
+    },
+    {
+      "nodo_id": 8,
+      "ranking_operaciones": 10,
+      "operaciones": 105194.0,
+      "pct_operaciones": 1.519248986038432,
+      "indice_centralidad": 77.77777777777779,
+      "ranking_centralidad": 8,
+      "categoria": "CENTRALIDAD_ALTA"
+    }
+  ],
+  "graficos": {
+    "mapa_centralidades": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\validacion_centralidades\\01_mapa_centralidades.png",
+    "demanda_vs_centralidad": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\validacion_centralidades\\02_demanda_vs_centralidad.png",
+    "mapa_h3": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\validacion_centralidades\\03_mapa_h3_centralidad.png",
+    "ranking": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\validacion_centralidades\\04_ranking_operaciones_vs_centralidad.png",
+    "concentracion": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\validacion_centralidades\\05_concentracion_operaciones.png",
+    "componentes": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\validacion_centralidades\\06_componentes_indice.png",
+    "discrepancias": "C:\\Users\\angel.steklein\\Documents\\Desarrollo\\analisis-sube\\data\\processed\\validacion_centralidades\\07_discrepancias_ranking.png"
+  }
+}
