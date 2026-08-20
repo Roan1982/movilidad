@@ -1,0 +1,95 @@
+{
+  "fuentes": {
+    "centralidades": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\sube_2025_validacion_centralidades.parquet",
+    "red": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\red_transporte_amba\\red_vial_amba.parquet"
+  },
+  "analisis": {
+    "nodos": 144,
+    "segmentos_red": 36856,
+    "longitud_red_km": 10266.070644782354,
+    "distancia_mediana_red_m": 71.35799178000795,
+    "distancia_maxima_red_m": 340.22693039710754
+  },
+  "nodo_principal_sube": {
+    "nodo_id": 6,
+    "indice_centralidad": 92.91666666666667,
+    "ranking": 1,
+    "operaciones": 142814.0
+  },
+  "nodo_principal_red": {
+    "nodo_id": 1,
+    "score_estructural": 79.94876680668614,
+    "ranking": 1,
+    "longitud_red_500m_km": 727.0242482861012,
+    "jerarquia_dominante": "secondary"
+  },
+  "mayor_discrepancia": {
+    "nodo_id": 135,
+    "diferencia_ranking": -136,
+    "diferencia_absoluta": 136,
+    "tipo": "CENTRALIDAD_RED_MUCHO_MAYOR_QUE_SUBE"
+  },
+  "correlaciones": {
+    "score_estructural_red": {
+      "nombre": "Score estructural red",
+      "pearson": 0.19650455594932356,
+      "spearman": 0.1762641430192826
+    },
+    "longitud_red_500m_km": {
+      "nombre": "Longitud red 500 m",
+      "pearson": 0.29131627132659654,
+      "spearman": 0.46833300009367757
+    },
+    "cantidad_jerarquias_viales": {
+      "nombre": "Cantidad jerarquías viales",
+      "pearson": 0.28728292631718266,
+      "spearman": 0.25952000002814873
+    },
+    "score_jerarquia_red": {
+      "nombre": "Score jerarquía vial",
+      "pearson": -0.2293963205628819,
+      "spearman": -0.19577936711335137
+    },
+    "score_diversidad_red": {
+      "nombre": "Score diversidad red",
+      "pearson": 0.2872829263171824,
+      "spearman": 0.25952000002814873
+    },
+    "score_segmentos_red": {
+      "nombre": "Score segmentos red",
+      "pearson": 0.28559031072960145,
+      "spearman": 0.4820683400424053
+    }
+  },
+  "concentracion": {
+    "top_1": 46.38820556495673,
+    "top_5": 54.384171526639136,
+    "top_10": 63.01918276784537,
+    "top_20": 72.5098890408385,
+    "top_30": 78.06119774196684,
+    "top_50": 85.39989217338508
+  },
+  "distribucion_matriz": {
+    "BAJA_SUBE_BAJA_RED": 72,
+    "ALTA_SUBE_BAJA_RED": 71,
+    "ALTA_SUBE_ALTA_RED": 1
+  },
+  "distribucion_discrepancias": {
+    "ALINEADO": 45,
+    "CENTRALIDAD_SUBE_MAYOR_QUE_RED": 29,
+    "CENTRALIDAD_SUBE_MUCHO_MAYOR_QUE_RED": 25,
+    "CENTRALIDAD_RED_MAYOR_QUE_SUBE": 24,
+    "CENTRALIDAD_RED_MUCHO_MAYOR_QUE_SUBE": 21
+  },
+  "archivos_generados": {
+    "parquet": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\validacion_red_transporte\\sube_2025_centralidades_red_validacion.parquet",
+    "mapa": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\validacion_red_transporte\\01_mapa_centralidad_estructural.png",
+    "discrepancias": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\validacion_red_transporte\\02_discrepancias_sube_red.png",
+    "jerarquia": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\validacion_red_transporte\\03_jerarquia_vial_nodos.png",
+    "densidad": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\validacion_red_transporte\\04_densidad_red.png",
+    "boxplot": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\validacion_red_transporte\\05_distribucion_indicadores.png",
+    "scatter": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\validacion_red_transporte\\06_sube_vs_red.png",
+    "ranking": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\validacion_red_transporte\\07_ranking_sube_vs_red.png",
+    "matriz": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\validacion_red_transporte\\08_matriz_sube_red.png"
+  }
+}
