@@ -1,0 +1,13 @@
+﻿indicador,valor
+h3_geometria,6785.0
+h3_utilizados_sube,7110.0
+h3_sin_geometria,325.0
+h3_geometria_sin_operaciones,0.0
+registros_sube,105926.0
+registros_con_geometria,104803.0
+registros_sin_geometria,1123.0
+operaciones_totales,11926332.0
+operaciones_con_geometria,11919434.0
+operaciones_sin_geometria,6898.0
+cobertura_geografica_pct,99.94216159670887
+sin_cobertura_geografica_pct,0.057838403291137624

@@ -1,0 +1,13 @@
+{
+  "h3": 6785,
+  "operaciones": 11919434,
+  "jurisdicciones": 64,
+  "provincias": 2,
+  "h3_hotspot": 340,
+  "operaciones_hotspot": 6732889,
+  "pct_operaciones_hotspot": 56.48665028893151,
+  "top_10_operaciones": 5121485,
+  "top_10_pct": 42.967518424113095,
+  "jurisdiccion_principal": "Comuna 1",
+  "provincia_principal": "Buenos Aires"
+}

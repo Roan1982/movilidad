@@ -1,0 +1,1 @@
+https://ide.transporte.gob.ar/geoserver/observ/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=observ:Hexagonos%20h3&maxFeatures=6786&outputFormat=shape-zip

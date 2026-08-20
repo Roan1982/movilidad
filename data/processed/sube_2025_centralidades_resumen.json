@@ -1,0 +1,57 @@
+{
+  "h3_analizados": 1548,
+  "h3_con_nodo": 387,
+  "h3_con_cluster": 1548,
+  "h3_con_corredor": 253,
+  "nodos_analizados": 144,
+  "operaciones_analizadas": 6924079.0,
+  "centralidades_criticas": 3,
+  "centralidades_altas": 19,
+  "centralidades_medias": 50,
+  "centralidades_bajas": 72,
+  "tipos_centralidad": {
+    "CENTRALIDAD_LOCAL": 102,
+    "CENTRALIDAD_DENSIDAD": 30,
+    "CENTRALIDAD_INTERMODAL": 10,
+    "CENTRALIDAD_METROPOLITANA": 1,
+    "CENTRALIDAD_TERRITORIAL": 1
+  },
+  "intermodalidad": {
+    "MONOMODAL": 123,
+    "INTERMODAL": 21
+  },
+  "alcance_territorial": {
+    "LOCAL": 132,
+    "BIJURISDICCIONAL": 10,
+    "METROPOLITANO": 1,
+    "INTERJURISDICCIONAL": 1
+  },
+  "horas_pico": {
+    "6": 9,
+    "7": 58,
+    "8": 4,
+    "12": 14,
+    "13": 1,
+    "16": 3,
+    "17": 44,
+    "18": 11
+  },
+  "modos_dominantes": {
+    "COLECTIVO": 107,
+    "TREN": 37
+  },
+  "centralidad_principal": {
+    "nodo_id": 6,
+    "ranking": 1,
+    "operaciones": 142814.0,
+    "pct_operaciones": 2.062570343290422,
+    "indice_centralidad": 92.91666666666667,
+    "categoria": "CENTRALIDAD_CRITICA",
+    "tipo": "CENTRALIDAD_INTERMODAL",
+    "intermodalidad": "INTERMODAL",
+    "jurisdicciones": "Comuna 9 | Tres de Febrero",
+    "corredores": 2,
+    "hora_pico": 7,
+    "modo": "COLECTIVO"
+  }
+}

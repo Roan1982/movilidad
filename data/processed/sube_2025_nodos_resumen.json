@@ -1,0 +1,46 @@
+{
+  "h3_analizados": 1548,
+  "operaciones_totales": 9963499.0,
+  "percentil_demanda": 0.75,
+  "percentil_75_operaciones": 5089.25,
+  "radio_conectividad_h3": 1,
+  "min_h3_nodo": 1,
+  "h3_candidatos": 387,
+  "nodos_detectados": 144,
+  "h3_en_nodos": 387,
+  "operaciones_en_nodos": 6924079.0,
+  "pct_operaciones_en_nodos": 69.4944516981434,
+  "distribucion_nodos": {
+    "NODO_BAJO": 73,
+    "NODO_MEDIO": 46,
+    "NODO_ALTO": 22,
+    "NODO_CRITICO": 3
+  },
+  "horas_pico": {
+    "6": 9,
+    "7": 58,
+    "8": 4,
+    "12": 14,
+    "13": 1,
+    "16": 3,
+    "17": 44,
+    "18": 11
+  },
+  "modos_dominantes": {
+    "COLECTIVO": 107,
+    "TREN": 37
+  },
+  "nodo_principal": {
+    "nodo_id": 1,
+    "h3": 152,
+    "operaciones": 3211956.0,
+    "pct_operaciones": 32.23722910997432,
+    "indice_nodo": 91.42361111111111,
+    "categoria": "NODO_CRITICO",
+    "corredores": 8,
+    "clusters": 1,
+    "jurisdicciones": "Comuna 1 | Comuna 10 | Comuna 11 | Comuna 12 | Comuna 13 | Comuna 14 | Comuna 15 | Comuna 2 | Comuna 3 | Comuna 4 | Comuna 5 | Comuna 6 | Comuna 7 | Comuna 9 | Vicente López",
+    "hora_pico": 17,
+    "modo": "COLECTIVO"
+  }
+}

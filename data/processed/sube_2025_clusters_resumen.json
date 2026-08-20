@@ -1,0 +1,28 @@
+{
+  "h3_totales": 6785,
+  "operaciones_totales": 11919434,
+  "h3_candidatos": 1698,
+  "clusters_detectados": 191,
+  "clusters_validos": 66,
+  "h3_clusterizados": 1548,
+  "operaciones_clusterizadas": 9963499,
+  "pct_operaciones_clusterizadas": 83.59037014677038,
+  "parametros": {
+    "categorias_cluster": [
+      "DEMANDA_ALTA",
+      "HOTSPOT_ALTO",
+      "HOTSPOT_EXTREMO"
+    ],
+    "min_h3_cluster": 2,
+    "min_operaciones_cluster": 5000,
+    "percentil_operaciones": 0.75,
+    "umbral_operaciones": 1317.0
+  },
+  "categorias_clusters": {
+    "CLUSTER_BAJO": 34,
+    "CLUSTER_MUY_ALTO": 12,
+    "CLUSTER_CRITICO": 11,
+    "CLUSTER_ALTO": 7,
+    "CLUSTER_MEDIO": 2
+  }
+}

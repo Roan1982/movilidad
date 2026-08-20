@@ -1,0 +1,17 @@
+﻿indicador,valor
+registros_totales,105926
+registros_con_geometria,104803
+registros_sin_geometria,1123
+h3_utilizados,7110
+h3_con_geometria,6785
+jurisdicciones_con_operaciones,64
+operaciones_totales,11926332
+operaciones_con_geometria,11919434
+operaciones_sin_geometria,6898
+cobertura_operaciones_pct,99.94216159670887
+hora_pico_global,17
+operaciones_hora_pico_global,1008435
+modo_principal,COLECTIVO
+operaciones_modo_principal,9483908
+jurisdiccion_principal,Comuna 1
+operaciones_jurisdiccion_principal,994858

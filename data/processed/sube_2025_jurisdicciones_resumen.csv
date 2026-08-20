@@ -1,0 +1,65 @@
+﻿id_jurisdiccion,jurisdiccion,jurisdiccion_completa,provincia_jurisdiccion,categoria_jurisdiccion,registros,h3_distintos,operaciones,pct_operaciones,ranking_operaciones
+022007,Comuna 1,Comuna 1,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,992,30,994858,8.346520480754371,1
+060427,La Matanza,Municipio La Matanza,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,7788,397,804697,6.751134323995586,2
+060490,Lomas de Zamora,Municipio Lomas de Zamora,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,3406,162,584887,4.907003134544811,3
+060028,Almirante Brown,Municipio Almirante Brown,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,3980,196,483563,4.056929213249556,4
+060560,Moreno,Municipio Moreno,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,4494,243,395625,3.3191592822276625,5
+060658,Quilmes,Municipio Quilmes,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,3156,157,385057,3.23049735415289,6
+060434,Lanús,Municipio Lanús,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,2185,100,376625,3.159755740079605,7
+060441,La Plata,Municipio La Plata,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,6519,517,366868,3.0778978263565198,8
+060539,Merlo,Municipio Merlo,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,3657,189,358777,3.0100170863817866,9
+022021,Comuna 3,Comuna 3,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,479,12,350496,2.9405423109855717,10
+022028,Comuna 4,Comuna 4,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,1134,46,327416,2.746908955576246,11
+022098,Comuna 14,Comuna 14,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,918,33,303111,2.5429982665284276,12
+060568,Morón,Municipio Morón,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,2035,97,296934,2.491175336010082,13
+060805,Tigre,Municipio Tigre,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,4620,414,278300,2.3348424094634024,14
+060274,Florencio Varela,Municipio Florencio Varela,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,3127,180,278200,2.334003443452097,15
+022105,Comuna 15,Comuna 15,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,845,27,270148,2.2664499002217724,16
+060371,General San Martín,Municipio General San Martín,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,2172,102,267372,2.2431602037479297,17
+022091,Comuna 13,Comuna 13,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,825,30,263971,2.214626969703427,18
+060756,San Isidro,Municipio San Isidro,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,2157,103,246744,2.0700982949358164,19
+060260,Esteban Echeverría,Municipio Esteban Echeverría,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,2677,149,242716,2.0363047440004283,20
+060760,San Miguel,Municipio San Miguel,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,2213,105,239462,2.009004789992545,21
+060035,Avellaneda,Municipio Avellaneda,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1805,84,235897,1.9790956516895015,22
+022063,Comuna 9,Comuna 9,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,760,32,233954,1.962794542089834,23
+060412,José C. Paz,Municipio José C. Paz,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1730,85,230873,1.9369459992815097,24
+060515,Malvinas Argentinas,Municipio Malvinas Argentinas,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,2228,108,226511,1.9003503018683605,25
+060840,Tres de Febrero,Municipio Tres de Febrero,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1921,85,224590,1.8842337647911804,26
+060638,Pilar,Municipio Pilar,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,4817,334,208147,1.7462825835522056,27
+022049,Comuna 7,Comuna 7,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,681,23,207279,1.7390003585740732,28
+022014,Comuna 2,Comuna 2,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,354,12,195364,1.6390375583270147,29
+060861,Vicente López,Municipio Vicente López,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1475,56,190600,1.5990692175484174,30
+022084,Comuna 12,Comuna 12,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,866,31,174160,1.4611432052897813,31
+022035,Comuna 5,Comuna 5,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,405,13,157060,1.3176800173565288,32
+022077,Comuna 11,Comuna 11,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,692,27,154775,1.2985096439981965,33
+022042,Comuna 6,Comuna 6,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,404,14,149767,1.2564942261520136,34
+060091,Berazategui,Municipio Berazategui,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,2676,172,141834,1.1899390524751428,35
+022056,Comuna 8,Comuna 8,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,1008,43,128842,1.080940588286323,36
+060749,San Fernando,Municipio San Fernando,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1589,162,114728,0.9625289254506548,37
+060252,Escobar,Municipio Escobar,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,2979,268,105605,0.8859900562392476,38
+022070,Comuna 10,Comuna 10,"{'id': '02', 'nombre': 'Ciudad Autónoma de Buenos Aires', 'interseccion': 0.0}",Comuna,619,25,104094,0.8733132798084204,39
+060408,Hurlingham,Municipio Hurlingham,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1228,58,95265,0.7992409706702517,40
+060270,Ezeiza,Municipio Ezeiza,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1664,123,93595,0.7852302382814486,41
+060410,Ituzaingó,Municipio Ituzaingó,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1400,73,79329,0.6655433471085959,42
+060364,General Rodríguez,Municipio General Rodríguez,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1846,145,62053,0.5206035789954455,43
+060648,Presidente Perón,Municipio Presidente Perón,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,895,66,61655,0.5172644942704494,44
+060778,San Vicente,Municipio San Vicente,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1278,119,51217,0.42969322201037397,45
+060098,Berisso,Municipio Berisso,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,956,70,35694,0.2994605280754103,46
+060497,Luján,Municipio Luján,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1751,207,28533,0.2393821720058184,47
+060245,Ensenada,Municipio Ensenada,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,762,63,23167,0.19436325583916148,48
+060882,Zárate,Municipio Zárate,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,920,122,22523,0.1889603147263536,49
+060126,Campana,Municipio Campana,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1657,225,17276,0.14493976811315035,50
+060134,Cañuelas,Municipio Cañuelas,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,1021,121,14052,0.11789150390865875,51
+060525,Marcos Paz,Municipio Marcos Paz,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,542,76,13773,0.1155507887371162,52
+060266,Exaltación de la Cruz,Municipio Exaltación de la Cruz,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,828,118,8059,0.06761227085111592,53
+060119,Brandsen,Municipio Brandsen,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,368,60,4181,0.0350771689326859,54
+060532,Mercedes,Municipio Mercedes,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,381,60,2617,0.021955740515866778,55
+060483,Lobos,Municipio Lobos,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,262,43,2544,0.021343295327613712,56
+060329,General Las Heras,Municipio General Las Heras,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,191,43,1275,0.010696816644146023,57
+060728,San Andrés de Giles,Municipio San Andrés de Giles,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,200,63,1140,0.009564212528883502,58
+060735,San Antonio de Areco,Municipio San Antonio de Areco,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,102,16,493,0.0041361024357364625,59
+060574,Navarro,Municipio Navarro,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,82,20,315,0.0026427429356125466,60
+060547,Monte,Municipio Monte,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,36,11,313,0.002625963615386435,61
+060161,Carmen de Areco,Municipio Carmen de Areco,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,27,11,240,0.0020135184271333688,62
+060505,Magdalena,Municipio Magdalena,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,11,7,152,0.001275228337184467,63
+060218,Chascomús,Municipio Chascomús,"{'id': '06', 'nombre': 'Buenos Aires', 'interseccion': 0.0}",Municipio,7,2,66,0.0005537175674616764,64

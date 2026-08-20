@@ -1,0 +1,23 @@
+{
+  "h3": 6785,
+  "operaciones": 11919434,
+  "jurisdicciones": 64,
+  "provincias": 2,
+  "h3_representative_point": 6695,
+  "h3_interseccion": 87,
+  "h3_nearest": 3,
+  "operaciones_representative_point": 11704849,
+  "operaciones_interseccion": 209798,
+  "operaciones_nearest": 4787,
+  "pct_h3_representative_point": 98.6735,
+  "pct_operaciones_representative_point": 98.1997,
+  "pct_h3_nearest": 0.0442,
+  "pct_operaciones_nearest": 0.0402,
+  "nearest_mayor_500_m": 2,
+  "indice_calidad_territorial": 99.93,
+  "errores": [],
+  "estado": "OK",
+  "nearest_distancia_min_m": 446.26868633459776,
+  "nearest_distancia_max_m": 768.5042423368744,
+  "nearest_distancia_promedio_m": 587.8495028767943
+}
