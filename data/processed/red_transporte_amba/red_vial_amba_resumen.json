@@ -1,0 +1,38 @@
+{
+  "fuente": {
+    "openstreetmap": true,
+    "overpass_url": "https://overpass-api.de/api/interpreter",
+    "bbox": "-35.20,-59.40,-34.20,-57.80",
+    "elementos_recibidos": 36856
+  },
+  "red": {
+    "segmentos": 36856,
+    "longitud_total_km": 12498.799030301907,
+    "osm_ids_unicos": 36856,
+    "jerarquia_maxima": 5
+  },
+  "por_tipo": {
+    "motorway": {
+      "segmentos": 2419,
+      "longitud_km": 1267.0670608526764
+    },
+    "trunk": {
+      "segmentos": 1307,
+      "longitud_km": 904.6925893877113
+    },
+    "primary": {
+      "segmentos": 6592,
+      "longitud_km": 1999.6973785633845
+    },
+    "secondary": {
+      "segmentos": 12611,
+      "longitud_km": 2949.020241026258
+    },
+    "tertiary": {
+      "segmentos": 13927,
+      "longitud_km": 5378.3217604718775
+    }
+  },
+  "crs": "EPSG:4326",
+  "crs_metrico_calculo_longitud": "EPSG:3857"
+}
