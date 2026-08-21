@@ -1,161 +1,142 @@
 {
   "proceso": 27,
-  "nombre": "Construcción de escenarios territoriales AMBA",
-  "version": "V1",
-  "fecha_proceso": "2026-08-21T09:21:15.351545",
-  "parametros": {
-    "distancia_agrupacion_m": 5000,
-    "crs": "EPSG:4326",
-    "crs_metrico": "EPSG:22185",
-    "pesos": {
-      "impacto": 0.25,
-      "cobertura": 0.2,
-      "deficit": 0.2,
-      "demanda": 0.15,
-      "complementariedad": 0.1,
-      "urgencia": 0.1
-    }
+  "version": "V3",
+  "descripcion": "Construcción de escenarios territoriales estratégicos AMBA.",
+  "fecha_proceso": "2026-08-21T09:40:58.284578",
+  "proyectos_analizados": 144,
+  "escenarios_construidos": 6,
+  "min_proyectos_escenario": 8,
+  "rango_escenarios_evaluado": [
+    6,
+    12
+  ],
+  "metodo": "KMeans multicriterio",
+  "random_state": 42,
+  "pesos_modelo": {
+    "impacto_potencial": 0.25,
+    "cobertura_territorial": 0.2,
+    "deficit_atendido": 0.2,
+    "demanda_cubierta": 0.15,
+    "complementariedad": 0.1,
+    "urgencia": 0.1
   },
-  "entrada": {
-    "archivo": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\cartera_proyectos_amba\\cartera_proyectos_amba.parquet",
-    "proyectos": 144
+  "por_prioridad": {
+    "PRIORIDAD_3_MEDIA": 4,
+    "PRIORIDAD_4_BAJA": 2
   },
-  "resultado": {
-    "escenarios": 11,
-    "proyectos": 144
-  },
-  "prioridades": {
-    "PRIORIDAD_4_BAJA": 7,
-    "PRIORIDAD_3_MEDIA": 3,
-    "PRIORIDAD_2_ALTA": 1
-  },
-  "horizontes": {
-    "LARGO_PLAZO": 9,
-    "MEDIANO_PLAZO": 2
-  },
-  "tipos": {
-    "ESCENARIO_SELECTIVO": 7,
-    "ESCENARIO_CENTRALIDAD": 2,
+  "por_tipo": {
+    "ESCENARIO_DEFICIT": 3,
+    "ESCENARIO_SELECTIVO": 1,
     "ESCENARIO_METROPOLITANO": 1,
-    "ESCENARIO_DEFICIT": 1
+    "ESCENARIO_INTEGRADO": 1
   },
-  "diagnosticos": {
-    "INTERVENCION_TERRITORIAL_MEDIA": 5,
-    "ALTA_DEMANDA_BAJO_SOPORTE": 3,
-    "ALTA_COMPLEMENTARIEDAD": 1,
+  "por_horizonte": {
+    "MEDIANO_PLAZO": 3,
+    "CORTO_PLAZO": 2,
+    "LARGO_PLAZO": 1
+  },
+  "por_diagnostico": {
+    "ALTA_URGENCIA": 2,
+    "INTERVENCION_TERRITORIAL_MEDIA": 2,
     "ALTO_IMPACTO_POTENCIAL": 1,
-    "ALTA_URGENCIA": 1
+    "ALTA_COMPLEMENTARIEDAD": 1
   },
-  "top_10": [
+  "escenarios": [
     {
-      "ranking_escenario": 1,
       "escenario_id": "AMBA-E001",
-      "score_escenario": 60.5655,
-      "prioridad_escenario": "PRIORIDAD_2_ALTA",
-      "tipo_escenario": "ESCENARIO_METROPOLITANO",
-      "horizonte_escenario": "MEDIANO_PLAZO",
-      "cantidad_proyectos": 133,
-      "impacto_territorial": 50.6744,
-      "cobertura_territorial": 100.0
+      "escenario_nombre": "AMBA-E001 - ESCENARIO_SELECTIVO",
+      "ranking": 1,
+      "cantidad_proyectos": 31,
+      "score": 56.591605610803896,
+      "prioridad": "PRIORIDAD_3_MEDIA",
+      "tipo": "ESCENARIO_SELECTIVO",
+      "horizonte": "MEDIANO_PLAZO",
+      "impacto": 79.96769163082439,
+      "cobertura": 21.52777777777778,
+      "deficit_atendido": 54.115125483870976,
+      "demanda_cubierta": 81.83962434767027,
+      "complementariedad": 42.857142857142854,
+      "diagnostico": "ALTO_IMPACTO_POTENCIAL"
     },
     {
-      "ranking_escenario": 2,
       "escenario_id": "AMBA-E002",
-      "score_escenario": 59.2833,
-      "prioridad_escenario": "PRIORIDAD_3_MEDIA",
-      "tipo_escenario": "ESCENARIO_CENTRALIDAD",
-      "horizonte_escenario": "MEDIANO_PLAZO",
-      "cantidad_proyectos": 1,
-      "impacto_territorial": 84.4692,
-      "cobertura_territorial": 1.114
+      "escenario_nombre": "AMBA-E002 - ESCENARIO_METROPOLITANO",
+      "ranking": 2,
+      "cantidad_proyectos": 24,
+      "score": 52.855383685449745,
+      "prioridad": "PRIORIDAD_3_MEDIA",
+      "tipo": "ESCENARIO_METROPOLITANO",
+      "horizonte": "MEDIANO_PLAZO",
+      "impacto": 60.27188675925927,
+      "cobertura": 16.666666666666664,
+      "deficit_atendido": 63.17691,
+      "demanda_cubierta": 59.0820717962963,
+      "complementariedad": 71.42857142857143,
+      "diagnostico": "ALTA_COMPLEMENTARIEDAD"
     },
     {
-      "ranking_escenario": 3,
       "escenario_id": "AMBA-E003",
-      "score_escenario": 54.473,
-      "prioridad_escenario": "PRIORIDAD_3_MEDIA",
-      "tipo_escenario": "ESCENARIO_SELECTIVO",
-      "horizonte_escenario": "LARGO_PLAZO",
-      "cantidad_proyectos": 1,
-      "impacto_territorial": 71.8551,
-      "cobertura_territorial": 1.0132
+      "escenario_nombre": "AMBA-E003 - ESCENARIO_DEFICIT",
+      "ranking": 3,
+      "cantidad_proyectos": 14,
+      "score": 50.77945718174604,
+      "prioridad": "PRIORIDAD_3_MEDIA",
+      "tipo": "ESCENARIO_DEFICIT",
+      "horizonte": "CORTO_PLAZO",
+      "impacto": 54.28501015873017,
+      "cobertura": 9.722222222222223,
+      "deficit_atendido": 77.16933142857144,
+      "demanda_cubierta": 55.07662107936508,
+      "complementariedad": 42.857142857142854,
+      "diagnostico": "ALTA_URGENCIA"
     },
     {
-      "ranking_escenario": 4,
       "escenario_id": "AMBA-E004",
-      "score_escenario": 54.2803,
-      "prioridad_escenario": "PRIORIDAD_3_MEDIA",
-      "tipo_escenario": "ESCENARIO_SELECTIVO",
-      "horizonte_escenario": "LARGO_PLAZO",
-      "cantidad_proyectos": 1,
-      "impacto_territorial": 76.4814,
-      "cobertura_territorial": 1.0238
+      "escenario_nombre": "AMBA-E004 - ESCENARIO_INTEGRADO",
+      "ranking": 4,
+      "cantidad_proyectos": 20,
+      "score": 45.97859536650794,
+      "prioridad": "PRIORIDAD_3_MEDIA",
+      "tipo": "ESCENARIO_INTEGRADO",
+      "horizonte": "LARGO_PLAZO",
+      "impacto": 55.95903544444444,
+      "cobertura": 13.88888888888889,
+      "deficit_atendido": 53.275386,
+      "demanda_cubierta": 52.96964042222222,
+      "complementariedad": 57.14285714285714,
+      "diagnostico": "INTERVENCION_TERRITORIAL_MEDIA"
     },
     {
-      "ranking_escenario": 5,
       "escenario_id": "AMBA-E005",
-      "score_escenario": 46.6297,
-      "prioridad_escenario": "PRIORIDAD_4_BAJA",
-      "tipo_escenario": "ESCENARIO_SELECTIVO",
-      "horizonte_escenario": "LARGO_PLAZO",
-      "cantidad_proyectos": 1,
-      "impacto_territorial": 63.0312,
-      "cobertura_territorial": 0.9123
+      "escenario_nombre": "AMBA-E005 - ESCENARIO_DEFICIT",
+      "ranking": 5,
+      "cantidad_proyectos": 19,
+      "score": 38.2773741518797,
+      "prioridad": "PRIORIDAD_4_BAJA",
+      "tipo": "ESCENARIO_DEFICIT",
+      "horizonte": "CORTO_PLAZO",
+      "impacto": 25.36950558479532,
+      "cobertura": 13.194444444444445,
+      "deficit_atendido": 79.41810894736842,
+      "demanda_cubierta": 20.213023923976607,
+      "complementariedad": 28.57142857142857,
+      "diagnostico": "ALTA_URGENCIA"
     },
     {
-      "ranking_escenario": 6,
       "escenario_id": "AMBA-E006",
-      "score_escenario": 41.197,
-      "prioridad_escenario": "PRIORIDAD_4_BAJA",
-      "tipo_escenario": "ESCENARIO_SELECTIVO",
-      "horizonte_escenario": "LARGO_PLAZO",
-      "cantidad_proyectos": 1,
-      "impacto_territorial": 82.4725,
-      "cobertura_territorial": 1.1406
-    },
-    {
-      "ranking_escenario": 7,
-      "escenario_id": "AMBA-E007",
-      "score_escenario": 36.603,
-      "prioridad_escenario": "PRIORIDAD_4_BAJA",
-      "tipo_escenario": "ESCENARIO_DEFICIT",
-      "horizonte_escenario": "LARGO_PLAZO",
-      "cantidad_proyectos": 1,
-      "impacto_territorial": 46.6062,
-      "cobertura_territorial": 0.7689
-    },
-    {
-      "ranking_escenario": 8,
-      "escenario_id": "AMBA-E008",
-      "score_escenario": 36.2076,
-      "prioridad_escenario": "PRIORIDAD_4_BAJA",
-      "tipo_escenario": "ESCENARIO_CENTRALIDAD",
-      "horizonte_escenario": "LARGO_PLAZO",
-      "cantidad_proyectos": 2,
-      "impacto_territorial": 51.5715,
-      "cobertura_territorial": 1.5325
-    },
-    {
-      "ranking_escenario": 9,
-      "escenario_id": "AMBA-E009",
-      "score_escenario": 33.0043,
-      "prioridad_escenario": "PRIORIDAD_4_BAJA",
-      "tipo_escenario": "ESCENARIO_SELECTIVO",
-      "horizonte_escenario": "LARGO_PLAZO",
-      "cantidad_proyectos": 1,
-      "impacto_territorial": 51.0184,
-      "cobertura_territorial": 0.7583
-    },
-    {
-      "ranking_escenario": 10,
-      "escenario_id": "AMBA-E010",
-      "score_escenario": 26.2067,
-      "prioridad_escenario": "PRIORIDAD_4_BAJA",
-      "tipo_escenario": "ESCENARIO_SELECTIVO",
-      "horizonte_escenario": "LARGO_PLAZO",
-      "cantidad_proyectos": 1,
-      "impacto_territorial": 40.0538,
-      "cobertura_territorial": 0.6627
+      "escenario_nombre": "AMBA-E006 - ESCENARIO_DEFICIT",
+      "ranking": 6,
+      "cantidad_proyectos": 36,
+      "score": 38.09541678492063,
+      "prioridad": "PRIORIDAD_4_BAJA",
+      "tipo": "ESCENARIO_DEFICIT",
+      "horizonte": "MEDIANO_PLAZO",
+      "impacto": 30.872257083333338,
+      "cobertura": 25.0,
+      "deficit_atendido": 63.75436694444444,
+      "demanda_cubierta": 26.05200697222222,
+      "complementariedad": 28.57142857142857,
+      "diagnostico": "INTERVENCION_TERRITORIAL_MEDIA"
     }
   ]
 }
