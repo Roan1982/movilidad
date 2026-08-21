@@ -1,0 +1,89 @@
+{
+  "proceso": 28,
+  "nombre": "EVALUACIÓN DE ESCENARIOS TERRITORIALES AMBA",
+  "version": "V1.0",
+  "fecha_evaluacion": "2026-08-21T10:42:27.657437-03:00",
+  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba.parquet",
+  "salida": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
+  "proyectos": 144,
+  "escenarios": 7,
+  "score_global": 0.657254,
+  "clasificacion_global": "BUENO",
+  "scores": {
+    "cobertura": 1.0,
+    "tamano": 0.948884,
+    "cohesion": 0.206109,
+    "indicadores": 0.487356,
+    "balance": 0.829613
+  },
+  "pesos": {
+    "cobertura": 0.2,
+    "tamano": 0.15,
+    "cohesion": 0.25,
+    "indicadores": 0.2,
+    "balance": 0.2
+  },
+  "validacion": {
+    "registros": 144,
+    "geometrias_nulas": 0,
+    "geometrias_vacias": 0,
+    "geometrias_invalidas": 0,
+    "columna_escenario": "escenario_id",
+    "cantidad_escenarios": 7,
+    "identificadores_duplicados": 137
+  },
+  "columnas_resueltas": {
+    "escenario": "escenario_id",
+    "score_escenario": "score_escenario",
+    "tipo": "tipo_escenario",
+    "dimension": "dimension_dominante",
+    "prioridad": "prioridad_escenario",
+    "proyecto": "proyecto_id",
+    "silhouette": null,
+    "distancia_centroide": null
+  },
+  "ranking": [
+    {
+      "escenario_id": "AMBA-E004",
+      "ranking_evaluacion": 1,
+      "score_evaluacion": 0.45065154049219325,
+      "clasificacion": "ESCENARIO_A_REVISAR"
+    },
+    {
+      "escenario_id": "AMBA-E006",
+      "ranking_evaluacion": 2,
+      "score_evaluacion": 0.42835325291312065,
+      "clasificacion": "ESCENARIO_A_REVISAR"
+    },
+    {
+      "escenario_id": "AMBA-E005",
+      "ranking_evaluacion": 3,
+      "score_evaluacion": 0.42782832505943147,
+      "clasificacion": "ESCENARIO_A_REVISAR"
+    },
+    {
+      "escenario_id": "AMBA-E001",
+      "ranking_evaluacion": 4,
+      "score_evaluacion": 0.42323222673180266,
+      "clasificacion": "ESCENARIO_A_REVISAR"
+    },
+    {
+      "escenario_id": "AMBA-E007",
+      "ranking_evaluacion": 5,
+      "score_evaluacion": 0.4162011220409475,
+      "clasificacion": "ESCENARIO_A_REVISAR"
+    },
+    {
+      "escenario_id": "AMBA-E003",
+      "ranking_evaluacion": 6,
+      "score_evaluacion": 0.4048793034529302,
+      "clasificacion": "ESCENARIO_A_REVISAR"
+    },
+    {
+      "escenario_id": "AMBA-E002",
+      "ranking_evaluacion": 7,
+      "score_evaluacion": 0.3922636309462923,
+      "clasificacion": "ESCENARIO_A_REVISAR"
+    }
+  ]
+}
