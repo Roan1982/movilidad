@@ -1,0 +1,31 @@
+{
+  "total": 35,
+  "ok": 35,
+  "fallidos": 0,
+  "criticos": 0,
+  "importantes": 0,
+  "score": 100.0,
+  "auditoria": "OK",
+  "dictamen": "GO",
+  "fallas": [],
+  "fallas_criticas": [],
+  "fallas_importantes": [],
+  "ranking_escenarios": {
+    "campo": "ranking_integral_v4",
+    "metodo": "deteccion_por_nombre",
+    "completo": true,
+    "ordenado": true,
+    "estado": "OK",
+    "critico": false,
+    "advertencia": false
+  },
+  "ranking_proyectos": {
+    "campo": "ranking_final_proyecto_v4",
+    "metodo": "deteccion_por_nombre",
+    "completo": true,
+    "ordenado": true,
+    "estado": "OK",
+    "critico": false,
+    "advertencia": false
+  }
+}

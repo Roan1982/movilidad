@@ -1,0 +1,36 @@
+﻿control,estado,criticidad,detalle
+cantidad_proyectos,True,critica,144
+proyectos_unicos,True,critica,144
+proyectos_nulos,True,critica,0
+proyectos_duplicados,True,critica,0
+cantidad_escenarios,True,critica,7
+escenarios_unicos,True,critica,7
+escenarios_nulos,True,critica,0
+escenarios_duplicados,True,critica,0
+escenarios_nulos,True,critica,0
+proyectos_multiescenario,True,critica,0
+7_escenarios_presentes,True,critica,7
+minimo_proyectos_escenario,True,importante,20
+maximo_proyectos_escenario,True,importante,21
+cv_distribucion,True,importante,0.0241
+ranking_escenarios_ids,True,critica,7 registros y campo escenario detectado
+ranking_escenarios_secuencia,True,critica,campo=ranking_integral_v4; metodo=deteccion_por_nombre
+ranking_proyectos_ids,True,critica,144 registros y campo proyecto detectado
+ranking_proyectos_secuencia,True,critica,campo=ranking_final_proyecto_v4; metodo=deteccion_por_nombre
+geopackage_existe,True,critica,C:\Users\Roan\Documents\GitHub\movilidad\data\processed\escenarios_territoriales_amba\modelo_maestro_territorial_amba_v4.gpkg
+capa_proyectos,True,critica,proyectos
+capa_escenarios,True,critica,escenarios
+cantidad_proyectos_geo,True,critica,144
+cantidad_escenarios_geo,True,critica,7
+geometrias_validas,True,critica,144
+geometrias_nulas,True,critica,0
+geometrias_vacias,True,critica,0
+geometrias_invalidas,True,critica,0
+cobertura_geometrica,True,critica,100.00%
+ids_tabulares_vs_geo,True,critica,"faltan=0, sobran=0"
+asignacion_tabular_vs_geo,True,critica,144/144
+auditoria_39,True,critica,fallas=0
+auditoria_40,True,critica,fallas=0
+estructura_indicadores_globales,True,critica,OK
+cantidad_indicadores,True,critica,27
+hashes_generados,True,importante,10/10

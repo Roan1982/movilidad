@@ -1,0 +1,11 @@
+﻿producto,existe,tamano_mb,estado
+modelo_maestro_proyectos_v4.csv,True,0.3016672134399414,OK
+modelo_maestro_escenarios_v4.csv,True,0.004540443420410156,OK
+ranking_final_proyectos_v4.csv,True,0.026371002197265625,OK
+ranking_final_escenarios_v4.csv,True,0.0013942718505859375,OK
+matriz_integral_escenarios_v4.csv,True,0.0012111663818359375,OK
+indicadores_globales_amba_v4.csv,True,0.001407623291015625,OK
+modelo_maestro_territorial_amba_v4.gpkg,True,0.69921875,OK
+informe_territorial_amba_v4_1.md,True,0.008080482482910156,OK
+atlas_territorial_amba_v4.gpkg,True,0.7109375,OK
+atlas_territorial_amba_v4.md,True,0.0026044845581054688,OK
