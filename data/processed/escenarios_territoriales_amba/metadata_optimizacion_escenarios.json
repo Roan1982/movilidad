@@ -1,0 +1,37 @@
+{
+  "proceso": 29,
+  "nombre": "Optimización de escenarios territoriales AMBA",
+  "version": "V1.0",
+  "fecha_ejecucion": "2026-08-21T10:57:23.332075-03:00",
+  "proyectos": 144,
+  "escenarios": 7,
+  "movimientos": 39,
+  "metricas_originales": {
+    "cobertura": 1.0,
+    "estructura_escenarios": 1.0,
+    "tamano": 1.0,
+    "cohesion": 0.850387146735774,
+    "balance": 0.8422525459499924,
+    "indicadores": 0.9010073669330645,
+    "score_global": 1.0
+  },
+  "metricas_optimizadas": {
+    "cobertura": 1.0,
+    "estructura_escenarios": 1.0,
+    "tamano": 1.0,
+    "cohesion": 0.8435478166112644,
+    "balance": 0.91842124913562,
+    "indicadores": 0.9119117979133236,
+    "score_global": 1.0
+  },
+  "validacion": {
+    "mismos_proyectos": true,
+    "proyectos_sin_escenario": 0,
+    "escenarios": 7,
+    "min_proyectos": 19,
+    "max_proyectos": 23,
+    "proyectos_asignados": 144,
+    "proyectos_totales": 144
+  },
+  "duracion_segundos": 2.9353629000252113
+}
