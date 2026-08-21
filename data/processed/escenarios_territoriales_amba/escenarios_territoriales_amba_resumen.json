@@ -1,142 +1,220 @@
 {
-  "proceso": 27,
-  "version": "V3",
-  "descripcion": "Construcción de escenarios territoriales estratégicos AMBA.",
-  "fecha_proceso": "2026-08-21T09:40:58.284578",
-  "proyectos_analizados": 144,
-  "escenarios_construidos": 6,
-  "min_proyectos_escenario": 8,
-  "rango_escenarios_evaluado": [
-    6,
-    12
-  ],
-  "metodo": "KMeans multicriterio",
-  "random_state": 42,
-  "pesos_modelo": {
-    "impacto_potencial": 0.25,
-    "cobertura_territorial": 0.2,
-    "deficit_atendido": 0.2,
-    "demanda_cubierta": 0.15,
-    "complementariedad": 0.1,
-    "urgencia": 0.1
+  "version": "V4_DEFINITIVA",
+  "proyecto": "Construcción de escenarios territoriales AMBA",
+  "fecha_ejecucion": "2026-08-21T09:50:26.404633",
+  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\cartera_proyectos_amba\\cartera_proyectos_amba.parquet",
+  "salida": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
+  "parametros": {
+    "k_min": 6,
+    "k_max": 12,
+    "min_proyectos_escenario": 8,
+    "random_state": 42,
+    "crs": "EPSG:4326",
+    "crs_metrico": "EPSG:22185"
   },
-  "por_prioridad": {
-    "PRIORIDAD_3_MEDIA": 4,
-    "PRIORIDAD_4_BAJA": 2
+  "modelo": {
+    "metodo": "KMeans multicriterio + reparación restringida",
+    "peso_espacial": 0.55,
+    "peso_territorial": 0.45,
+    "normalizacion": "global",
+    "evaluacion_k": "silhouette sobre solución final",
+    "restriccion_tamano": 8
   },
-  "por_tipo": {
-    "ESCENARIO_DEFICIT": 3,
-    "ESCENARIO_SELECTIVO": 1,
-    "ESCENARIO_METROPOLITANO": 1,
-    "ESCENARIO_INTEGRADO": 1
+  "pesos_territoriales": {
+    "demanda": 0.2,
+    "deficit": 0.2,
+    "conectividad": 0.15,
+    "intermodalidad": 0.15,
+    "integracion": 0.1,
+    "centralidad": 0.1,
+    "impacto": 0.1
   },
-  "por_horizonte": {
-    "MEDIANO_PLAZO": 3,
-    "CORTO_PLAZO": 2,
-    "LARGO_PLAZO": 1
+  "cantidad_proyectos": 144,
+  "cantidad_escenarios": 6,
+  "k_seleccionado": 6,
+  "k_final": 6,
+  "silhouette_seleccionada": 0.3037079310441713,
+  "distribucion_proyectos": {
+    "AMBA-E001": 17,
+    "AMBA-E002": 21,
+    "AMBA-E003": 21,
+    "AMBA-E004": 35,
+    "AMBA-E005": 23,
+    "AMBA-E006": 27
   },
-  "por_diagnostico": {
-    "ALTA_URGENCIA": 2,
-    "INTERVENCION_TERRITORIAL_MEDIA": 2,
-    "ALTO_IMPACTO_POTENCIAL": 1,
-    "ALTA_COMPLEMENTARIEDAD": 1
+  "prioridades": {
+    "PRIORIDAD_3_MEDIA": 5,
+    "PRIORIDAD_2_ALTA": 1
   },
-  "escenarios": [
+  "horizontes": {
+    "CORTO_PLAZO": 3,
+    "LARGO_PLAZO": 3
+  },
+  "tipos": {
+    "ESCENARIO_DEFICIT": 6
+  },
+  "diagnosticos": {
+    "ALTA_URGENCIA": 3,
+    "INTERVENCION_TERRITORIAL_MEDIA": 3
+  },
+  "cohesion": {
+    "1.0": {
+      "cohesion_promedio": 0.2289097097232605,
+      "cohesion_maxima": 0.40006827673127515,
+      "dispersion_std": 0.07184504637094663
+    },
+    "2.0": {
+      "cohesion_promedio": 0.23837194186401106,
+      "cohesion_maxima": 0.915332346072396,
+      "dispersion_std": 0.15700862800331006
+    },
+    "3.0": {
+      "cohesion_promedio": 0.2647226335545286,
+      "cohesion_maxima": 0.5093047462062796,
+      "dispersion_std": 0.10245242754587384
+    },
+    "4.0": {
+      "cohesion_promedio": 0.22650735460298566,
+      "cohesion_maxima": 0.43712001599056305,
+      "dispersion_std": 0.07584732673576905
+    },
+    "5.0": {
+      "cohesion_promedio": 0.20252787727909902,
+      "cohesion_maxima": 0.32696778117221703,
+      "dispersion_std": 0.06108945896289727
+    },
+    "6.0": {
+      "cohesion_promedio": 0.19815340874381948,
+      "cohesion_maxima": 0.4434108557987091,
+      "dispersion_std": 0.07913044701487693
+    }
+  },
+  "top_escenarios": [
     {
-      "escenario_id": "AMBA-E001",
-      "escenario_nombre": "AMBA-E001 - ESCENARIO_SELECTIVO",
       "ranking": 1,
-      "cantidad_proyectos": 31,
-      "score": 56.591605610803896,
-      "prioridad": "PRIORIDAD_3_MEDIA",
-      "tipo": "ESCENARIO_SELECTIVO",
-      "horizonte": "MEDIANO_PLAZO",
-      "impacto": 79.96769163082439,
-      "cobertura": 21.52777777777778,
-      "deficit_atendido": 54.115125483870976,
-      "demanda_cubierta": 81.83962434767027,
-      "complementariedad": 42.857142857142854,
-      "diagnostico": "ALTO_IMPACTO_POTENCIAL"
+      "escenario_id": "AMBA-E001",
+      "score": 64.8341,
+      "cantidad_proyectos": 17,
+      "tipo": "ESCENARIO_DEFICIT",
+      "horizonte": "CORTO_PLAZO",
+      "prioridad": "PRIORIDAD_2_ALTA"
     },
     {
-      "escenario_id": "AMBA-E002",
-      "escenario_nombre": "AMBA-E002 - ESCENARIO_METROPOLITANO",
       "ranking": 2,
-      "cantidad_proyectos": 24,
-      "score": 52.855383685449745,
-      "prioridad": "PRIORIDAD_3_MEDIA",
-      "tipo": "ESCENARIO_METROPOLITANO",
-      "horizonte": "MEDIANO_PLAZO",
-      "impacto": 60.27188675925927,
-      "cobertura": 16.666666666666664,
-      "deficit_atendido": 63.17691,
-      "demanda_cubierta": 59.0820717962963,
-      "complementariedad": 71.42857142857143,
-      "diagnostico": "ALTA_COMPLEMENTARIEDAD"
+      "escenario_id": "AMBA-E002",
+      "score": 55.9211,
+      "cantidad_proyectos": 21,
+      "tipo": "ESCENARIO_DEFICIT",
+      "horizonte": "CORTO_PLAZO",
+      "prioridad": "PRIORIDAD_3_MEDIA"
     },
     {
-      "escenario_id": "AMBA-E003",
-      "escenario_nombre": "AMBA-E003 - ESCENARIO_DEFICIT",
       "ranking": 3,
-      "cantidad_proyectos": 14,
-      "score": 50.77945718174604,
-      "prioridad": "PRIORIDAD_3_MEDIA",
+      "escenario_id": "AMBA-E003",
+      "score": 55.2842,
+      "cantidad_proyectos": 21,
       "tipo": "ESCENARIO_DEFICIT",
       "horizonte": "CORTO_PLAZO",
-      "impacto": 54.28501015873017,
-      "cobertura": 9.722222222222223,
-      "deficit_atendido": 77.16933142857144,
-      "demanda_cubierta": 55.07662107936508,
-      "complementariedad": 42.857142857142854,
-      "diagnostico": "ALTA_URGENCIA"
+      "prioridad": "PRIORIDAD_3_MEDIA"
     },
     {
-      "escenario_id": "AMBA-E004",
-      "escenario_nombre": "AMBA-E004 - ESCENARIO_INTEGRADO",
       "ranking": 4,
-      "cantidad_proyectos": 20,
-      "score": 45.97859536650794,
-      "prioridad": "PRIORIDAD_3_MEDIA",
-      "tipo": "ESCENARIO_INTEGRADO",
+      "escenario_id": "AMBA-E004",
+      "score": 53.1102,
+      "cantidad_proyectos": 35,
+      "tipo": "ESCENARIO_DEFICIT",
       "horizonte": "LARGO_PLAZO",
-      "impacto": 55.95903544444444,
-      "cobertura": 13.88888888888889,
-      "deficit_atendido": 53.275386,
-      "demanda_cubierta": 52.96964042222222,
-      "complementariedad": 57.14285714285714,
-      "diagnostico": "INTERVENCION_TERRITORIAL_MEDIA"
+      "prioridad": "PRIORIDAD_3_MEDIA"
     },
     {
-      "escenario_id": "AMBA-E005",
-      "escenario_nombre": "AMBA-E005 - ESCENARIO_DEFICIT",
       "ranking": 5,
-      "cantidad_proyectos": 19,
-      "score": 38.2773741518797,
-      "prioridad": "PRIORIDAD_4_BAJA",
+      "escenario_id": "AMBA-E005",
+      "score": 52.5175,
+      "cantidad_proyectos": 23,
       "tipo": "ESCENARIO_DEFICIT",
-      "horizonte": "CORTO_PLAZO",
-      "impacto": 25.36950558479532,
-      "cobertura": 13.194444444444445,
-      "deficit_atendido": 79.41810894736842,
-      "demanda_cubierta": 20.213023923976607,
-      "complementariedad": 28.57142857142857,
-      "diagnostico": "ALTA_URGENCIA"
+      "horizonte": "LARGO_PLAZO",
+      "prioridad": "PRIORIDAD_3_MEDIA"
     },
     {
-      "escenario_id": "AMBA-E006",
-      "escenario_nombre": "AMBA-E006 - ESCENARIO_DEFICIT",
       "ranking": 6,
-      "cantidad_proyectos": 36,
-      "score": 38.09541678492063,
-      "prioridad": "PRIORIDAD_4_BAJA",
+      "escenario_id": "AMBA-E006",
+      "score": 48.4692,
+      "cantidad_proyectos": 27,
       "tipo": "ESCENARIO_DEFICIT",
-      "horizonte": "MEDIANO_PLAZO",
-      "impacto": 30.872257083333338,
-      "cobertura": 25.0,
-      "deficit_atendido": 63.75436694444444,
-      "demanda_cubierta": 26.05200697222222,
-      "complementariedad": 28.57142857142857,
-      "diagnostico": "INTERVENCION_TERRITORIAL_MEDIA"
+      "horizonte": "LARGO_PLAZO",
+      "prioridad": "PRIORIDAD_3_MEDIA"
+    }
+  ],
+  "evaluacion_k": [
+    {
+      "k_solicitado": 6,
+      "k_final": 6,
+      "silhouette": 0.3037079310441713,
+      "min_proyectos": 17,
+      "max_proyectos": 35,
+      "penalizacion_k": 0.0,
+      "score_seleccion": 0.3037079310441713,
+      "cumple_minimo": true
+    },
+    {
+      "k_solicitado": 7,
+      "k_final": 7,
+      "silhouette": 0.27935615092446836,
+      "min_proyectos": 17,
+      "max_proyectos": 23,
+      "penalizacion_k": 0.003,
+      "score_seleccion": 0.27635615092446836,
+      "cumple_minimo": true
+    },
+    {
+      "k_solicitado": 8,
+      "k_final": 7,
+      "silhouette": 0.2839779812999106,
+      "min_proyectos": 9,
+      "max_proyectos": 26,
+      "penalizacion_k": 0.003,
+      "score_seleccion": 0.2809779812999106,
+      "cumple_minimo": true
+    },
+    {
+      "k_solicitado": 9,
+      "k_final": 8,
+      "silhouette": 0.2770120312323329,
+      "min_proyectos": 10,
+      "max_proyectos": 23,
+      "penalizacion_k": 0.006,
+      "score_seleccion": 0.2710120312323329,
+      "cumple_minimo": true
+    },
+    {
+      "k_solicitado": 10,
+      "k_final": 8,
+      "silhouette": 0.2525579832816236,
+      "min_proyectos": 11,
+      "max_proyectos": 25,
+      "penalizacion_k": 0.006,
+      "score_seleccion": 0.2465579832816236,
+      "cumple_minimo": true
+    },
+    {
+      "k_solicitado": 11,
+      "k_final": 8,
+      "silhouette": 0.24003279768972913,
+      "min_proyectos": 13,
+      "max_proyectos": 23,
+      "penalizacion_k": 0.006,
+      "score_seleccion": 0.23403279768972912,
+      "cumple_minimo": true
+    },
+    {
+      "k_solicitado": 12,
+      "k_final": 9,
+      "silhouette": 0.2480032250321047,
+      "min_proyectos": 10,
+      "max_proyectos": 22,
+      "penalizacion_k": 0.009000000000000001,
+      "score_seleccion": 0.2390032250321047,
+      "cumple_minimo": true
     }
   ]
 }
