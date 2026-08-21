@@ -1,26 +1,19 @@
 {
-  "version": "V4_DEFINITIVA",
+  "version": "V5",
   "proyecto": "Construcción de escenarios territoriales AMBA",
-  "fecha_ejecucion": "2026-08-21T09:50:26.404633",
-  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\cartera_proyectos_amba\\cartera_proyectos_amba.parquet",
-  "salida": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
+  "fecha_ejecucion": "2026-08-21T09:55:26.037328",
   "parametros": {
     "k_min": 6,
     "k_max": 12,
     "min_proyectos_escenario": 8,
     "random_state": 42,
     "crs": "EPSG:4326",
-    "crs_metrico": "EPSG:22185"
+    "crs_metrico": "EPSG:22185",
+    "margen_perfil_integrado": 7.0
   },
-  "modelo": {
-    "metodo": "KMeans multicriterio + reparación restringida",
-    "peso_espacial": 0.55,
-    "peso_territorial": 0.45,
-    "normalizacion": "global",
-    "evaluacion_k": "silhouette sobre solución final",
-    "restriccion_tamano": 8
-  },
-  "pesos_territoriales": {
+  "pesos_clustering": {
+    "espacial": 0.55,
+    "territorial": 0.45,
     "demanda": 0.2,
     "deficit": 0.2,
     "conectividad": 0.15,
@@ -29,192 +22,231 @@
     "centralidad": 0.1,
     "impacto": 0.1
   },
+  "pesos_score_escenario": {
+    "demanda": 0.2,
+    "deficit": 0.2,
+    "impacto": 0.2,
+    "conectividad": 0.1,
+    "intermodalidad": 0.1,
+    "integracion": 0.07,
+    "centralidad": 0.05,
+    "urgencia": 0.05,
+    "score_cartera": 0.03
+  },
   "cantidad_proyectos": 144,
   "cantidad_escenarios": 6,
-  "k_seleccionado": 6,
-  "k_final": 6,
-  "silhouette_seleccionada": 0.3037079310441713,
   "distribucion_proyectos": {
-    "AMBA-E001": 17,
-    "AMBA-E002": 21,
-    "AMBA-E003": 21,
+    "AMBA-E001": 19,
+    "AMBA-E002": 20,
+    "AMBA-E003": 29,
     "AMBA-E004": 35,
-    "AMBA-E005": 23,
-    "AMBA-E006": 27
+    "AMBA-E005": 19,
+    "AMBA-E006": 22
   },
   "prioridades": {
-    "PRIORIDAD_3_MEDIA": 5,
-    "PRIORIDAD_2_ALTA": 1
+    "PRIORIDAD_3_MEDIA": 4,
+    "PRIORIDAD_4_BAJA": 2
   },
   "horizontes": {
-    "CORTO_PLAZO": 3,
-    "LARGO_PLAZO": 3
+    "LARGO_PLAZO": 4,
+    "MEDIANO_PLAZO": 1,
+    "CORTO_PLAZO": 1
   },
   "tipos": {
-    "ESCENARIO_DEFICIT": 6
+    "ESCENARIO_INTEGRADO": 5,
+    "ESCENARIO_DEFICIT": 1
+  },
+  "dimensiones_dominantes": {
+    "DEFICIT": 3,
+    "IMPACTO": 1,
+    "INTEGRACION": 1,
+    "INTERMODALIDAD": 1
   },
   "diagnosticos": {
-    "ALTA_URGENCIA": 3,
-    "INTERVENCION_TERRITORIAL_MEDIA": 3
+    "INTERVENCION_TERRITORIAL_MEDIA": 5,
+    "ALTA_URGENCIA": 1
   },
-  "cohesion": {
-    "1.0": {
-      "cohesion_promedio": 0.2289097097232605,
-      "cohesion_maxima": 0.40006827673127515,
-      "dispersion_std": 0.07184504637094663
+  "evaluacion_k": [
+    {
+      "k_solicitado": 6,
+      "k_final": 6,
+      "silhouette": 0.24269734400486437,
+      "min_proyectos": 19,
+      "max_proyectos": 35,
+      "score_seleccion": 0.24269734400486437,
+      "cumple_minimo": true
     },
-    "2.0": {
-      "cohesion_promedio": 0.23837194186401106,
-      "cohesion_maxima": 0.915332346072396,
-      "dispersion_std": 0.15700862800331006
+    {
+      "k_solicitado": 7,
+      "k_final": 7,
+      "silhouette": 0.24327359429723716,
+      "min_proyectos": 14,
+      "max_proyectos": 29,
+      "score_seleccion": 0.24027359429723716,
+      "cumple_minimo": true
     },
-    "3.0": {
-      "cohesion_promedio": 0.2647226335545286,
-      "cohesion_maxima": 0.5093047462062796,
-      "dispersion_std": 0.10245242754587384
+    {
+      "k_solicitado": 8,
+      "k_final": 7,
+      "silhouette": 0.2420240688222138,
+      "min_proyectos": 15,
+      "max_proyectos": 29,
+      "score_seleccion": 0.2390240688222138,
+      "cumple_minimo": true
     },
-    "4.0": {
-      "cohesion_promedio": 0.22650735460298566,
-      "cohesion_maxima": 0.43712001599056305,
-      "dispersion_std": 0.07584732673576905
+    {
+      "k_solicitado": 9,
+      "k_final": 8,
+      "silhouette": 0.21942006517124898,
+      "min_proyectos": 13,
+      "max_proyectos": 28,
+      "score_seleccion": 0.21342006517124898,
+      "cumple_minimo": true
     },
-    "5.0": {
-      "cohesion_promedio": 0.20252787727909902,
-      "cohesion_maxima": 0.32696778117221703,
-      "dispersion_std": 0.06108945896289727
+    {
+      "k_solicitado": 10,
+      "k_final": 9,
+      "silhouette": 0.23481081802351328,
+      "min_proyectos": 10,
+      "max_proyectos": 28,
+      "score_seleccion": 0.22581081802351327,
+      "cumple_minimo": true
     },
-    "6.0": {
-      "cohesion_promedio": 0.19815340874381948,
-      "cohesion_maxima": 0.4434108557987091,
-      "dispersion_std": 0.07913044701487693
+    {
+      "k_solicitado": 11,
+      "k_final": 10,
+      "silhouette": 0.22831197751351773,
+      "min_proyectos": 10,
+      "max_proyectos": 24,
+      "score_seleccion": 0.21631197751351772,
+      "cumple_minimo": true
+    },
+    {
+      "k_solicitado": 12,
+      "k_final": 9,
+      "silhouette": 0.22718341627374805,
+      "min_proyectos": 9,
+      "max_proyectos": 29,
+      "score_seleccion": 0.21818341627374804,
+      "cumple_minimo": true
     }
-  },
+  ],
+  "metricas_cohesion": [
+    {
+      "cluster_territorial": 1,
+      "cantidad_proyectos": 35,
+      "silhouette_promedio": 0.2545315415160354,
+      "silhouette_minima": 0.09268279719836851,
+      "silhouette_maxima": 0.4470908566388836,
+      "distancia_centroide_promedio": 0.34858318391159854,
+      "dispersion_std": 0.0825536040963162
+    },
+    {
+      "cluster_territorial": 2,
+      "cantidad_proyectos": 22,
+      "silhouette_promedio": 0.26763812950497656,
+      "silhouette_minima": 0.004868275529638768,
+      "silhouette_maxima": 0.4689130562426579,
+      "distancia_centroide_promedio": 0.43015189567919737,
+      "dispersion_std": 0.14711198031076908
+    },
+    {
+      "cluster_territorial": 3,
+      "cantidad_proyectos": 29,
+      "silhouette_promedio": 0.22936461016624013,
+      "silhouette_minima": -0.012882874823523323,
+      "silhouette_maxima": 0.46338963407829836,
+      "distancia_centroide_promedio": 0.35076830937417786,
+      "dispersion_std": 0.10380088458783485
+    },
+    {
+      "cluster_territorial": 4,
+      "cantidad_proyectos": 19,
+      "silhouette_promedio": 0.29486513454292584,
+      "silhouette_minima": 0.12043573180094516,
+      "silhouette_maxima": 0.4678886585507258,
+      "distancia_centroide_promedio": 0.3869394847292522,
+      "dispersion_std": 0.16943219155587594
+    },
+    {
+      "cluster_territorial": 5,
+      "cantidad_proyectos": 19,
+      "silhouette_promedio": 0.27605825369383785,
+      "silhouette_minima": 0.04621492105132866,
+      "silhouette_maxima": 0.45563962322445606,
+      "distancia_centroide_promedio": 0.4549319082884188,
+      "dispersion_std": 0.14960208963097352
+    },
+    {
+      "cluster_territorial": 6,
+      "cantidad_proyectos": 20,
+      "silhouette_promedio": 0.13263283316051339,
+      "silhouette_minima": -0.026671917812695956,
+      "silhouette_maxima": 0.3261762417407177,
+      "distancia_centroide_promedio": 0.4443823391712412,
+      "dispersion_std": 0.2533922054225795
+    }
+  ],
   "top_escenarios": [
     {
       "ranking": 1,
       "escenario_id": "AMBA-E001",
-      "score": 64.8341,
-      "cantidad_proyectos": 17,
-      "tipo": "ESCENARIO_DEFICIT",
-      "horizonte": "CORTO_PLAZO",
-      "prioridad": "PRIORIDAD_2_ALTA"
+      "score": 57.1597,
+      "cantidad_proyectos": 19,
+      "tipo": "ESCENARIO_INTEGRADO",
+      "dimension_dominante": "IMPACTO",
+      "horizonte": "MEDIANO_PLAZO",
+      "prioridad": "PRIORIDAD_3_MEDIA"
     },
     {
       "ranking": 2,
       "escenario_id": "AMBA-E002",
-      "score": 55.9211,
-      "cantidad_proyectos": 21,
+      "score": 56.5789,
+      "cantidad_proyectos": 20,
       "tipo": "ESCENARIO_DEFICIT",
+      "dimension_dominante": "DEFICIT",
       "horizonte": "CORTO_PLAZO",
       "prioridad": "PRIORIDAD_3_MEDIA"
     },
     {
       "ranking": 3,
       "escenario_id": "AMBA-E003",
-      "score": 55.2842,
-      "cantidad_proyectos": 21,
-      "tipo": "ESCENARIO_DEFICIT",
-      "horizonte": "CORTO_PLAZO",
+      "score": 51.677,
+      "cantidad_proyectos": 29,
+      "tipo": "ESCENARIO_INTEGRADO",
+      "dimension_dominante": "DEFICIT",
+      "horizonte": "LARGO_PLAZO",
       "prioridad": "PRIORIDAD_3_MEDIA"
     },
     {
       "ranking": 4,
       "escenario_id": "AMBA-E004",
-      "score": 53.1102,
+      "score": 51.6203,
       "cantidad_proyectos": 35,
-      "tipo": "ESCENARIO_DEFICIT",
+      "tipo": "ESCENARIO_INTEGRADO",
+      "dimension_dominante": "DEFICIT",
       "horizonte": "LARGO_PLAZO",
       "prioridad": "PRIORIDAD_3_MEDIA"
     },
     {
       "ranking": 5,
       "escenario_id": "AMBA-E005",
-      "score": 52.5175,
-      "cantidad_proyectos": 23,
-      "tipo": "ESCENARIO_DEFICIT",
+      "score": 43.1479,
+      "cantidad_proyectos": 19,
+      "tipo": "ESCENARIO_INTEGRADO",
+      "dimension_dominante": "INTEGRACION",
       "horizonte": "LARGO_PLAZO",
-      "prioridad": "PRIORIDAD_3_MEDIA"
+      "prioridad": "PRIORIDAD_4_BAJA"
     },
     {
       "ranking": 6,
       "escenario_id": "AMBA-E006",
-      "score": 48.4692,
-      "cantidad_proyectos": 27,
-      "tipo": "ESCENARIO_DEFICIT",
+      "score": 39.2859,
+      "cantidad_proyectos": 22,
+      "tipo": "ESCENARIO_INTEGRADO",
+      "dimension_dominante": "INTERMODALIDAD",
       "horizonte": "LARGO_PLAZO",
-      "prioridad": "PRIORIDAD_3_MEDIA"
-    }
-  ],
-  "evaluacion_k": [
-    {
-      "k_solicitado": 6,
-      "k_final": 6,
-      "silhouette": 0.3037079310441713,
-      "min_proyectos": 17,
-      "max_proyectos": 35,
-      "penalizacion_k": 0.0,
-      "score_seleccion": 0.3037079310441713,
-      "cumple_minimo": true
-    },
-    {
-      "k_solicitado": 7,
-      "k_final": 7,
-      "silhouette": 0.27935615092446836,
-      "min_proyectos": 17,
-      "max_proyectos": 23,
-      "penalizacion_k": 0.003,
-      "score_seleccion": 0.27635615092446836,
-      "cumple_minimo": true
-    },
-    {
-      "k_solicitado": 8,
-      "k_final": 7,
-      "silhouette": 0.2839779812999106,
-      "min_proyectos": 9,
-      "max_proyectos": 26,
-      "penalizacion_k": 0.003,
-      "score_seleccion": 0.2809779812999106,
-      "cumple_minimo": true
-    },
-    {
-      "k_solicitado": 9,
-      "k_final": 8,
-      "silhouette": 0.2770120312323329,
-      "min_proyectos": 10,
-      "max_proyectos": 23,
-      "penalizacion_k": 0.006,
-      "score_seleccion": 0.2710120312323329,
-      "cumple_minimo": true
-    },
-    {
-      "k_solicitado": 10,
-      "k_final": 8,
-      "silhouette": 0.2525579832816236,
-      "min_proyectos": 11,
-      "max_proyectos": 25,
-      "penalizacion_k": 0.006,
-      "score_seleccion": 0.2465579832816236,
-      "cumple_minimo": true
-    },
-    {
-      "k_solicitado": 11,
-      "k_final": 8,
-      "silhouette": 0.24003279768972913,
-      "min_proyectos": 13,
-      "max_proyectos": 23,
-      "penalizacion_k": 0.006,
-      "score_seleccion": 0.23403279768972912,
-      "cumple_minimo": true
-    },
-    {
-      "k_solicitado": 12,
-      "k_final": 9,
-      "silhouette": 0.2480032250321047,
-      "min_proyectos": 10,
-      "max_proyectos": 22,
-      "penalizacion_k": 0.009000000000000001,
-      "score_seleccion": 0.2390032250321047,
-      "cumple_minimo": true
+      "prioridad": "PRIORIDAD_4_BAJA"
     }
   ]
 }
