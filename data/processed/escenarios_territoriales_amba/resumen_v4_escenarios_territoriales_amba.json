@@ -1,0 +1,49 @@
+{
+  "registros": 144,
+  "escenarios": 7,
+  "escenarios_ids": [
+    "AMBA-E001",
+    "AMBA-E002",
+    "AMBA-E003",
+    "AMBA-E004",
+    "AMBA-E005",
+    "AMBA-E006",
+    "AMBA-E007"
+  ],
+  "cobertura": 1.0,
+  "sin_escenario": 0,
+  "minimo_proyectos": 20,
+  "maximo_proyectos": 21,
+  "promedio_proyectos": 20.571428571428573,
+  "desvio_proyectos": 0.4948716593053935,
+  "cv_proyectos": 0.024056261216234404,
+  "score_tamano": 0.9759437387837656,
+  "inconsistencias_restantes": 0,
+  "cambios_escenario": 3,
+  "score_v4": 0.9951887477567531,
+  "errores": [],
+  "advertencias": [],
+  "dictamen": "VALIDADO",
+  "detalle_inconsistencias": [],
+  "version": "V4.0",
+  "proceso": 31,
+  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba_optimizado.parquet",
+  "salidas": {
+    "parquet": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba_v4.parquet",
+    "csv": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba_v4.csv",
+    "detalle": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\detalle_v4_escenarios_territoriales_amba.csv",
+    "auditoria": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\auditoria_v4_escenarios_territoriales_amba.csv",
+    "json": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\resumen_v4_escenarios_territoriales_amba.json"
+  },
+  "principios_v4": {
+    "asignacion_proyecto_escenario": "NO_MODIFICADA",
+    "proyectos_eliminados": 0,
+    "geometrias_modificadas": false,
+    "indicadores_originales_modificados": false,
+    "atributos_escenario_normalizados": true,
+    "auditoria_original_conservada": true,
+    "metodo_tipo": "MODA_DETERMINISTICA",
+    "metodo_dimension": "MODA_DETERMINISTICA",
+    "metodo_prioridad": "MEDIANA_O_MODA"
+  }
+}

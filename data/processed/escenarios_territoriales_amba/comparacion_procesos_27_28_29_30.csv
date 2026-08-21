@@ -1,5 +1,5 @@
-﻿proceso,archivo,disponible,proyectos,escenarios,score
-27,C:\Users\Roan\Documents\GitHub\movilidad\data\processed\escenarios_territoriales_amba\escenarios_territoriales_amba.parquet,True,144.0,7,
-28,C:\Users\Roan\Documents\GitHub\movilidad\data\processed\escenarios_territoriales_amba\evaluacion_escenarios_territoriales_amba.parquet,True,,7,0.420487057376674
-29,C:\Users\Roan\Documents\GitHub\movilidad\data\processed\escenarios_territoriales_amba\evaluacion_escenarios_optimizada.csv,True,144.0,7,
-30,C:\Users\Roan\Documents\GitHub\movilidad\data\processed\escenarios_territoriales_amba\validacion_final_escenarios_territoriales_amba.parquet,True,144.0,7,0.0
+﻿proceso,archivo_disponible,proyectos,escenarios,proyectos_comunes,proyectos_solo_proceso,proyectos_solo_actual,asignaciones_modificadas,score
+27,True,144.0,7.0,144.0,0.0,0.0,8.0,
+28,True,,,,,,,0.420487057376674
+29,True,144.0,7.0,,,,,
+30,True,144.0,7.0,,,,,0.9599774666699662

@@ -1,63 +1,60 @@
 {
   "proceso": 29,
   "nombre": "Optimización de escenarios territoriales AMBA",
-  "version": "V2.0",
-  "fecha_ejecucion": "2026-08-21T11:14:33.060965-03:00",
-  "project_root": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
-  "input": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba.parquet",
-  "output": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba_optimizado.parquet",
+  "version": "V4.0",
+  "fecha_ejecucion": "2026-08-21T14:17:10.507482-03:00",
   "proyectos": 144,
   "escenarios": 7,
-  "movimientos": 6,
+  "movimientos": 8,
   "configuracion": {
     "min_proyectos": 8,
     "min_escenarios": 6,
     "max_escenarios": 12,
-    "max_iteraciones": 50,
-    "peso_cohesion": 0.3,
-    "peso_balance": 0.2,
-    "peso_indicadores": 0.25,
-    "peso_score_original": 0.15,
-    "peso_estabilidad": 0.1,
-    "mejora_minima": 0.0005,
-    "max_deterioro_score_original": 0.015,
-    "max_deterioro_cohesion": 0.02,
-    "max_diferencia_tamano": 8
+    "max_iteraciones": 100,
+    "mejora_minima": 1e-05,
+    "penalizacion_movimiento": 1e-06,
+    "radio_cohesion_metros": 50000.0
+  },
+  "pesos": {
+    "cohesion": 0.3,
+    "balance": 0.2,
+    "indicadores": 0.2,
+    "score_territorial": 0.15,
+    "estabilidad": 0.15
   },
   "metricas_originales": {
     "cobertura": 1.0,
     "estructura_escenarios": 1.0,
     "tamano": 1.0,
-    "cohesion": 0.850387146735774,
+    "cohesion": 0.8393741268165447,
     "balance": 0.8422525459499924,
-    "indicadores": 0.8522546468788619,
-    "score_original": 1.0,
+    "indicadores": 0.9010073669330645,
+    "score_territorial": 0.5488586774992081,
     "estabilidad": 1.0,
-    "score_global": 0.8866303149304462
+    "score_objetivo": 0.832793022246456
   },
   "metricas_optimizadas": {
     "cobertura": 1.0,
     "estructura_escenarios": 1.0,
     "tamano": 1.0,
-    "cohesion": 0.8490168124757802,
-    "balance": 0.9319586182560229,
-    "indicadores": 0.8627179051974261,
-    "score_original": 1.0,
-    "estabilidad": 0.9583333333333334,
-    "score_global": 0.9026095770266285
+    "cohesion": 0.8393741268165447,
+    "balance": 0.9759437387837656,
+    "indicadores": 0.927011409816737,
+    "score_territorial": 0.5379350621738912,
+    "estabilidad": 0.9444444444444444,
+    "score_objetivo": 0.8547601937578142
   },
+  "mejora_score_objetivo": 0.021967171511358186,
   "validacion": {
+    "proyectos_originales": 144,
+    "proyectos_optimizados": 144,
     "mismos_proyectos": true,
-    "mismos_registros": true,
+    "mismos_escenarios": true,
     "duplicados_proyecto": 0,
     "proyectos_sin_escenario": 0,
     "escenarios": 7,
-    "min_proyectos": 19,
-    "max_proyectos": 23,
-    "proyectos_totales": 144,
-    "proyectos_asignados": 144,
-    "cantidad_escenarios_valida": true,
-    "todos_los_escenarios_cumplen_minimo": true
+    "min_proyectos": 20,
+    "max_proyectos": 21
   },
-  "duracion_segundos": 17.492806799942628
+  "duracion_segundos": 460.3501161999302
 }

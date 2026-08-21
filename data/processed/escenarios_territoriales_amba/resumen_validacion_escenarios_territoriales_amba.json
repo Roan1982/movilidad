@@ -1,40 +1,119 @@
 {
   "proceso": 30,
-  "version": "V1.0",
-  "fecha_ejecucion": "2026-08-21T11:06:46.321132",
+  "version": "V3.0",
+  "fecha_ejecucion": "2026-08-21T14:02:21.746966",
   "proyecto": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
   "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba_optimizado.parquet",
-  "salida_principal": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\validacion_final_escenarios_territoriales_amba.parquet",
-  "crs_original": "{\"$schema\": \"https://proj.org/schemas/v0.7/projjson.schema.json\", \"type\": \"GeographicCRS\", \"name\": \"WGS 84\", \"datum_ensemble\": {\"name\": \"World Geodetic System 1984 ensemble\", \"members\": [{\"name\": \"World Geodetic System 1984 (Transit)\"}, {\"name\": \"World Geodetic System 1984 (G730)\"}, {\"name\": \"World Geodetic System 1984 (G873)\"}, {\"name\": \"World Geodetic System 1984 (G1150)\"}, {\"name\": \"World Geodetic System 1984 (G1674)\"}, {\"name\": \"World Geodetic System 1984 (G1762)\"}, {\"name\": \"World Geodetic System 1984 (G2139)\"}, {\"name\": \"World Geodetic System 1984 (G2296)\"}], \"ellipsoid\": {\"name\": \"WGS 84\", \"semi_major_axis\": 6378137, \"inverse_flattening\": 298.257223563}, \"accuracy\": \"2.0\", \"id\": {\"authority\": \"EPSG\", \"code\": 6326}}, \"coordinate_system\": {\"subtype\": \"ellipsoidal\", \"axis\": [{\"name\": \"Geodetic latitude\", \"abbreviation\": \"Lat\", \"direction\": \"north\", \"unit\": \"degree\"}, {\"name\": \"Geodetic longitude\", \"abbreviation\": \"Lon\", \"direction\": \"east\", \"unit\": \"degree\"}]}, \"scope\": \"Horizontal component of 3D system.\", \"area\": \"World.\", \"bbox\": {\"south_latitude\": -90, \"west_longitude\": -180, \"north_latitude\": 90, \"east_longitude\": 180}, \"id\": {\"authority\": \"EPSG\", \"code\": 4326}}",
-  "crs_metrico": "EPSG:22185",
-  "proyectos": 144,
-  "escenarios": 7,
-  "cobertura": 1.0,
-  "score_validacion": 0.0,
-  "clasificacion_score": "RECHAZADO",
-  "dictamen": "RECHAZADO",
-  "fundamento": "Se detectaron errores estructurales o de integridad que impiden validar el resultado.",
-  "errores": 21,
-  "warnings": 0,
-  "comparacion_proceso_27": {
-    "archivo_disponible": true,
-    "proyectos_original": 144,
-    "proyectos_optimizado": 144,
-    "escenarios_original": 7,
-    "escenarios_optimizado": 7,
-    "asignaciones_modificadas": 21,
-    "proyectos_solo_original": 0,
-    "proyectos_solo_optimizado": 0
+  "resultado": {
+    "dictamen": "VALIDADO_CON_OBSERVACIONES",
+    "fundamento": "El resultado supera el umbral mínimo de validación, pero presenta observaciones que deben ser consideradas.",
+    "score_global": 0.9599774666699662,
+    "score_validado": 0.8,
+    "score_observaciones": 0.6
   },
-  "comparacion_proceso_28": {
-    "archivo_disponible": true,
-    "score_global_28": 0.420487057376674,
-    "escenarios_28": 7
+  "estructura": {
+    "registros": 144,
+    "columnas": 143,
+    "geometrias_nulas": 0,
+    "geometrias_vacias": 0,
+    "geometrias_invalidas": 0,
+    "crs": "{\"$schema\": \"https://proj.org/schemas/v0.7/projjson.schema.json\", \"type\": \"GeographicCRS\", \"name\": \"WGS 84\", \"datum_ensemble\": {\"name\": \"World Geodetic System 1984 ensemble\", \"members\": [{\"name\": \"World Geodetic System 1984 (Transit)\"}, {\"name\": \"World Geodetic System 1984 (G730)\"}, {\"name\": \"World Geodetic System 1984 (G873)\"}, {\"name\": \"World Geodetic System 1984 (G1150)\"}, {\"name\": \"World Geodetic System 1984 (G1674)\"}, {\"name\": \"World Geodetic System 1984 (G1762)\"}, {\"name\": \"World Geodetic System 1984 (G2139)\"}, {\"name\": \"World Geodetic System 1984 (G2296)\"}], \"ellipsoid\": {\"name\": \"WGS 84\", \"semi_major_axis\": 6378137, \"inverse_flattening\": 298.257223563}, \"accuracy\": \"2.0\", \"id\": {\"authority\": \"EPSG\", \"code\": 6326}}, \"coordinate_system\": {\"subtype\": \"ellipsoidal\", \"axis\": [{\"name\": \"Geodetic latitude\", \"abbreviation\": \"Lat\", \"direction\": \"north\", \"unit\": \"degree\"}, {\"name\": \"Geodetic longitude\", \"abbreviation\": \"Lon\", \"direction\": \"east\", \"unit\": \"degree\"}]}, \"scope\": \"Horizontal component of 3D system.\", \"area\": \"World.\", \"bbox\": {\"south_latitude\": -90, \"west_longitude\": -180, \"north_latitude\": 90, \"east_longitude\": 180}, \"id\": {\"authority\": \"EPSG\", \"code\": 4326}}"
   },
-  "comparacion_proceso_29": {
-    "archivo_disponible": true,
-    "score_global_29": null,
-    "score_global_30": 0.918914658356371,
-    "diferencia_score": null
-  }
+  "proyectos": {
+    "total": 144,
+    "sin_id": 0,
+    "duplicados": 0,
+    "asignados": 144,
+    "sin_escenario": 0,
+    "cobertura": 1.0
+  },
+  "escenarios": {
+    "cantidad": 7,
+    "nulos": 0,
+    "min_proyectos": 20,
+    "max_proyectos": 21
+  },
+  "metricas": {
+    "cobertura": 1.0,
+    "tamano": 0.9927831216351296,
+    "cohesion": 0.8634850026717747,
+    "indicadores": 1.0,
+    "balance": 0.9759437387837656
+  },
+  "pesos": {
+    "cobertura": 0.25,
+    "tamano": 0.15,
+    "cohesion": 0.25,
+    "indicadores": 0.15,
+    "balance": 0.2
+  },
+  "cohesion": {
+    "distancia_media_m": 6825.74986641126,
+    "distancia_maxima_m": 33873.65238611548
+  },
+  "balance": {
+    "mean": 20.571428571428573,
+    "std": 0.4948716593053935,
+    "cv": 0.024056261216234404
+  },
+  "tamano": {
+    "min": 20,
+    "max": 21,
+    "mean": 20.571428571428573,
+    "std": 0.4948716593053935,
+    "cv": 0.024056261216234404,
+    "cumplen_minimo": 7
+  },
+  "indicadores": [
+    "indice_demanda_estructural",
+    "deficit_infraestructura",
+    "indice_conectividad_estructural",
+    "indice_intermodalidad_estructural",
+    "indice_integracion_territorial",
+    "indice_centralidad_estructural",
+    "impacto_potencial",
+    "urgencia_intervencion",
+    "score_prioridad_territorial",
+    "score_cartera"
+  ],
+  "consistencia": {
+    "inconsistencias": 9
+  },
+  "trazabilidad": {
+    "proceso_27": {
+      "disponible": true,
+      "proyectos_27": 144,
+      "escenarios_27": 7,
+      "proyectos_comunes": 144,
+      "proyectos_solo_27": 0,
+      "proyectos_solo_29": 0,
+      "asignaciones_modificadas": 8
+    },
+    "proceso_28": {
+      "disponible": true,
+      "registros": 7,
+      "score_referencia": 0.420487057376674
+    },
+    "proceso_29": {
+      "evaluacion_disponible": true,
+      "resumen_disponible": true,
+      "score_referencia": null
+    }
+  },
+  "alertas": {
+    "errores": 0,
+    "errores_bloqueantes": 0,
+    "advertencias": 9,
+    "advertencias_criticas": 9,
+    "informaciones": 1
+  },
+  "salidas": {
+    "parquet": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\validacion_final_escenarios_territoriales_amba.parquet",
+    "csv": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\validacion_final_escenarios_territoriales_amba.csv",
+    "detalle": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\detalle_validacion_escenarios_territoriales_amba.csv",
+    "comparacion": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\comparacion_procesos_27_28_29_30.csv",
+    "alertas": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\alertas_validacion_escenarios_territoriales_amba.csv",
+    "json": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\resumen_validacion_escenarios_territoriales_amba.json"
+  },
+  "duracion_segundos": 1.1341594000114128
 }

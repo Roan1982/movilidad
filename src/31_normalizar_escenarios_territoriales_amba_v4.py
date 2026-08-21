@@ -3,32 +3,36 @@
 """
 31 - NORMALIZACIÓN Y VALIDACIÓN DE ESCENARIOS TERRITORIALES AMBA - V4
 
-V4 toma como base la salida optimizada del proceso 29 y corrige las
-inconsistencias de atributos de nivel ESCENARIO detectadas por el proceso 30.
+Objetivo
+--------
+Normalizar los atributos conceptuales de cada escenario territorial
+a partir de la salida optimizada del proceso 29.
 
-Principios:
-
+Principios V4
+-------------
 - No modifica la asignación proyecto -> escenario.
 - No elimina proyectos.
 - No modifica geometrías.
 - No modifica indicadores originales.
-- Normaliza atributos conceptuales del escenario mediante reglas
-  determinísticas y trazables.
-- Mantiene una copia de los valores originales para auditoría.
+- Normaliza atributos conceptuales a nivel escenario.
+- Conserva los valores originales para auditoría.
+- Utiliza reglas determinísticas y trazables.
+- Valida nuevamente la consistencia interna.
+- Produce Parquet, CSV, auditoría, detalle y resumen JSON.
 
-Entrada:
+Entrada
+-------
+data/processed/escenarios_territoriales_amba/
+    escenarios_territoriales_amba_optimizado.parquet
 
-    data/processed/escenarios_territoriales_amba/
-        escenarios_territoriales_amba_optimizado.parquet
-
-Salidas:
-
-    data/processed/escenarios_territoriales_amba/
-        escenarios_territoriales_amba_v4.parquet
-        escenarios_territoriales_amba_v4.csv
-        detalle_v4_escenarios_territoriales_amba.csv
-        auditoria_v4_escenarios_territoriales_amba.csv
-        resumen_v4_escenarios_territoriales_amba.json
+Salidas
+-------
+data/processed/escenarios_territoriales_amba/
+    escenarios_territoriales_amba_v4.parquet
+    escenarios_territoriales_amba_v4.csv
+    detalle_v4_escenarios_territoriales_amba.csv
+    auditoria_v4_escenarios_territoriales_amba.csv
+    resumen_v4_escenarios_territoriales_amba.json
 """
 
 from __future__ import annotations
@@ -55,6 +59,7 @@ except ImportError:
 # ============================================================================
 
 VERSION = "V4.0"
+PROCESO = 31
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 
@@ -104,7 +109,10 @@ CRS_GEOGRAPHIC = "EPSG:4326"
 CRS_METRIC = "EPSG:22185"
 
 
-# Campos conceptuales del escenario.
+# ============================================================================
+# CAMPOS CONCEPTUALES
+# ============================================================================
+
 SCENARIO_FIELDS = [
     "tipo_escenario",
     "dimension_dominante",
@@ -112,8 +120,6 @@ SCENARIO_FIELDS = [
 ]
 
 
-# Indicadores utilizados únicamente como soporte diagnóstico.
-# V4 NO modifica estos campos.
 INDICATOR_FIELDS = [
     "indice_demanda_estructural",
     "deficit_infraestructura",
@@ -134,10 +140,11 @@ INDICATOR_FIELDS = [
 
 def normalizar_nombre(nombre: str) -> str:
     """
-    Normaliza nombres de columnas para tolerar diferencias menores.
+    Normaliza nombres de columnas para permitir pequeñas diferencias
+    de nomenclatura.
     """
-
     s = unicodedata.normalize("NFKD", str(nombre))
+
     s = "".join(
         c for c in s
         if not unicodedata.combining(c)
@@ -146,7 +153,7 @@ def normalizar_nombre(nombre: str) -> str:
     s = re.sub(
         r"[^a-zA-Z0-9]+",
         "_",
-        s,
+        s
     )
 
     return s.strip("_").lower()
@@ -158,7 +165,7 @@ def resolver_columna(
     requerida: bool = True,
 ):
     """
-    Resuelve una columna aceptando diferencias menores de nomenclatura.
+    Busca una columna por nombre exacto o normalizado.
     """
 
     direct = {
@@ -167,6 +174,7 @@ def resolver_columna(
     }
 
     for candidato in candidatos:
+
         if candidato.lower() in direct:
             return direct[candidato.lower()]
 
@@ -176,10 +184,11 @@ def resolver_columna(
     }
 
     for candidato in candidatos:
-        n = normalizar_nombre(candidato)
 
-        if n in normalizadas:
-            return normalizadas[n]
+        normalizado = normalizar_nombre(candidato)
+
+        if normalizado in normalizadas:
+            return normalizadas[normalizado]
 
     if requerida:
         raise KeyError(
@@ -190,163 +199,178 @@ def resolver_columna(
     return None
 
 
-def valor_valido(v) -> bool:
+def valor_valido(valor) -> bool:
     """
-    Determina si un valor puede utilizarse como atributo válido.
+    Determina si un valor puede utilizarse.
     """
 
-    if v is None:
+    if valor is None:
         return False
 
     try:
-        if pd.isna(v):
+
+        if pd.isna(valor):
             return False
+
     except Exception:
         pass
 
-    if isinstance(v, str) and not v.strip():
-        return False
+    if isinstance(valor, str):
+
+        if not valor.strip():
+            return False
 
     return True
 
 
-def clave_valor(v):
+def clave_valor(valor):
     """
-    Genera una clave estable para comparar valores heterogéneos.
+    Construye una clave estable para comparar valores heterogéneos.
     """
 
-    if isinstance(v, (np.integer, int)):
-        return ("num", float(v))
+    if isinstance(valor, (np.integer, int)):
 
-    if isinstance(v, (np.floating, float)):
-        if math.isnan(float(v)):
-            return ("null", "")
+        return (
+            "num",
+            float(valor),
+        )
 
-        return ("num", float(v))
+    if isinstance(valor, (np.floating, float)):
 
-    return ("str", str(v).strip())
+        if math.isnan(float(valor)):
+            return (
+                "null",
+                "",
+            )
+
+        return (
+            "num",
+            float(valor),
+        )
+
+    return (
+        "str",
+        str(valor).strip(),
+    )
 
 
 def valores_unicos_validos(
-    series: pd.Series,
+    serie: pd.Series,
 ) -> list:
-    """
-    Devuelve valores únicos conservando el orden de primera aparición.
-    """
 
     salida = []
     vistos = set()
 
-    for v in series:
+    for valor in serie:
 
-        if not valor_valido(v):
+        if not valor_valido(valor):
             continue
 
-        clave = clave_valor(v)
+        clave = clave_valor(valor)
 
         if clave not in vistos:
+
             vistos.add(clave)
-            salida.append(v)
+            salida.append(valor)
 
     return salida
 
 
 def frecuencia_valores(
-    series: pd.Series,
+    serie: pd.Series,
 ) -> Counter:
-    """
-    Cuenta frecuencias de valores válidos.
-    """
 
-    counter = Counter()
+    contador = Counter()
 
-    for v in series:
+    for valor in serie:
 
-        if valor_valido(v):
-            counter[clave_valor(v)] += 1
+        if valor_valido(valor):
 
-    return counter
+            contador[
+                clave_valor(valor)
+            ] += 1
+
+    return contador
 
 
 def moda_deterministica(
-    series: pd.Series,
+    serie: pd.Series,
 ):
     """
     Moda determinística.
 
-    Regla:
-
-    1. Mayor frecuencia.
-    2. En empate, primer valor observado.
-
-    No depende de sets ni del hash aleatorio de Python.
+    Criterio:
+    1. mayor frecuencia
+    2. primer valor observado como desempate
     """
 
-    frecuencias = frecuencia_valores(series)
+    frecuencias = frecuencia_valores(serie)
 
     if not frecuencias:
         return None, 0, 0
 
     valores = [
-        v
-        for v in series
-        if valor_valido(v)
+        valor
+        for valor in serie
+        if valor_valido(valor)
     ]
 
     primera_posicion = {}
 
-    for i, v in enumerate(valores):
-        clave = clave_valor(v)
+    for i, valor in enumerate(valores):
+
+        clave = clave_valor(valor)
 
         if clave not in primera_posicion:
             primera_posicion[clave] = i
 
     ganador = sorted(
         frecuencias.keys(),
-        key=lambda k: (
-            -frecuencias[k],
-            primera_posicion[k],
+        key=lambda clave: (
+            -frecuencias[clave],
+            primera_posicion[clave],
         ),
     )[0]
 
-    valor = next(
-        v
-        for v in valores
-        if clave_valor(v) == ganador
+    valor_final = next(
+        valor
+        for valor in valores
+        if clave_valor(valor) == ganador
     )
 
     return (
-        valor,
+        valor_final,
         frecuencias[ganador],
         len(valores),
     )
 
 
 def resolver_prioridad(
-    df_grupo: pd.DataFrame,
+    grupo: pd.DataFrame,
     columna: str,
 ):
     """
-    Resuelve prioridad.
+    Normalización de prioridad.
 
     Si es numérica:
         mediana.
-
-    Si todos los valores son enteros:
-        devuelve entero.
 
     Si es categórica:
         moda determinística.
     """
 
-    serie = df_grupo[columna]
+    serie = grupo[columna]
 
     validos = serie[
         serie.apply(valor_valido)
     ]
 
     if validos.empty:
-        return None, "SIN_DATO"
+
+        return (
+            None,
+            "SIN_DATO",
+        )
 
     numerica = pd.to_numeric(
         validos,
@@ -359,51 +383,58 @@ def resolver_prioridad(
             numerica.median()
         )
 
-        valores_float = numerica.to_numpy(
+        valores = numerica.to_numpy(
             dtype=float
         )
 
         todos_enteros = np.all(
             np.isclose(
-                valores_float,
-                np.round(valores_float),
+                valores,
+                np.round(valores),
             )
         )
 
         if todos_enteros:
+
             return (
                 int(round(mediana)),
                 "MEDIANA",
             )
 
-        return mediana, "MEDIANA"
+        return (
+            mediana,
+            "MEDIANA",
+        )
 
     valor, _, _ = moda_deterministica(
         validos
     )
 
-    return valor, "MODA"
+    return (
+        valor,
+        "MODA",
+    )
 
 
 def score_numerico_grupo(
-    df_grupo: pd.DataFrame,
+    grupo: pd.DataFrame,
     columnas: list[str],
 ) -> float:
     """
-    Score auxiliar para diagnóstico.
+    Score auxiliar exclusivamente para diagnóstico.
 
-    No modifica ningún indicador.
+    No modifica indicadores.
     """
 
     scores = []
 
     for columna in columnas:
 
-        if columna not in df_grupo.columns:
+        if columna not in grupo.columns:
             continue
 
         serie = pd.to_numeric(
-            df_grupo[columna],
+            grupo[columna],
             errors="coerce",
         )
 
@@ -421,34 +452,36 @@ def score_numerico_grupo(
     )
 
 
-def convertir_jsonable(v):
+def convertir_jsonable(valor):
     """
-    Convierte tipos NumPy/Pandas a tipos serializables por JSON.
+    Convierte valores NumPy/Pandas a tipos JSON.
     """
 
-    if isinstance(v, np.integer):
-        return int(v)
+    if isinstance(valor, np.integer):
+        return int(valor)
 
-    if isinstance(v, np.floating):
+    if isinstance(valor, np.floating):
 
-        if np.isnan(v):
+        if np.isnan(valor):
             return None
 
-        return float(v)
+        return float(valor)
 
-    if isinstance(v, np.ndarray):
-        return v.tolist()
+    if isinstance(valor, np.ndarray):
+        return valor.tolist()
 
-    if isinstance(v, (list, dict, tuple)):
-        return v
+    if isinstance(valor, (list, dict, tuple)):
+        return valor
 
     try:
-        if pd.isna(v):
+
+        if pd.isna(valor):
             return None
+
     except Exception:
         pass
 
-    return v
+    return valor
 
 
 # ============================================================================
@@ -458,10 +491,12 @@ def convertir_jsonable(v):
 def cargar():
 
     print("=" * 88)
+
     print(
-        "31 - NORMALIZACIÓN Y VALIDACIÓN DE ESCENARIOS "
-        f"TERRITORIALES AMBA - {VERSION}"
+        "31 - NORMALIZACIÓN Y VALIDACIÓN DE "
+        f"ESCENARIOS TERRITORIALES AMBA - {VERSION}"
     )
+
     print("=" * 88)
 
     print(f"Proyecto : {BASE_DIR}")
@@ -472,21 +507,24 @@ def cargar():
     if not INPUT_FILE.exists():
 
         raise FileNotFoundError(
-            "\nNo existe la salida del proceso 29:\n"
+            "\nNo existe la entrada del proceso 29:\n"
             f"{INPUT_FILE}\n\n"
-            "Verificá que el proceso 29 haya generado:\n"
-            "escenarios_territoriales_amba_optimizado.parquet"
+            "Ejecute primero el proceso que genera "
+            "escenarios_territoriales_amba_optimizado.parquet."
         )
 
     print("=" * 88)
     print("CARGANDO RESULTADO DEL PROCESO 29")
     print("=" * 88)
 
-    print(f"Cargando: {INPUT_FILE}")
+    print(
+        f"Cargando: {INPUT_FILE}"
+    )
 
     if gpd is not None:
 
         try:
+
             df = gpd.read_parquet(
                 INPUT_FILE
             )
@@ -503,11 +541,19 @@ def cargar():
             INPUT_FILE
         )
 
-    print(f"Registros : {len(df):,}")
-    print(f"Columnas  : {len(df.columns):,}")
+    print(
+        f"Registros : {len(df):,}"
+    )
+
+    print(
+        f"Columnas  : {len(df.columns):,}"
+    )
 
     if hasattr(df, "crs"):
-        print(f"CRS       : {df.crs}")
+
+        print(
+            f"CRS       : {df.crs}"
+        )
 
     return df
 
@@ -565,7 +611,7 @@ def resolver_columnas(df):
 
     if (
         hasattr(df, "geometry")
-        and df.geometry is not None
+        and "geometry" in df.columns
     ):
         geometria = "geometry"
 
@@ -581,9 +627,10 @@ def resolver_columnas(df):
     print()
     print("COLUMNAS RESUELTAS")
 
-    for k, v in resultado.items():
+    for clave, valor in resultado.items():
+
         print(
-            f"  {k:20}: {v}"
+            f"  {clave:20}: {valor}"
         )
 
     return resultado
@@ -603,11 +650,10 @@ def normalizar(
     dimension = cols["dimension"]
     prioridad = cols["prioridad"]
 
-    # Copia completa.
     out = df.copy()
 
     # ------------------------------------------------------------------------
-    # AUDITORÍA A NIVEL PROYECTO
+    # AUDITORÍA ORIGINAL
     # ------------------------------------------------------------------------
 
     out[
@@ -644,31 +690,39 @@ def normalizar(
             continue
 
         # --------------------------------------------------------------------
-        # VALORES ORIGINALES
+        # TIPO
         # --------------------------------------------------------------------
 
-        tipo_originales = valores_unicos_validos(
-            grupo[tipo]
-        )
-
-        dimension_originales = valores_unicos_validos(
-            grupo[dimension]
-        )
-
-        # --------------------------------------------------------------------
-        # RESOLUCIÓN
-        # --------------------------------------------------------------------
-
-        tipo_final, tipo_freq, tipo_total = (
-            moda_deterministica(
+        tipo_originales = (
+            valores_unicos_validos(
                 grupo[tipo]
             )
         )
 
-        dimension_final, dim_freq, dim_total = (
-            moda_deterministica(
+        (
+            tipo_final,
+            tipo_frecuencia,
+            tipo_total,
+        ) = moda_deterministica(
+            grupo[tipo]
+        )
+
+        # --------------------------------------------------------------------
+        # DIMENSIÓN
+        # --------------------------------------------------------------------
+
+        dimension_originales = (
+            valores_unicos_validos(
                 grupo[dimension]
             )
+        )
+
+        (
+            dimension_final,
+            dimension_frecuencia,
+            dimension_total,
+        ) = moda_deterministica(
+            grupo[dimension]
         )
 
         # --------------------------------------------------------------------
@@ -677,11 +731,12 @@ def normalizar(
 
         if prioridad:
 
-            prioridad_final, prioridad_metodo = (
-                resolver_prioridad(
-                    grupo,
-                    prioridad,
-                )
+            (
+                prioridad_final,
+                prioridad_metodo,
+            ) = resolver_prioridad(
+                grupo,
+                prioridad,
             )
 
             prioridad_originales = (
@@ -700,58 +755,68 @@ def normalizar(
         # SCORE AUXILIAR
         # --------------------------------------------------------------------
 
-        score_aux = score_numerico_grupo(
-            grupo,
-            [
-                c
-                for c in INDICATOR_FIELDS
-                if c in grupo.columns
-            ],
-        )
+        indicadores_disponibles = [
+            columna
+            for columna in INDICATOR_FIELDS
+            if columna in grupo.columns
+        ]
 
-        # --------------------------------------------------------------------
-        # DETECCIÓN DE CAMBIOS
-        # --------------------------------------------------------------------
-
-        cambios_tipo = (
-            len(tipo_originales) > 1
-        )
-
-        cambios_dimension = (
-            len(dimension_originales) > 1
-        )
-
-        cambios_prioridad = (
-            len(prioridad_originales) > 1
+        score_auxiliar = (
+            score_numerico_grupo(
+                grupo,
+                indicadores_disponibles,
+            )
         )
 
         # --------------------------------------------------------------------
         # ASIGNACIÓN
         # --------------------------------------------------------------------
 
-        mask = (
+        mascara = (
             out[escenario]
             == escenario_id
         )
 
         out.loc[
-            mask,
+            mascara,
             tipo,
         ] = tipo_final
 
         out.loc[
-            mask,
+            mascara,
             dimension,
         ] = dimension_final
 
         if prioridad:
 
             out.loc[
-                mask,
+                mascara,
                 prioridad,
             ] = prioridad_final
 
+        # --------------------------------------------------------------------
+        # CAMBIOS
+        # --------------------------------------------------------------------
+
+        cambio_tipo = (
+            len(tipo_originales) > 1
+        )
+
+        cambio_dimension = (
+            len(dimension_originales) > 1
+        )
+
+        cambio_prioridad = (
+            len(prioridad_originales) > 1
+        )
+
         cantidad = len(grupo)
+
+        hubo_cambio = (
+            cambio_tipo
+            or cambio_dimension
+            or cambio_prioridad
+        )
 
         # --------------------------------------------------------------------
         # AUDITORÍA
@@ -773,11 +838,10 @@ def normalizar(
                         )
                     ),
 
-                "tipo_final":
-                    tipo_final,
+                "tipo_final": tipo_final,
 
                 "tipo_frecuencia":
-                    tipo_freq,
+                    tipo_frecuencia,
 
                 "tipo_total_validos":
                     tipo_total,
@@ -800,10 +864,10 @@ def normalizar(
                     dimension_final,
 
                 "dimension_frecuencia":
-                    dim_freq,
+                    dimension_frecuencia,
 
                 "dimension_total_validos":
-                    dim_total,
+                    dimension_total,
 
                 "dimension_metodo":
                     "MODA_DETERMINISTICA",
@@ -826,16 +890,19 @@ def normalizar(
                     prioridad_metodo,
 
                 "score_auxiliar_indicadores":
-                    score_aux,
+                    score_auxiliar,
 
                 "corregido_tipo":
-                    cambios_tipo,
+                    cambio_tipo,
 
                 "corregido_dimension":
-                    cambios_dimension,
+                    cambio_dimension,
 
                 "corregido_prioridad":
-                    cambios_prioridad,
+                    cambio_prioridad,
+
+                "escenario_modificado":
+                    hubo_cambio,
             }
         )
 
@@ -861,7 +928,16 @@ def normalizar(
                     prioridad_final,
 
                 "score_auxiliar_indicadores":
-                    score_aux,
+                    score_auxiliar,
+
+                "corregido_tipo":
+                    cambio_tipo,
+
+                "corregido_dimension":
+                    cambio_dimension,
+
+                "corregido_prioridad":
+                    cambio_prioridad,
 
                 "estado_v4":
                     "NORMALIZADO",
@@ -934,7 +1010,11 @@ def validar_v4(
     # ========================================================================
 
     if (
-        hasattr(df, "geometry")
+        gpd is not None
+        and isinstance(
+            df,
+            gpd.GeoDataFrame,
+        )
         and df.geometry is not None
     ):
 
@@ -953,16 +1033,19 @@ def validar_v4(
             )
 
             if null_geom:
+
                 errores.append(
                     f"GEOMETRY_NULL:{null_geom}"
                 )
 
             if empty_geom:
+
                 errores.append(
                     f"GEOMETRY_EMPTY:{empty_geom}"
                 )
 
             if invalid_geom:
+
                 errores.append(
                     f"GEOMETRY_INVALID:{invalid_geom}"
                 )
@@ -970,22 +1053,25 @@ def validar_v4(
         except Exception as exc:
 
             advertencias.append(
-                f"GEOMETRY_VALIDATION_WARNING:{exc}"
+                "GEOMETRY_VALIDATION_WARNING:"
+                f"{exc}"
             )
 
     # ========================================================================
     # ESCENARIOS
     # ========================================================================
 
+    escenarios = [
+        valor
+        for valor
+        in df[escenario]
+        .dropna()
+        .unique()
+        .tolist()
+    ]
+
     escenarios = sorted(
-        [
-            x
-            for x in
-            df[escenario]
-            .dropna()
-            .unique()
-            .tolist()
-        ],
+        escenarios,
         key=str,
     )
 
@@ -1005,25 +1091,26 @@ def validar_v4(
         )
 
     counts = (
-        df.groupby(escenario)
+        df.groupby(
+            escenario,
+            dropna=True,
+        )
         .size()
     )
 
-    if len(counts):
+    if not counts.empty:
 
-        menores = counts[
-            counts < MIN_PROJECTS
-        ]
+        escenarios_pequenos = (
+            counts[
+                counts < MIN_PROJECTS
+            ]
+        )
 
-        if not menores.empty:
-
-            malos = (
-                menores
-                .to_dict()
-            )
+        if not escenarios_pequenos.empty:
 
             errores.append(
-                f"SCENARIO_MIN_PROJECTS:{malos}"
+                "SCENARIO_MIN_PROJECTS:"
+                f"{escenarios_pequenos.to_dict()}"
             )
 
     # ========================================================================
@@ -1052,16 +1139,13 @@ def validar_v4(
 
     inconsistencias = []
 
-    for escenario_id, grupo in (
-        df.groupby(
-            escenario,
-            sort=True,
-        )
+    for escenario_id, grupo in df.groupby(
+        escenario,
+        sort=True,
+        dropna=True,
     ):
 
-        for nombre, columna in (
-            campos_consistencia
-        ):
+        for nombre, columna in campos_consistencia:
 
             unicos = (
                 valores_unicos_validos(
@@ -1104,28 +1188,26 @@ def validar_v4(
     # ========================================================================
 
     sin_escenario = int(
-        df[escenario]
-        .isna()
-        .sum()
+        df[escenario].isna().sum()
     )
 
     cobertura = (
         (n - sin_escenario) / n
         if n
-        else 0
+        else 0.0
     )
 
-    if cobertura < 1:
+    if cobertura < 1.0:
 
         errores.append(
             f"COVERAGE:{cobertura:.6f}"
         )
 
     # ========================================================================
-    # TAMAÑO DE ESCENARIOS
+    # TAMAÑO
     # ========================================================================
 
-    if len(counts):
+    if not counts.empty:
 
         minimo = int(
             counts.min()
@@ -1148,16 +1230,16 @@ def validar_v4(
         cv = (
             desvio / promedio
             if promedio
-            else 0
+            else 0.0
         )
 
     else:
 
         minimo = 0
         maximo = 0
-        promedio = 0
-        desvio = 0
-        cv = 0
+        promedio = 0.0
+        desvio = 0.0
+        cv = 0.0
 
     score_tamano = max(
         0.0,
@@ -1168,37 +1250,38 @@ def validar_v4(
     )
 
     # ========================================================================
-    # AUDITORÍA DE CAMBIOS
+    # AUDITORÍA
     # ========================================================================
 
     cambios = 0
 
     if not auditoria.empty:
 
-        columnas_cambios = [
+        columnas_cambio = [
             "corregido_tipo",
             "corregido_dimension",
             "corregido_prioridad",
         ]
 
-        existentes = [
-            c
-            for c in columnas_cambios
-            if c in auditoria.columns
+        columnas_existentes = [
+            columna
+            for columna in columnas_cambio
+            if columna in auditoria.columns
         ]
 
-        if existentes:
+        if columnas_existentes:
 
             cambios = int(
                 auditoria[
-                    existentes
+                    columnas_existentes
                 ]
+                .fillna(False)
                 .any(axis=1)
                 .sum()
             )
 
     # ========================================================================
-    # SCORE V4
+    # SCORES
     # ========================================================================
 
     score_consistencia = (
@@ -1215,21 +1298,29 @@ def validar_v4(
         + 0.40 * score_consistencia
     )
 
+    # ========================================================================
+    # DICTAMEN
+    # ========================================================================
+
     if errores:
+
         dictamen = "NO_VALIDADO"
+
     else:
+
         dictamen = "VALIDADO"
 
     return {
-        "registros": n,
+        "registros":
+            n,
 
         "escenarios":
             cantidad_escenarios,
 
         "escenarios_ids":
             [
-                str(x)
-                for x in escenarios
+                str(valor)
+                for valor in escenarios
             ],
 
         "cobertura":
@@ -1284,10 +1375,10 @@ def validar_v4(
 # ============================================================================
 
 def exportar(
-    df,
-    auditoria,
-    detalle,
-    resumen,
+    df: pd.DataFrame,
+    auditoria: pd.DataFrame,
+    detalle: pd.DataFrame,
+    resumen: dict,
 ):
 
     print()
@@ -1322,10 +1413,11 @@ def exportar(
             csv_df["geometry"] = (
                 csv_df["geometry"]
                 .apply(
-                    lambda g:
-                        g.wkt
-                        if g is not None
-                        else None
+                    lambda geom:
+                    geom.wkt
+                    if geom is not None
+                    and not pd.isna(geom)
+                    else None
                 )
             )
 
@@ -1369,35 +1461,194 @@ def exportar(
     with OUTPUT_JSON.open(
         "w",
         encoding="utf-8",
-    ) as f:
+    ) as archivo:
 
         json.dump(
             resumen,
-            f,
+            archivo,
             ensure_ascii=False,
             indent=2,
             default=convertir_jsonable,
         )
 
     print(
-        f"Parquet   : {OUTPUT_PARQUET}"
+        f"Parquet    : {OUTPUT_PARQUET}"
     )
 
     print(
-        f"CSV       : {OUTPUT_CSV}"
+        f"CSV        : {OUTPUT_CSV}"
     )
 
     print(
-        f"Detalle   : {OUTPUT_DETAIL}"
+        f"Detalle    : {OUTPUT_DETAIL}"
     )
 
     print(
-        f"Auditoría : {OUTPUT_AUDIT}"
+        f"Auditoría  : {OUTPUT_AUDIT}"
     )
 
     print(
-        f"Resumen   : {OUTPUT_JSON}"
+        f"Resumen    : {OUTPUT_JSON}"
     )
+
+
+# ============================================================================
+# REPORTE
+# ============================================================================
+
+def imprimir_resultado(
+    resumen: dict,
+    detalle: pd.DataFrame,
+):
+
+    print()
+    print("=" * 88)
+    print("RESULTADO V4")
+    print("=" * 88)
+
+    print(
+        f"Proyectos                  : "
+        f"{resumen['registros']:,}"
+    )
+
+    print(
+        f"Escenarios                 : "
+        f"{resumen['escenarios']}"
+    )
+
+    print(
+        f"Cobertura                  : "
+        f"{resumen['cobertura']:.2%}"
+    )
+
+    print(
+        f"Mínimo proyectos           : "
+        f"{resumen['minimo_proyectos']}"
+    )
+
+    print(
+        f"Máximo proyectos           : "
+        f"{resumen['maximo_proyectos']}"
+    )
+
+    print(
+        f"Score tamaño               : "
+        f"{resumen['score_tamano']:.4f}"
+    )
+
+    print(
+        f"Inconsistencias restantes  : "
+        f"{resumen['inconsistencias_restantes']}"
+    )
+
+    print(
+        f"Escenarios normalizados    : "
+        f"{resumen['cambios_escenario']}"
+    )
+
+    print(
+        f"Score V4                   : "
+        f"{resumen['score_v4']:.4f}"
+    )
+
+    print(
+        f"Dictamen                   : "
+        f"{resumen['dictamen']}"
+    )
+
+    # ========================================================================
+    # DETALLE
+    # ========================================================================
+
+    print()
+    print("=" * 88)
+    print("DETALLE DE ESCENARIOS V4")
+    print("=" * 88)
+
+    if not detalle.empty:
+
+        columnas_mostrar = [
+            "escenario_id",
+            "cantidad_proyectos",
+            "tipo_escenario",
+            "dimension_dominante",
+            "prioridad_escenario",
+            "score_auxiliar_indicadores",
+            "estado_v4",
+        ]
+
+        columnas_mostrar = [
+            columna
+            for columna in columnas_mostrar
+            if columna in detalle.columns
+        ]
+
+        print(
+            detalle[
+                columnas_mostrar
+            ].to_string(
+                index=False
+            )
+        )
+
+    # ========================================================================
+    # INCONSISTENCIAS
+    # ========================================================================
+
+    if resumen[
+        "detalle_inconsistencias"
+    ]:
+
+        print()
+        print(
+            "INCONSISTENCIAS RESTANTES"
+        )
+
+        print(
+            pd.DataFrame(
+                resumen[
+                    "detalle_inconsistencias"
+                ]
+            ).to_string(
+                index=False
+            )
+        )
+
+    print()
+    print("=" * 88)
+
+    if resumen["dictamen"] == "VALIDADO":
+
+        print(
+            "DICTAMEN FINAL: VALIDADO"
+        )
+
+        print()
+
+        print(
+            "La salida V4 conserva la asignación "
+            "proyecto -> escenario del proceso 29, "
+            "mantiene los indicadores y geometrías "
+            "originales y elimina las inconsistencias "
+            "internas de los atributos conceptuales "
+            "del escenario."
+        )
+
+    else:
+
+        print(
+            "DICTAMEN FINAL: NO_VALIDADO"
+        )
+
+        print()
+
+        print("Errores:")
+
+        for error in resumen["errores"]:
+
+            print(
+                f"  - {error}"
+            )
 
 
 # ============================================================================
@@ -1415,7 +1666,7 @@ def main():
         df = cargar()
 
         # --------------------------------------------------------------------
-        # COLUMNAS
+        # RESOLVER COLUMNAS
         # --------------------------------------------------------------------
 
         cols = resolver_columnas(
@@ -1459,7 +1710,7 @@ def main():
 
         resumen["version"] = VERSION
 
-        resumen["proceso"] = 31
+        resumen["proceso"] = PROCESO
 
         resumen["entrada"] = str(
             INPUT_FILE
@@ -1482,8 +1733,41 @@ def main():
                 str(OUTPUT_JSON),
         }
 
+        resumen[
+            "principios_v4"
+        ] = {
+            "asignacion_proyecto_escenario":
+                "NO_MODIFICADA",
+
+            "proyectos_eliminados":
+                0,
+
+            "geometrias_modificadas":
+                False,
+
+            "indicadores_originales_modificados":
+                False,
+
+            "atributos_escenario_normalizados":
+                True,
+
+            "auditoria_original_conservada":
+                True,
+
+            "metodo_tipo":
+                "MODA_DETERMINISTICA",
+
+            "metodo_dimension":
+                "MODA_DETERMINISTICA",
+
+            "metodo_prioridad":
+                (
+                    "MEDIANA_O_MODA"
+                ),
+        }
+
         # --------------------------------------------------------------------
-        # EXPORTACIÓN
+        # EXPORTAR
         # --------------------------------------------------------------------
 
         exportar(
@@ -1494,159 +1778,23 @@ def main():
         )
 
         # --------------------------------------------------------------------
-        # RESULTADO
+        # REPORTE
         # --------------------------------------------------------------------
 
-        print()
-        print("=" * 88)
-        print("RESULTADO V4")
-        print("=" * 88)
-
-        print(
-            f"Proyectos                  : "
-            f"{resumen['registros']:,}"
-        )
-
-        print(
-            f"Escenarios                 : "
-            f"{resumen['escenarios']}"
-        )
-
-        print(
-            f"Cobertura                  : "
-            f"{resumen['cobertura']:.2%}"
-        )
-
-        print(
-            f"Mínimo proyectos          : "
-            f"{resumen['minimo_proyectos']}"
-        )
-
-        print(
-            f"Máximo proyectos          : "
-            f"{resumen['maximo_proyectos']}"
-        )
-
-        print(
-            f"Score tamaño              : "
-            f"{resumen['score_tamano']:.4f}"
-        )
-
-        print(
-            f"Inconsistencias restantes : "
-            f"{resumen['inconsistencias_restantes']}"
-        )
-
-        print(
-            f"Escenarios normalizados   : "
-            f"{resumen['cambios_escenario']}"
-        )
-
-        print(
-            f"Score V4                  : "
-            f"{resumen['score_v4']:.4f}"
-        )
-
-        print(
-            f"Dictamen                  : "
-            f"{resumen['dictamen']}"
+        imprimir_resultado(
+            resumen,
+            detalle,
         )
 
         # --------------------------------------------------------------------
-        # DETALLE
-        # --------------------------------------------------------------------
-
-        print()
-        print("=" * 88)
-        print("DETALLE DE ESCENARIOS V4")
-        print("=" * 88)
-
-        if not detalle.empty:
-
-            mostrar = [
-                c
-                for c in [
-                    "escenario_id",
-                    "cantidad_proyectos",
-                    "tipo_escenario",
-                    "dimension_dominante",
-                    "prioridad_escenario",
-                    "score_auxiliar_indicadores",
-                    "estado_v4",
-                ]
-                if c in detalle.columns
-            ]
-
-            print(
-                detalle[
-                    mostrar
-                ].to_string(
-                    index=False
-                )
-            )
-
-        # --------------------------------------------------------------------
-        # INCONSISTENCIAS
+        # CÓDIGO DE SALIDA
         # --------------------------------------------------------------------
 
         if resumen[
-            "detalle_inconsistencias"
-        ]:
-
-            print()
-            print(
-                "INCONSISTENCIAS RESTANTES"
-            )
-
-            print(
-                pd.DataFrame(
-                    resumen[
-                        "detalle_inconsistencias"
-                    ]
-                ).to_string(
-                    index=False
-                )
-            )
-
-        # --------------------------------------------------------------------
-        # DICTAMEN
-        # --------------------------------------------------------------------
-
-        print()
-        print("=" * 88)
-
-        if resumen["dictamen"] == "VALIDADO":
-
-            print(
-                "DICTAMEN FINAL: VALIDADO"
-            )
-
-            print()
-
-            print(
-                "La salida V4 conserva la "
-                "asignación del proceso 29, "
-                "mantiene los indicadores y "
-                "geometrías originales y "
-                "elimina las inconsistencias "
-                "internas de los atributos "
-                "de nivel escenario."
-            )
+            "dictamen"
+        ] == "VALIDADO":
 
             return 0
-
-        print(
-            "DICTAMEN FINAL: NO_VALIDADO"
-        )
-
-        print()
-        print("Errores:")
-
-        for error in resumen["errores"]:
-
-            print(
-                f"  - {error}"
-            )
 
         return 1
 
@@ -1654,7 +1802,9 @@ def main():
 
         print()
         print("=" * 88)
-        print("ERROR EN PROCESO 31 V4")
+        print(
+            "ERROR EN PROCESO 31 V4"
+        )
         print("=" * 88)
 
         print(

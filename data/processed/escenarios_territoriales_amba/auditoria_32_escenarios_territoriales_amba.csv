@@ -1,0 +1,8 @@
+﻿escenario_id,cantidad_proyectos,tipo_valores_distintos,dimension_valores_distintos,prioridad_valores_distintos,consistente,cobertura,estado
+AMBA-E001,20,1,1,1,True,1.0,VALIDADO
+AMBA-E002,21,1,1,1,True,1.0,VALIDADO
+AMBA-E003,20,1,1,1,True,1.0,VALIDADO
+AMBA-E004,21,1,1,1,True,1.0,VALIDADO
+AMBA-E005,21,1,1,1,True,1.0,VALIDADO
+AMBA-E006,20,1,1,1,True,1.0,VALIDADO
+AMBA-E007,21,1,1,1,True,1.0,VALIDADO

@@ -1,0 +1,52 @@
+{
+  "version": "V4.0",
+  "proceso": 33,
+  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba_v4.parquet",
+  "registros": 144,
+  "proyectos_unicos": 144,
+  "escenarios": 7,
+  "escenarios_ids": [
+    "AMBA-E001",
+    "AMBA-E002",
+    "AMBA-E003",
+    "AMBA-E004",
+    "AMBA-E005",
+    "AMBA-E006",
+    "AMBA-E007"
+  ],
+  "cobertura": 1.0,
+  "minimo_proyectos": 20,
+  "maximo_proyectos": 21,
+  "promedio_proyectos": 20.571428571428573,
+  "desvio_proyectos": 0.4948716593053935,
+  "cv_tamano": 0.024056261216234404,
+  "score_analitico_global": 50.215390439878114,
+  "escenario_mejor_rank": "AMBA-E001",
+  "escenario_menor_rank": "AMBA-E007",
+  "proyectos_representativos": 35,
+  "auditoria_ok": true,
+  "dictamen": "VALIDADO",
+  "salidas": {
+    "sintesis": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\sintesis_estrategica_escenarios_v4.csv",
+    "representativos": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\proyectos_representativos_escenarios_v4.csv",
+    "indicadores": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\indicadores_escenarios_v4.csv",
+    "comparacion": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\comparacion_escenarios_v4.csv",
+    "auditoria": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\auditoria_33_escenarios_territoriales_amba.csv",
+    "json": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\resumen_33_escenarios_territoriales_amba.json",
+    "markdown": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\sintesis_ejecutiva_escenarios_v4.md",
+    "geopackage": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\sintesis_estrategica_escenarios_v4.gpkg"
+  },
+  "entrada_validada": {
+    "errores": [],
+    "advertencias": [],
+    "escenarios": [
+      "AMBA-E001",
+      "AMBA-E002",
+      "AMBA-E003",
+      "AMBA-E004",
+      "AMBA-E005",
+      "AMBA-E006",
+      "AMBA-E007"
+    ]
+  }
+}
