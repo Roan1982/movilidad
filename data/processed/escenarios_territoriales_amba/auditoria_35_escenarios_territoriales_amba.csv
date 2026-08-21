@@ -1,0 +1,8 @@
+﻿control,resultado,valor,criterio
+proyectos_unicos,OK,144.0,Todos los proyectos deben ser únicos.
+escenarios,OK,7.0,Deben existir 7 escenarios.
+cobertura_proyectos,OK,144.0,Todos los proyectos deben propagarse a la cartera.
+escenarios_sin_proyectos,OK,0.0,Todos los escenarios deben tener proyectos.
+scores_validos,OK,26.582166,Scores entre 0 y 100.
+ranking_unico,OK,7.0,Ranking territorial único.
+proyectos_sin_cartera,OK,0.0,No debe haber proyectos sin categoría.

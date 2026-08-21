@@ -1,0 +1,19 @@
+{
+  "proceso": "35",
+  "version": "V4.0",
+  "proyecto": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
+  "registros": 144,
+  "proyectos_unicos": 144,
+  "escenarios": 7,
+  "cobertura_cartera": 100.0,
+  "score_cartera_global": 49.250927516241354,
+  "escenario_prioritario": "AMBA-E001",
+  "escenario_menor_prioridad": "AMBA-E007",
+  "auditoria": "OK",
+  "dictamen": "VALIDADO",
+  "categorias": {
+    "P3_PROGRAMADA": 5,
+    "P2_PRIORITARIA": 1,
+    "P4_SEGUIMIENTO": 1
+  }
+}

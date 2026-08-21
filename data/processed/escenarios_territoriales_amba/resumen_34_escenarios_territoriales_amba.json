@@ -1,0 +1,55 @@
+{
+  "version": "V4.0",
+  "proceso": 34,
+  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba_v4.parquet",
+  "salidas": {
+    "priorizacion": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\priorizacion_territorial_escenarios_v4.csv",
+    "cartera": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\cartera_priorizada_escenarios_v4.csv",
+    "matriz": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\matriz_priorizacion_escenarios_v4.csv",
+    "proyectos": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\proyectos_priorizados_v4.csv",
+    "auditoria": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\auditoria_34_escenarios_territoriales_amba.csv",
+    "json": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\resumen_34_escenarios_territoriales_amba.json",
+    "gpkg": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\priorizacion_territorial_escenarios_v4.gpkg",
+    "markdown": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\sintesis_priorizacion_territorial_v4.md"
+  },
+  "registros": 144,
+  "proyectos_unicos": 144,
+  "escenarios": 7,
+  "cobertura": 1.0,
+  "minimo_proyectos": 20,
+  "maximo_proyectos": 21,
+  "promedio_proyectos": 20.571428571428573,
+  "desvio_proyectos": 0.4948716593053935,
+  "cv_tamano": 0.024056261216234404,
+  "score_analitico_global": 53.37666403990804,
+  "mejor_escenario": "AMBA-E001",
+  "menor_escenario": "AMBA-E007",
+  "cartera": {
+    "P3_PROGRAMADA": 5,
+    "P2_PRIORITARIA": 1,
+    "P4_SEGUIMIENTO": 1
+  },
+  "auditoria": "OK",
+  "dictamen": "VALIDADO",
+  "validacion_base": {
+    "registros": 144,
+    "proyectos_unicos": 144,
+    "escenarios": 7,
+    "escenarios_ids": [
+      "AMBA-E001",
+      "AMBA-E002",
+      "AMBA-E003",
+      "AMBA-E004",
+      "AMBA-E005",
+      "AMBA-E006",
+      "AMBA-E007"
+    ],
+    "errores": [],
+    "advertencias": []
+  },
+  "validacion_final": {
+    "errores": [],
+    "advertencias": [],
+    "dictamen": "VALIDADO"
+  }
+}

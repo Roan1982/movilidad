@@ -1,0 +1,10 @@
+﻿proceso,control,resultado,valor,detalle
+34,INTEGRIDAD_PROYECTOS,OK,144.0,La cantidad de proyectos se conserva.
+34,COBERTURA_ESCENARIOS,OK,1.0,Cobertura completa.
+34,COMPONENTE_score_demanda_v4,OK,7.0,Componente disponible.
+34,COMPONENTE_score_deficit_v4,OK,7.0,Componente disponible.
+34,COMPONENTE_score_conectividad_v4,OK,7.0,Componente disponible.
+34,COMPONENTE_score_integracion_v4,OK,7.0,Componente disponible.
+34,COMPONENTE_score_impacto_v4,OK,7.0,Componente disponible.
+34,SCORE_PRIORIZACION,OK,7.0,Todos los escenarios poseen score.
+34,DICTAMEN,OK,0.0,Proceso 34 validado.
