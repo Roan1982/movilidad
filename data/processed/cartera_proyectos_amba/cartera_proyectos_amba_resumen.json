@@ -1,0 +1,270 @@
+{
+  "proceso": "26_construir_cartera_proyectos_amba",
+  "version": "V1",
+  "fecha_generacion": "2026-08-21T09:18:52.523158",
+  "registros": 144,
+  "crs": "EPSG:4326",
+  "crs_metrico": "EPSG:22185",
+  "modelo": {
+    "base": "score_prioridad_territorial",
+    "peso_prioridad": 0.7,
+    "peso_urgencia": 0.15,
+    "peso_impacto": 0.15
+  },
+  "resumen": {
+    "total_proyectos": 144,
+    "score_cartera_min": 33.886926550000005,
+    "score_cartera_max": 72.79725111666666,
+    "score_cartera_promedio": 54.95554397361111
+  },
+  "por_tipo_proyecto": {
+    "INTEGRACION_TERRITORIAL": 55,
+    "AMPLIACION_INFRAESTRUCTURA": 29,
+    "MEJORA_CONECTIVIDAD": 29,
+    "PROYECTO_INTEGRAL_CENTRALIDAD": 14,
+    "MEJORA_INTERMODAL": 12,
+    "MONITOREO": 4,
+    "CONSOLIDACION_CENTRALIDAD": 1
+  },
+  "por_escenario": {
+    "ESCENARIO_MEDIANO_PLAZO": 80,
+    "ESCENARIO_CORTO_PLAZO": 31,
+    "ESCENARIO_ESTRUCTURAL": 28,
+    "ESCENARIO_URGENTE": 5
+  },
+  "por_prioridad": {
+    "PRIORIDAD_4_BAJA": 56,
+    "PRIORIDAD_2_ALTA": 39,
+    "PRIORIDAD_3_MEDIA": 34,
+    "PRIORIDAD_1_MUY_ALTA": 15
+  },
+  "por_diagnostico": {
+    "DEFICIT_ESTRUCTURAL_MEDIO": 109,
+    "ALTA_DEMANDA_BAJO_SOPORTE": 16,
+    "ALTO_IMPACTO_POTENCIAL": 13,
+    "DEFICIT_ESTRUCTURAL_ALTO": 5,
+    "INTERVENCION_SELECTIVA": 1
+  },
+  "top_20": [
+    {
+      "ranking_cartera": 1,
+      "proyecto_id": "AMBA-P001",
+      "nodo_id": 7,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 72.79725111666666,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 86.47011555555555,
+      "urgencia": 53.132045000000005
+    },
+    {
+      "ranking_cartera": 2,
+      "proyecto_id": "AMBA-P002",
+      "nodo_id": 17,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 72.62915166666666,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 84.46923888888888,
+      "urgencia": 54.885560000000005
+    },
+    {
+      "ranking_cartera": 3,
+      "proyecto_id": "AMBA-P003",
+      "nodo_id": 2,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 71.41541593333334,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 86.07411611111111,
+      "urgencia": 50.65481
+    },
+    {
+      "ranking_cartera": 4,
+      "proyecto_id": "AMBA-P004",
+      "nodo_id": 4,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 71.33350586666667,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 82.74153222222222,
+      "urgencia": 54.543420000000005
+    },
+    {
+      "ranking_cartera": 5,
+      "proyecto_id": "AMBA-P005",
+      "nodo_id": 20,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_URGENTE",
+      "score_cartera": 71.14240306666666,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 75.95810055555556,
+      "urgencia": 61.92499
+    },
+    {
+      "ranking_cartera": 6,
+      "proyecto_id": "AMBA-P006",
+      "nodo_id": 8,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 71.0874738,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 82.753465,
+      "urgencia": 54.18323
+    },
+    {
+      "ranking_cartera": 7,
+      "proyecto_id": "AMBA-P007",
+      "nodo_id": 11,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_URGENTE",
+      "score_cartera": 70.90521598333333,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 81.50214777777778,
+      "urgencia": 55.268505000000005
+    },
+    {
+      "ranking_cartera": 8,
+      "proyecto_id": "AMBA-P008",
+      "nodo_id": 18,
+      "tipo_proyecto": "AMPLIACION_INFRAESTRUCTURA",
+      "escenario": "ESCENARIO_URGENTE",
+      "score_cartera": 70.69559865000001,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 71.85506166666667,
+      "urgencia": 66.61869500000002
+    },
+    {
+      "ranking_cartera": 9,
+      "proyecto_id": "AMBA-P009",
+      "nodo_id": 3,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 70.6608482,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 86.80549333333333,
+      "urgencia": 48.10622000000001
+    },
+    {
+      "ranking_cartera": 10,
+      "proyecto_id": "AMBA-P010",
+      "nodo_id": 23,
+      "tipo_proyecto": "AMPLIACION_INFRAESTRUCTURA",
+      "escenario": "ESCENARIO_URGENTE",
+      "score_cartera": 70.57118401666666,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 65.20896888888889,
+      "urgencia": 75.09203500000001
+    },
+    {
+      "ranking_cartera": 11,
+      "proyecto_id": "AMBA-P011",
+      "nodo_id": 16,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 70.04106636666667,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 82.81346555555555,
+      "urgencia": 52.193349999999995
+    },
+    {
+      "ranking_cartera": 12,
+      "proyecto_id": "AMBA-P012",
+      "nodo_id": 5,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 69.9795043,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 85.33003166666667,
+      "urgencia": 47.68128
+    },
+    {
+      "ranking_cartera": 13,
+      "proyecto_id": "AMBA-P013",
+      "nodo_id": 15,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_URGENTE",
+      "score_cartera": 69.57331339999999,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 76.49207833333334,
+      "urgencia": 58.17991
+    },
+    {
+      "ranking_cartera": 14,
+      "proyecto_id": "AMBA-P014",
+      "nodo_id": 12,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 69.57207106666667,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 79.71725888888889,
+      "urgencia": 54.659420000000004
+    },
+    {
+      "ranking_cartera": 15,
+      "proyecto_id": "AMBA-P015",
+      "nodo_id": 30,
+      "tipo_proyecto": "AMPLIACION_INFRAESTRUCTURA",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 69.15844718333332,
+      "prioridad": "PRIORIDAD_2_ALTA",
+      "impacto": 76.48144111111111,
+      "urgencia": 58.319505
+    },
+    {
+      "ranking_cartera": 16,
+      "proyecto_id": "AMBA-P016",
+      "nodo_id": 10,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 69.0159161,
+      "prioridad": "PRIORIDAD_1_MUY_ALTA",
+      "impacto": 79.51034666666668,
+      "urgencia": 53.14347000000001
+    },
+    {
+      "ranking_cartera": 17,
+      "proyecto_id": "AMBA-P017",
+      "nodo_id": 39,
+      "tipo_proyecto": "AMPLIACION_INFRAESTRUCTURA",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 68.51614503333333,
+      "prioridad": "PRIORIDAD_2_ALTA",
+      "impacto": 68.3012961111111,
+      "urgencia": 66.4636
+    },
+    {
+      "ranking_cartera": 18,
+      "proyecto_id": "AMBA-P018",
+      "nodo_id": 14,
+      "tipo_proyecto": "PROYECTO_INTEGRAL_CENTRALIDAD",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 68.05452208333332,
+      "prioridad": "PRIORIDAD_2_ALTA",
+      "impacto": 84.85374444444444,
+      "urgencia": 44.041755
+    },
+    {
+      "ranking_cartera": 19,
+      "proyecto_id": "AMBA-P019",
+      "nodo_id": 28,
+      "tipo_proyecto": "AMPLIACION_INFRAESTRUCTURA",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 67.82261343333333,
+      "prioridad": "PRIORIDAD_2_ALTA",
+      "impacto": 61.21104111111111,
+      "urgencia": 74.28039000000001
+    },
+    {
+      "ranking_cartera": 20,
+      "proyecto_id": "AMBA-P020",
+      "nodo_id": 9,
+      "tipo_proyecto": "AMPLIACION_INFRAESTRUCTURA",
+      "escenario": "ESCENARIO_CORTO_PLAZO",
+      "score_cartera": 67.60590788333333,
+      "prioridad": "PRIORIDAD_2_ALTA",
+      "impacto": 80.93925944444445,
+      "urgencia": 48.556985000000005
+    }
+  ]
+}
