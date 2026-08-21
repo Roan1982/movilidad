@@ -1,0 +1,10 @@
+﻿proceso,control,valor,resultado,detalle
+37,registros,144.0,OK,Cantidad total de registros.
+37,proyectos_unicos,144.0,OK,Control de unicidad de proyectos.
+37,proyectos_nulos,0.0,OK,No debe haber proyectos nulos.
+37,escenarios_nulos,0.0,OK,No debe haber escenarios nulos.
+37,geometrias_validas,144.0,OK,Todas las geometrías deben ser válidas.
+37,geometrias_nulas,0.0,OK,No deben existir geometrías nulas.
+37,geometrias_invalidas,0.0,OK,No deben existir geometrías inválidas.
+37,cobertura_geometrica,1.0,OK,Cobertura geoespacial del modelo.
+37,proyectos_multiescenario,0.0,OK,Cada proyecto debe pertenecer a un único escenario.
