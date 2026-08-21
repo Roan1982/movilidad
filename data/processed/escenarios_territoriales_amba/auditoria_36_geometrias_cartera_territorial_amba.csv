@@ -1,0 +1,10 @@
+﻿control,valor,estado
+registros,144,OK
+proyectos_unicos,144,OK
+proyectos_nulos,0,OK
+proyectos_duplicados,0,OK
+escenarios_nulos,0,OK
+geometrias_validas,144,OK
+geometrias_nulas,0,OK
+geometrias_invalidas,0,OK
+proyectos_multiescenario,0,OK
