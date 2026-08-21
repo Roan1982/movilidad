@@ -1,0 +1,12 @@
+﻿control,valor,esperado,estado,observacion
+proyectos_totales,144.0,144.0,OK,Cantidad total de proyectos consolidada.
+proyectos_unicos,144.0,144.0,OK,Cada proyecto debe aparecer una sola vez.
+escenarios,7.0,7.0,OK,Cantidad esperada de escenarios.
+proyecto_id_nulos,0.0,0.0,OK,No debe haber proyectos sin identificador.
+escenario_id_nulos,0.0,0.0,OK,No debe haber proyectos sin escenario.
+proyecto_id_duplicados,0.0,0.0,OK,No debe haber proyectos duplicados.
+proyectos_multiescenario,0.0,0.0,OK,Cada proyecto debe pertenecer a un único escenario.
+geometrias_nulas,0.0,0.0,OK,Todas las geometrías deben estar presentes.
+geometrias_invalidas,0.0,0.0,OK,Todas las geometrías deben ser válidas.
+cobertura_geometrica_pct,100.0,100.0,OK,Cobertura espacial completa.
+score_integracion,100.0,100.0,OK,Score integral de auditoría.
