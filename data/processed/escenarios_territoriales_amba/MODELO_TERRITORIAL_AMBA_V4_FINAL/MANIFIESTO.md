@@ -9,7 +9,7 @@
 - Proceso: 46
 - Estado: FINAL
 - Dictamen: GO
-- Fecha: 2026-08-21T18:11:48.453561-03:00
+- Fecha: 2026-08-21T18:38:51.450529-03:00
 
 ## Auditorías
 
@@ -59,10 +59,10 @@
 | `05_auditoria/manifiesto_43_paquete_ejecutivo_amba_v4_1.csv` | 1616 | `df35341eabc0b7427b2347e409eea3901574207c5a0d232c686ebb1bb6332d5c` |
 | `05_auditoria/resumen_44_auditoria_paquete_final_amba_v4.json` | 4632 | `38cdc8cc659d4be6cc075c45788cc4a46cf2e9a5902c9e1e7f2cd5808446813f` |
 | `05_auditoria/resumen_45_cierre_amba_v4.json` | 1451 | `e7a95afe90c37849559f62a6c90f4afa9e585b95033cd0eb83d620e141c32e8b` |
-| `06_metadatos/MANIFIESTO_SHA256.csv` | 4578 | `c32dbbf8e663f3587d331393f52dcd5a3b1bb9fadedceac9e1ac07d5ee805533` |
-| `06_metadatos/metadata_paquete.json` | 742 | `7c4469a4eb902770664f394b6aaa50036705c3f235f7f15c029f1210347bbded` |
-| `06_metadatos/resumen_proceso_46.json` | 453 | `9ef99f1e27d49e254a5a99a86ea396a6f8ce4c3534d2c524c4117b777eee6327` |
-| `README.md` | 2914 | `cae5dc935ded14a9c106415d1dec7159de5da638d35a85c4c28a44f86a00b9b5` |
+| `06_metadatos/MANIFIESTO_SHA256.csv` | 4579 | `7e42587d74bcc6cb8ba8f916c720230734264b155e90af3b1422934e6acd8937` |
+| `06_metadatos/metadata_paquete.json` | 1010 | `62758ba53cdbd9fd0d023da8c12fd8a6f49b14e392e8d5c48fb198460f8238d7` |
+| `06_metadatos/resumen_proceso_46.json` | 453 | `cd94c8417e8e2d0a8806a335135b74aea7caa64c18a44430e1d803d6a21b2888` |
+| `README.md` | 2914 | `d9f6de60794c8acf0ff8021f25d3706c8b8fd1b219774d3fb586c6edf866bb81` |
 
 ## Integridad
 

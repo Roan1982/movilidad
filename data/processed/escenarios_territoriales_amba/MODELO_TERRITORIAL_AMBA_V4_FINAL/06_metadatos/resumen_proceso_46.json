@@ -4,7 +4,7 @@
   "version": "V4.1",
   "estado": "FINAL",
   "dictamen": "GO",
-  "fecha": "2026-08-21T18:11:48.192248-03:00",
+  "fecha": "2026-08-21T18:38:51.252454-03:00",
   "auditorias": {
     "42": "GO",
     "43": "GO",
@@ -14,5 +14,5 @@
   "archivos_paquete": 39,
   "archivos_zip": 39,
   "zip": "MODELO_TERRITORIAL_AMBA_V4_FINAL.zip",
-  "sha256_zip": "a7e2adc89d2c46e78f0bcfee8d2b043f02726dad477d63e09d68fdbc325fd9c1"
+  "sha256_zip": "fbcfc6b807cf9cdf57dbe4dd93ed9d23bd07879762287eaaa2340e937936ac06"
 }

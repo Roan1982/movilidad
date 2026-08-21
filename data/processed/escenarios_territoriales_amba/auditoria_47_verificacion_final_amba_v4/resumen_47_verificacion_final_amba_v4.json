@@ -1,27 +1,52 @@
 {
-  "proceso": "47",
   "proyecto": "Modelo Territorial AMBA",
   "version": "V4.1",
+  "proceso": 47,
+  "fecha_hora": "2026-08-21 18:28:14",
   "zip": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\MODELO_TERRITORIAL_AMBA_V4_FINAL.zip",
   "zip_nombre": "MODELO_TERRITORIAL_AMBA_V4_FINAL.zip",
-  "zip_tamaño_bytes": 615200,
+  "zip_tamano_bytes": 615200,
   "zip_sha256": "a059736db56c4eafcf95fb1cf8e2cdfd4bd97a568538517dc6b6e194dfa706fb",
-  "directorio_definitivo": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\MODELO_TERRITORIAL_AMBA_V4_FINAL",
+  "zip_root": "MODELO_TERRITORIAL_AMBA_V4_FINAL",
   "archivos_zip": 40,
-  "archivos_inventariados": 40,
-  "procesos_previos": {
-    "42": "GO",
-    "43": "GO",
-    "44": "GO",
-    "45": "GO"
-  },
-  "controles_total": 20,
-  "controles_ok": 16,
-  "controles_fallidos": 4,
-  "fallas_criticas": 4,
+  "archivos_directorio": 40,
+  "controles_total": 13,
+  "controles_ok": 11,
+  "controles_fallidos": 2,
+  "fallas_criticas": 2,
   "fallas_importantes": 0,
-  "score_auditoria": 80.0,
+  "score": 84.62,
   "auditoria": "OBSERVADA",
   "dictamen_final": "NO-GO",
-  "tiempo_ejecucion_segundos": 0.473
+  "tiempo_segundos": 2.88,
+  "errores": [],
+  "fallas_criticas_detalle": [
+    "MANIFIESTO.md inválido",
+    "README.md inválido"
+  ],
+  "fallas_importantes_detalle": [],
+  "procesos": {
+    "42": {
+      "ok": true,
+      "missing": [],
+      "go_detected": true
+    },
+    "43": {
+      "ok": true,
+      "missing": [],
+      "go_detected": true
+    },
+    "44": {
+      "ok": true,
+      "missing": [],
+      "go_detected": true
+    },
+    "45": {
+      "ok": true,
+      "missing": [],
+      "go_detected": true
+    }
+  },
+  "metadata_version_ok": true,
+  "metadata_status_ok": false
 }

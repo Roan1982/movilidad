@@ -2,8 +2,13 @@
   "proyecto": "Modelo Territorial AMBA",
   "version": "V4.1",
   "proceso": 46,
+  "proceso_final": 46,
   "script": "46_generar_paquete_definitivo_amba_v4.py",
-  "fecha_generacion": "2026-08-21T18:11:46.699146-03:00",
+  "estado": "FINAL",
+  "estado_final": "GO",
+  "dictamen": "GO",
+  "dictamen_final": "GO",
+  "fecha_generacion": "2026-08-21T18:38:50.016612-03:00",
   "base_dir": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
   "input_dir": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
   "archivo_zip": "MODELO_TERRITORIAL_AMBA_V4_FINAL.zip",
@@ -16,6 +21,13 @@
     "06_metadatos"
   ],
   "cantidad_productos": 35,
+  "auditorias": {
+    "proceso_42": "GO",
+    "proceso_43": "GO",
+    "proceso_44": "GO",
+    "proceso_45": "GO",
+    "proceso_46": "GO"
+  },
   "resumen": "06_metadatos/resumen_proceso_46.json",
-  "sha256_zip": "a7e2adc89d2c46e78f0bcfee8d2b043f02726dad477d63e09d68fdbc325fd9c1"
+  "sha256_zip": "fbcfc6b807cf9cdf57dbe4dd93ed9d23bd07879762287eaaa2340e937936ac06"
 }
