@@ -1,0 +1,54 @@
+{
+  "proceso": 40,
+  "version": "4.0",
+  "nombre": "Generación del Atlas Territorial AMBA",
+  "fecha_generacion": "2026-08-21T16:25:38.146448",
+  "proyecto_root": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
+  "input": {
+    "geopackage": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\modelo_maestro_territorial_amba_v4.gpkg",
+    "proyectos": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\modelo_maestro_proyectos_v4.csv",
+    "escenarios": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\modelo_maestro_escenarios_v4.csv",
+    "ranking_proyectos": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\ranking_final_proyectos_v4.csv",
+    "ranking_escenarios": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\ranking_final_escenarios_v4.csv"
+  },
+  "validacion": {
+    "proyectos": 144,
+    "proyectos_unicos": 144,
+    "escenarios": 7,
+    "escenarios_geograficos": 7,
+    "proyecto_nulos": 0,
+    "proyecto_duplicados": 0,
+    "escenario_nulos": 0,
+    "geometrias_validas": 144,
+    "geometrias_nulas": 0,
+    "geometrias_vacias": 0,
+    "geometrias_invalidas": 0,
+    "cobertura_geometrica": 100.0,
+    "proyectos_multiescenario": 0,
+    "min_proyectos_escenario": 20,
+    "max_proyectos_escenario": 21,
+    "promedio_proyectos_escenario": 20.571428571428573,
+    "cv_tamano_escenarios": 0.024056261216234404,
+    "controles": {
+      "proyectos_144": true,
+      "proyectos_unicos_144": true,
+      "escenarios_7": true,
+      "proyectos_nulos_0": true,
+      "proyectos_duplicados_0": true,
+      "escenarios_nulos_0": true,
+      "escenarios_geograficos_7": true,
+      "geometrias_validas_144": true,
+      "geometrias_nulas_0": true,
+      "geometrias_invalidas_0": true,
+      "multiescenario_0": true
+    },
+    "ok": true
+  },
+  "cartografia": {
+    "mapas_generales": 13,
+    "mapas_por_escenario": 7
+  },
+  "controles_totales": 15,
+  "controles_ok": 15,
+  "dictamen": "VALIDADO"
+}

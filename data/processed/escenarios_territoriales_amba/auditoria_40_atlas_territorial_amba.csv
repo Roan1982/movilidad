@@ -1,0 +1,16 @@
+﻿proceso,control,resultado,estado
+40,proyectos_144,True,OK
+40,proyectos_unicos_144,True,OK
+40,escenarios_7,True,OK
+40,proyectos_nulos_0,True,OK
+40,proyectos_duplicados_0,True,OK
+40,escenarios_nulos_0,True,OK
+40,escenarios_geograficos_7,True,OK
+40,geometrias_validas_144,True,OK
+40,geometrias_nulas_0,True,OK
+40,geometrias_invalidas_0,True,OK
+40,multiescenario_0,True,OK
+40,mapas_generales_generados,True,OK
+40,mapas_escenarios_generados,True,OK
+40,atlas_html_generado,True,OK
+40,geopackage_generado,True,OK
