@@ -4,38 +4,67 @@
 ================================================================================
 29 - OPTIMIZACIÓN DE ESCENARIOS TERRITORIALES AMBA
 ================================================================================
+VERSIÓN 2.0
 
 Proceso:
     27 -> Construcción de escenarios territoriales
     28 -> Evaluación de escenarios
     29 -> Optimización de escenarios
 
-Objetivo:
-    Mejorar la estructura de los escenarios existentes manteniendo:
+OBJETIVO
+--------
+Optimizar la asignación de proyectos a escenarios territoriales manteniendo:
 
     - cobertura total de proyectos
+    - identidad de cada proyecto
     - cantidad razonable de escenarios
     - mínimo de proyectos por escenario
     - cohesión territorial
     - balance de tamaños
-    - concentración de indicadores
-    - score territorial original
-    - trazabilidad de movimientos
+    - coherencia de indicadores
+    - conservación del score territorial original
+    - estabilidad de la asignación
+    - trazabilidad completa de movimientos
 
-Entrada principal:
-    escenarios_territoriales_amba.parquet
+PRINCIPIO DE OPTIMIZACIÓN
+-------------------------
+La V2 no realiza movimientos únicamente por distancia.
 
-Entradas complementarias:
-    evaluacion_escenarios_territoriales_amba.parquet
-    recomendaciones_escenarios_territoriales_amba.csv
+Cada movimiento candidato se evalúa mediante una función objetivo global:
 
-Salidas:
+    SCORE =
+          cohesión territorial
+        + balance de tamaños
+        + coherencia de indicadores
+        + conservación del score territorial
+        + estabilidad de asignación
+
+Un movimiento solamente se acepta cuando:
+
+    1. respeta las restricciones duras
+    2. mejora el score objetivo
+    3. no deteriora significativamente el score territorial
+    4. no viola el mínimo de proyectos
+    5. mantiene la cobertura total
+    6. mejora o mantiene la coherencia espacial
+
+ENTRADAS
+--------
+    data/processed/escenarios_territoriales_amba/
+        escenarios_territoriales_amba.parquet
+        evaluacion_escenarios_territoriales_amba.parquet
+        recomendaciones_escenarios_territoriales_amba.csv
+
+SALIDAS
+-------
     escenarios_territoriales_amba_optimizado.parquet
     escenarios_territoriales_amba_optimizado.csv
     evaluacion_escenarios_optimizada.csv
     movimientos_optimizacion_escenarios.csv
     resumen_optimizacion_escenarios.csv
-    metadata_optimización_escenarios.json
+    metadata_optimizacion_escenarios.json
+
+================================================================================
 """
 
 from __future__ import annotations
@@ -44,35 +73,94 @@ import json
 import math
 import time
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-from sklearn.metrics import silhouette_score
 
 
 # ==============================================================================
-# CONFIGURACIÓN
+# CONFIGURACIÓN GENERAL
 # ==============================================================================
 
-VERSION = "V1.0"
+VERSION = "V2.0"
+
+PROCESO = 29
+
+# ------------------------------------------------------------------------------
+# Restricciones estructurales
+# ------------------------------------------------------------------------------
 
 MIN_PROYECTOS = 8
+
 MIN_ESCENARIOS = 6
 MAX_ESCENARIOS = 12
 
 MAX_ITERACIONES = 50
 
-# Pesos de optimización
+# ------------------------------------------------------------------------------
+# Parámetros de optimización
+# ------------------------------------------------------------------------------
+
+# Pesos de la función objetivo.
+#
+# La suma debe ser 1.0.
+
 PESO_COHESION = 0.30
 PESO_BALANCE = 0.20
 PESO_INDICADORES = 0.25
 PESO_SCORE_ORIGINAL = 0.15
 PESO_ESTABILIDAD = 0.10
 
-# Umbral para aceptar una transferencia de proyecto
+# ------------------------------------------------------------------------------
+# Umbrales
+# ------------------------------------------------------------------------------
+
+# Mejora mínima del objetivo global para aceptar movimiento.
 MEJORA_MINIMA = 0.0005
+
+# Deterioro máximo permitido del score territorial original.
+MAX_DETERIORO_SCORE_ORIGINAL = 0.015
+
+# Deterioro máximo permitido de cohesión en un movimiento.
+MAX_DETERIORO_COHESION = 0.020
+
+# Máxima diferencia de tamaño entre escenarios.
+MAX_DIFERENCIA_TAMANO = 8
+
+# Cantidad de candidatos espaciales evaluados por proyecto.
+MAX_DESTINOS_CANDIDATOS = 5
+
+# Distancia máxima relativa para considerar una transferencia.
+#
+# 1.0 significa que el destino no puede estar más lejos que el
+# centroide actual del proyecto.
+FACTOR_DISTANCIA_DESTINO = 1.0
+
+# ------------------------------------------------------------------------------
+# Escala espacial
+# ------------------------------------------------------------------------------
+
+# EPSG métrico utilizado cuando la capa viene en coordenadas geográficas.
+CRS_METRICO = 3857
+
+# ------------------------------------------------------------------------------
+# Indicadores preferidos
+# ------------------------------------------------------------------------------
+
+INDICADORES_PREFERIDOS = [
+    "indice_demanda_estructural",
+    "deficit_infraestructura",
+    "indice_conectividad_estructural",
+    "indice_intermodalidad_estructural",
+    "indice_integracion_territorial",
+    "indice_centralidad_estructural",
+    "impacto_potencial",
+    "urgencia_intervencion",
+    "score_prioridad_territorial",
+    "score_cartera",
+]
 
 
 # ==============================================================================
@@ -96,6 +184,11 @@ INPUT_ESCENARIOS = (
 INPUT_EVALUACION = (
     INPUT_DIR
     / "evaluacion_escenarios_territoriales_amba.parquet"
+)
+
+INPUT_RECOMENDACIONES = (
+    INPUT_DIR
+    / "recomendaciones_escenarios_territoriales_amba.csv"
 )
 
 OUTPUT_OPTIMIZADO = (
@@ -135,16 +228,25 @@ OUTPUT_METADATA = (
 
 def encabezado(titulo: str) -> None:
     print()
-    print("=" * 88)
+    print("=" * 90)
     print(titulo)
-    print("=" * 88)
+    print("=" * 90)
+
+
+def imprimir_metrica(
+    nombre: str,
+    valor: float,
+) -> None:
+    print(
+        f"{nombre:<35}: {valor:.6f}"
+    )
 
 
 def encontrar_columna(
     df: pd.DataFrame,
     candidatos: List[str],
     obligatoria: bool = True,
-) -> str | None:
+) -> Optional[str]:
 
     for columna in candidatos:
         if columna in df.columns:
@@ -152,101 +254,211 @@ def encontrar_columna(
 
     if obligatoria:
         raise KeyError(
-            f"No se encontró ninguna de las columnas requeridas: {candidatos}"
+            "No se encontró ninguna de las columnas requeridas: "
+            f"{candidatos}"
         )
 
     return None
 
 
-def normalizar_serie(serie: pd.Series) -> pd.Series:
-    valores = pd.to_numeric(serie, errors="coerce")
+def normalizar_serie(
+    serie: pd.Series,
+) -> pd.Series:
+
+    valores = pd.to_numeric(
+        serie,
+        errors="coerce",
+    )
 
     if valores.notna().sum() == 0:
         return pd.Series(
-            np.full(len(serie), 0.5),
+            0.5,
             index=serie.index,
             dtype=float,
         )
 
-    minimo = valores.min()
-    maximo = valores.max()
+    minimo = float(valores.min())
+    maximo = float(valores.max())
 
-    if math.isclose(float(minimo), float(maximo)):
+    if math.isclose(
+        minimo,
+        maximo,
+        rel_tol=1e-12,
+        abs_tol=1e-12,
+    ):
         return pd.Series(
-            np.full(len(serie), 0.5),
+            0.5,
             index=serie.index,
             dtype=float,
         )
 
-    return (valores - minimo) / (maximo - minimo)
+    resultado = (
+        valores - minimo
+    ) / (
+        maximo - minimo
+    )
+
+    return resultado.fillna(0.5)
 
 
-def distancia_centroides(
-    geometria_a,
-    geometria_b,
-) -> float:
+def validar_pesos() -> None:
 
-    try:
-        return float(
-            geometria_a.centroid.distance(
-                geometria_b.centroid
-            )
+    pesos = [
+        PESO_COHESION,
+        PESO_BALANCE,
+        PESO_INDICADORES,
+        PESO_SCORE_ORIGINAL,
+        PESO_ESTABILIDAD,
+    ]
+
+    suma = sum(pesos)
+
+    if not math.isclose(
+        suma,
+        1.0,
+        abs_tol=1e-9,
+    ):
+        raise ValueError(
+            "Los pesos de optimización deben sumar 1.0. "
+            f"Suma actual: {suma}"
         )
-    except Exception:
-        return float("inf")
 
 
 # ==============================================================================
-# CARGA
+# CARGA DE DATOS
 # ==============================================================================
 
 def cargar_escenarios() -> gpd.GeoDataFrame:
 
-    encabezado("1. CARGANDO ESCENARIOS DEL PROCESO 27")
+    encabezado(
+        "1. CARGA DE ESCENARIOS"
+    )
 
     if not INPUT_ESCENARIOS.exists():
         raise FileNotFoundError(
-            f"No existe el archivo:\n{INPUT_ESCENARIOS}"
+            f"No existe el archivo de entrada:\n"
+            f"{INPUT_ESCENARIOS}"
         )
 
-    gdf = gpd.read_parquet(INPUT_ESCENARIOS)
-
-    print(f"Entrada     : {INPUT_ESCENARIOS}")
-    print(f"Registros   : {len(gdf):,}")
-    print(f"Columnas    : {len(gdf.columns)}")
-    print(f"CRS         : {gdf.crs}")
+    gdf = gpd.read_parquet(
+        INPUT_ESCENARIOS
+    )
 
     if len(gdf) == 0:
-        raise ValueError("El GeoParquet no contiene registros.")
+        raise ValueError(
+            "El GeoParquet de escenarios está vacío."
+        )
+
+    print(
+        f"Archivo      : {INPUT_ESCENARIOS}"
+    )
+
+    print(
+        f"Registros    : {len(gdf):,}"
+    )
+
+    print(
+        f"Columnas     : {len(gdf.columns)}"
+    )
+
+    print(
+        f"CRS          : {gdf.crs}"
+    )
 
     return gdf
 
 
-def cargar_evaluacion() -> pd.DataFrame | None:
+def cargar_evaluacion() -> Optional[pd.DataFrame]:
+
+    encabezado(
+        "2. CARGA DE EVALUACIÓN DEL PROCESO 28"
+    )
 
     if not INPUT_EVALUACION.exists():
-        print()
-        print("Evaluación del proceso 28 no encontrada.")
-        print("Se continuará utilizando únicamente la información del proceso 27.")
+
+        print(
+            "Evaluación del proceso 28 no encontrada."
+        )
+
+        print(
+            "Se continuará sin esta entrada."
+        )
+
         return None
 
-    evaluacion = pd.read_parquet(INPUT_EVALUACION)
+    evaluacion = pd.read_parquet(
+        INPUT_EVALUACION
+    )
 
-    print(f"Evaluación  : {INPUT_EVALUACION}")
-    print(f"Registros   : {len(evaluacion):,}")
+    print(
+        f"Archivo      : {INPUT_EVALUACION}"
+    )
+
+    print(
+        f"Registros    : {len(evaluacion):,}"
+    )
 
     return evaluacion
 
 
+def cargar_recomendaciones() -> Optional[pd.DataFrame]:
+
+    encabezado(
+        "3. CARGA DE RECOMENDACIONES DEL PROCESO 28"
+    )
+
+    if not INPUT_RECOMENDACIONES.exists():
+
+        print(
+            "Archivo de recomendaciones no encontrado."
+        )
+
+        print(
+            "Se continuará sin recomendaciones externas."
+        )
+
+        return None
+
+    try:
+
+        recomendaciones = pd.read_csv(
+            INPUT_RECOMENDACIONES,
+            encoding="utf-8-sig",
+        )
+
+    except UnicodeDecodeError:
+
+        recomendaciones = pd.read_csv(
+            INPUT_RECOMENDACIONES,
+            encoding="latin-1",
+        )
+
+    print(
+        f"Archivo      : {INPUT_RECOMENDACIONES}"
+    )
+
+    print(
+        f"Registros    : {len(recomendaciones):,}"
+    )
+
+    print(
+        f"Columnas     : {len(recomendaciones.columns)}"
+    )
+
+    return recomendaciones
+
+
 # ==============================================================================
-# VALIDACIÓN
+# VALIDACIÓN DE ENTRADA
 # ==============================================================================
 
 def validar_entrada(
     gdf: gpd.GeoDataFrame,
 ) -> Tuple[str, str]:
 
-    encabezado("2. VALIDANDO ENTRADA")
+    encabezado(
+        "4. VALIDACIÓN DE ENTRADA"
+    )
 
     escenario_col = encontrar_columna(
         gdf,
@@ -264,42 +476,159 @@ def validar_entrada(
         ],
     )
 
-    nulas = int(gdf.geometry.isna().sum())
-    vacias = int(gdf.geometry.is_empty.sum())
+    if "geometry" not in gdf.columns:
+        raise ValueError(
+            "La entrada no contiene geometría."
+        )
 
-    try:
-        invalidas = int((~gdf.geometry.is_valid).sum())
-    except Exception:
-        invalidas = 0
+    if gdf.crs is None:
+        raise ValueError(
+            "La capa no posee CRS."
+        )
 
-    duplicados_proyecto = int(
-        gdf[proyecto_col].duplicated().sum()
+    geometria_nula = int(
+        gdf.geometry.isna().sum()
     )
 
-    print(f"Geometrías nulas       : {nulas}")
-    print(f"Geometrías vacías      : {vacias}")
-    print(f"Geometrías inválidas   : {invalidas}")
-    print(f"Escenarios             : {gdf[escenario_col].nunique()}")
-    print(f"Proyectos              : {gdf[proyecto_col].nunique()}")
-    print(f"Duplicados proyecto    : {duplicados_proyecto}")
+    geometria_vacia = int(
+        gdf.geometry.is_empty.sum()
+    )
 
-    if nulas > 0 or vacias > 0 or invalidas > 0:
-        raise ValueError(
-            "La geometría de entrada contiene problemas."
+    try:
+
+        geometria_invalida = int(
+            (~gdf.geometry.is_valid).sum()
         )
 
-    if duplicados_proyecto > 0:
+    except Exception:
+
+        geometria_invalida = 0
+
+    duplicados = int(
+        gdf[proyecto_col]
+        .duplicated()
+        .sum()
+    )
+
+    proyectos_sin_escenario = int(
+        gdf[escenario_col]
+        .isna()
+        .sum()
+    )
+
+    escenarios = int(
+        gdf[escenario_col]
+        .nunique(
+            dropna=True
+        )
+    )
+
+    proyectos = int(
+        gdf[proyecto_col]
+        .nunique()
+    )
+
+    print(
+        f"Columna escenario       : {escenario_col}"
+    )
+
+    print(
+        f"Columna proyecto        : {proyecto_col}"
+    )
+
+    print(
+        f"Proyectos               : {proyectos:,}"
+    )
+
+    print(
+        f"Escenarios              : {escenarios}"
+    )
+
+    print(
+        f"Geometrías nulas        : {geometria_nula}"
+    )
+
+    print(
+        f"Geometrías vacías       : {geometria_vacia}"
+    )
+
+    print(
+        f"Geometrías inválidas    : {geometria_invalida}"
+    )
+
+    print(
+        f"Proyectos duplicados    : {duplicados}"
+    )
+
+    print(
+        f"Sin escenario           : {proyectos_sin_escenario}"
+    )
+
+    if geometria_nula > 0:
         raise ValueError(
-            "Un mismo proyecto aparece más de una vez."
+            "Existen geometrías nulas."
         )
 
-    print("Validación de entrada: OK")
+    if geometria_vacia > 0:
+        raise ValueError(
+            "Existen geometrías vacías."
+        )
 
-    return escenario_col, proyecto_col
+    if geometria_invalida > 0:
+        raise ValueError(
+            "Existen geometrías inválidas."
+        )
+
+    if duplicados > 0:
+        raise ValueError(
+            "Existen proyectos duplicados."
+        )
+
+    if proyectos_sin_escenario > 0:
+        raise ValueError(
+            "Existen proyectos sin escenario en la entrada."
+        )
+
+    if escenarios < MIN_ESCENARIOS:
+        print(
+            "ADVERTENCIA: la entrada posee menos "
+            f"de {MIN_ESCENARIOS} escenarios."
+        )
+
+    print(
+        "Validación de entrada: OK"
+    )
+
+    return (
+        escenario_col,
+        proyecto_col,
+    )
 
 
 # ==============================================================================
-# PREPARACIÓN DE INDICADORES
+# PREPARACIÓN GEOMÉTRICA
+# ==============================================================================
+
+def preparar_geometria_metrica(
+    gdf: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+
+    if gdf.crs is None:
+        raise ValueError(
+            "No se puede realizar análisis espacial sin CRS."
+        )
+
+    if gdf.crs.is_geographic:
+
+        return gdf.to_crs(
+            CRS_METRICO
+        )
+
+    return gdf.copy()
+
+
+# ==============================================================================
+# INDICADORES
 # ==============================================================================
 
 def detectar_indicadores(
@@ -308,6 +637,10 @@ def detectar_indicadores(
     proyecto_col: str,
 ) -> List[str]:
 
+    encabezado(
+        "5. DETECCIÓN DE INDICADORES"
+    )
+
     excluir = {
         escenario_col,
         proyecto_col,
@@ -315,28 +648,28 @@ def detectar_indicadores(
         "tipo_escenario",
         "dimension_dominante",
         "prioridad_escenario",
+        "ranking_escenario",
+        "ranking",
     }
-
-    indicadores_preferidos = [
-        "indice_demanda_estructural",
-        "deficit_infraestructura",
-        "indice_conectividad_estructural",
-        "indice_intermodalidad_estructural",
-        "indice_integracion_territorial",
-        "indice_centralidad_estructural",
-        "impacto_potencial",
-        "urgencia_intervencion",
-        "score_prioridad_territorial",
-        "score_cartera",
-    ]
 
     indicadores = []
 
-    for columna in indicadores_preferidos:
-        if columna in gdf.columns:
-            if pd.api.types.is_numeric_dtype(gdf[columna]):
-                indicadores.append(columna)
+    for columna in INDICADORES_PREFERIDOS:
 
+        if columna not in gdf.columns:
+            continue
+
+        if not pd.api.types.is_numeric_dtype(
+            gdf[columna]
+        ):
+            continue
+
+        indicadores.append(
+            columna
+        )
+
+    # Si hay menos de 3 indicadores relevantes,
+    # completar automáticamente con columnas numéricas.
     if len(indicadores) < 3:
 
         for columna in gdf.columns:
@@ -344,23 +677,43 @@ def detectar_indicadores(
             if columna in excluir:
                 continue
 
-            if columna.startswith("ranking_"):
+            if columna in indicadores:
                 continue
 
-            if columna.startswith("nivel_"):
+            if columna.startswith(
+                "ranking_"
+            ):
                 continue
 
-            if not pd.api.types.is_numeric_dtype(gdf[columna]):
+            if columna.startswith(
+                "nivel_"
+            ):
                 continue
 
-            if columna not in indicadores:
-                indicadores.append(columna)
+            if not pd.api.types.is_numeric_dtype(
+                gdf[columna]
+            ):
+                continue
 
-    print()
-    print(f"Indicadores utilizados : {len(indicadores)}")
+            indicadores.append(
+                columna
+            )
+
+    print(
+        f"Indicadores utilizados : {len(indicadores)}"
+    )
 
     for indicador in indicadores:
-        print(f"  - {indicador}")
+
+        print(
+            f"  - {indicador}"
+        )
+
+    if not indicadores:
+
+        print(
+            "ADVERTENCIA: no se encontraron indicadores."
+        )
 
     return indicadores
 
@@ -368,43 +721,58 @@ def detectar_indicadores(
 def construir_matriz_indicadores(
     gdf: pd.DataFrame,
     indicadores: List[str],
-) -> np.ndarray:
+) -> pd.DataFrame:
 
-    matriz = []
+    matriz = pd.DataFrame(
+        index=gdf.index
+    )
 
     for indicador in indicadores:
 
-        serie = normalizar_serie(gdf[indicador])
+        matriz[
+            indicador
+        ] = normalizar_serie(
+            gdf[indicador]
+        )
 
-        valores = serie.fillna(0.5).to_numpy(dtype=float)
+    if matriz.empty:
 
-        matriz.append(valores)
+        matriz[
+            "__indicador_neutro"
+        ] = 0.5
 
-    if not matriz:
-        return np.zeros((len(gdf), 1))
-
-    return np.column_stack(matriz)
-
-
-# ==============================================================================
-# CENTROIDES
-# ==============================================================================
-
-def preparar_geometria_metrica(
-    gdf: gpd.GeoDataFrame,
-) -> gpd.GeoDataFrame:
-
-    if gdf.crs is None:
-        raise ValueError("La capa no tiene CRS.")
-
-    if gdf.crs.is_geographic:
-        return gdf.to_crs(3857)
-
-    return gdf
+    return matriz
 
 
 # ==============================================================================
-# MÉTRICAS
+# SCORE TERRITORIAL ORIGINAL
+# ==============================================================================
+
+def detectar_score_original(
+    gdf: pd.DataFrame,
+) -> Optional[str]:
+
+    candidatos = [
+        "score_cartera",
+        "score_prioridad_territorial",
+        "score_territorial",
+        "score",
+    ]
+
+    for columna in candidatos:
+
+        if columna in gdf.columns:
+
+            if pd.api.types.is_numeric_dtype(
+                gdf[columna]
+            ):
+                return columna
+
+    return None
+
+
+# ==============================================================================
+# MÉTRICA DE TAMAÑO
 # ==============================================================================
 
 def calcular_balance(
@@ -414,23 +782,67 @@ def calcular_balance(
     if len(cantidades) == 0:
         return 0.0
 
-    promedio = float(np.mean(cantidades))
+    promedio = float(
+        np.mean(cantidades)
+    )
 
     if promedio <= 0:
         return 0.0
 
-    cv = float(
-        np.std(cantidades, ddof=0) / promedio
+    desviacion = float(
+        np.std(
+            cantidades,
+            ddof=0,
+        )
     )
 
-    return max(
-        0.0,
-        min(
-            1.0,
-            1.0 - cv,
-        ),
+    cv = (
+        desviacion
+        / promedio
     )
 
+    return float(
+        max(
+            0.0,
+            min(
+                1.0,
+                1.0 - cv,
+            ),
+        )
+    )
+
+
+def calcular_score_tamano(
+    cantidades: np.ndarray,
+) -> float:
+
+    if len(cantidades) == 0:
+        return 0.0
+
+    scores = []
+
+    for cantidad in cantidades:
+
+        if cantidad >= MIN_PROYECTOS:
+            scores.append(
+                1.0
+            )
+
+        else:
+
+            scores.append(
+                cantidad
+                / MIN_PROYECTOS
+            )
+
+    return float(
+        np.mean(scores)
+    )
+
+
+# ==============================================================================
+# COHESIÓN TERRITORIAL
+# ==============================================================================
 
 def calcular_cohesion(
     gdf_metric: gpd.GeoDataFrame,
@@ -439,75 +851,101 @@ def calcular_cohesion(
 
     centroides = gdf_metric.geometry.centroid
 
-    grupos = []
+    dispersiones = []
 
     for escenario in sorted(
-        gdf_metric[escenario_col].dropna().unique()
+        gdf_metric[
+            escenario_col
+        ].dropna().unique()
     ):
 
-        idx = (
-            gdf_metric[escenario_col] == escenario
+        mask = (
+            gdf_metric[
+                escenario_col
+            ]
+            == escenario
         )
 
-        puntos = centroides[idx]
+        puntos = centroides[
+            mask
+        ]
 
-        if len(puntos) < 2:
+        if len(puntos) <= 1:
+            dispersiones.append(
+                0.0
+            )
             continue
 
         centro = puntos.unary_union.centroid
 
         distancias = np.array(
             [
-                float(p.distance(centro))
-                for p in puntos
+                float(
+                    punto.distance(
+                        centro
+                    )
+                )
+                for punto in puntos
             ],
             dtype=float,
         )
 
         if len(distancias):
-            grupos.append(
+
+            dispersiones.append(
                 float(
-                    np.mean(distancias)
+                    np.mean(
+                        distancias
+                    )
                 )
             )
 
-    if not grupos:
+    if not dispersiones:
         return 0.0
 
-    distancia_media = float(
-        np.mean(grupos)
+    dispersion_media = float(
+        np.mean(
+            dispersiones
+        )
     )
 
-    # Escala robusta.
-    # 50 km se considera una dispersión muy alta
-    # para un escenario territorial.
-    score = 1.0 - (
-        distancia_media / 50000.0
+    # 50 km = dispersión considerada muy alta.
+    score = (
+        1.0
+        - dispersion_media / 50000.0
     )
 
-    return max(
-        0.0,
-        min(1.0, score),
+    return float(
+        max(
+            0.0,
+            min(
+                1.0,
+                score,
+            ),
+        )
     )
 
 
-def calcular_concentracion_indicadores(
+# ==============================================================================
+# COHERENCIA DE INDICADORES
+# ==============================================================================
+
+def calcular_coherencia_indicadores(
     gdf: pd.DataFrame,
     escenario_col: str,
-    indicadores: List[str],
+    matriz_indicadores: pd.DataFrame,
 ) -> float:
 
-    if not indicadores:
+    if matriz_indicadores.empty:
         return 0.0
 
     scores = []
 
-    for indicador in indicadores:
+    for indicador in matriz_indicadores.columns:
 
-        valores = pd.to_numeric(
-            gdf[indicador],
-            errors="coerce",
-        )
+        valores = matriz_indicadores[
+            indicador
+        ]
 
         if valores.notna().sum() < 2:
             continue
@@ -516,34 +954,57 @@ def calcular_concentracion_indicadores(
             valores.mean()
         )
 
-        if math.isclose(
-            media_global,
-            0.0,
-        ):
-            continue
-
         medias = (
-            gdf.assign(
-                __valor=valores
+            pd.DataFrame(
+                {
+                    escenario_col:
+                        gdf[
+                            escenario_col
+                        ],
+                    "__valor":
+                        valores,
+                },
+                index=gdf.index,
             )
-            .groupby(escenario_col)["__valor"]
+            .groupby(
+                escenario_col
+            )[
+                "__valor"
+            ]
             .mean()
         )
 
+        if len(medias) <= 1:
+            scores.append(
+                1.0
+            )
+            continue
+
         dispersion = float(
-            medias.std(ddof=0)
+            medias.std(
+                ddof=0
+            )
         )
 
-        # Menor dispersión = mayor concentración homogénea.
+        # Buscamos escenarios internamente
+        # coherentes sin generar concentraciones
+        # extremas artificiales.
         score = 1.0 / (
-            1.0 + abs(
-                dispersion / (
-                    abs(media_global) + 1e-9
+            1.0
+            + (
+                dispersion
+                / (
+                    abs(
+                        media_global
+                    )
+                    + 1e-9
                 )
             )
         )
 
-        scores.append(score)
+        scores.append(
+            score
+        )
 
     if not scores:
         return 0.0
@@ -553,132 +1014,332 @@ def calcular_concentracion_indicadores(
     )
 
 
-def calcular_score_escenario(
-    grupo: pd.DataFrame,
-    score_col: str | None,
+# ==============================================================================
+# CONSERVACIÓN DEL SCORE TERRITORIAL
+# ==============================================================================
+
+def calcular_conservacion_score(
+    gdf_original: pd.DataFrame,
+    gdf_actual: pd.DataFrame,
+    proyecto_col: str,
+    score_col: Optional[str],
 ) -> float:
 
     if score_col is None:
-        return 0.5
+        return 1.0
 
-    valores = pd.to_numeric(
-        grupo[score_col],
+    original = pd.to_numeric(
+        gdf_original[
+            score_col
+        ],
         errors="coerce",
     )
 
-    if valores.notna().sum() == 0:
-        return 0.5
+    actual = pd.to_numeric(
+        gdf_actual[
+            score_col
+        ],
+        errors="coerce",
+    )
+
+    if original.notna().sum() == 0:
+        return 1.0
+
+    # Normalización común.
+    minimo = float(
+        original.min()
+    )
+
+    maximo = float(
+        original.max()
+    )
+
+    if math.isclose(
+        minimo,
+        maximo,
+    ):
+        return 1.0
+
+    original_norm = (
+        original - minimo
+    ) / (
+        maximo - minimo
+    )
+
+    actual_norm = (
+        actual - minimo
+    ) / (
+        maximo - minimo
+    )
+
+    # Como el valor de score pertenece al proyecto,
+    # debería permanecer invariado. Esta métrica
+    # mide que no se haya alterado el campo.
+    diferencia = float(
+        np.mean(
+            np.abs(
+                original_norm
+                - actual_norm
+            )
+        )
+    )
 
     return float(
-        normalizar_serie(
-            valores
-        ).mean()
+        max(
+            0.0,
+            min(
+                1.0,
+                1.0 - diferencia,
+            ),
+        )
     )
 
 
 # ==============================================================================
-# SCORE GLOBAL
+# ESTABILIDAD
 # ==============================================================================
 
-def evaluar_estructura(
-    gdf: gpd.GeoDataFrame,
+def calcular_estabilidad(
+    gdf_original: pd.DataFrame,
+    gdf_actual: pd.DataFrame,
     escenario_col: str,
     proyecto_col: str,
-    indicadores: List[str],
-) -> Dict[str, float]:
+) -> float:
 
-    gdf_metric = preparar_geometria_metrica(gdf)
-
-    cantidades = (
-        gdf.groupby(escenario_col)[proyecto_col]
-        .count()
-        .to_numpy()
+    original = (
+        gdf_original[
+            [
+                proyecto_col,
+                escenario_col,
+            ]
+        ]
+        .copy()
     )
 
-    cantidad_escenarios = len(cantidades)
+    actual = (
+        gdf_actual[
+            [
+                proyecto_col,
+                escenario_col,
+            ]
+        ]
+        .copy()
+    )
 
-    cobertura = 1.0
+    original = original.set_index(
+        proyecto_col
+    )
+
+    actual = actual.set_index(
+        proyecto_col
+    )
+
+    if len(original) == 0:
+        return 1.0
+
+    iguales = (
+        original[
+            escenario_col
+        ].astype(str)
+        ==
+        actual[
+            escenario_col
+        ].astype(str)
+    )
+
+    return float(
+        iguales.mean()
+    )
+
+
+# ==============================================================================
+# ESTRUCTURA DE ESCENARIOS
+# ==============================================================================
+
+def calcular_estructura_escenarios(
+    cantidad_escenarios: int,
+) -> float:
 
     if (
-        cantidad_escenarios >= MIN_ESCENARIOS
-        and cantidad_escenarios <= MAX_ESCENARIOS
+        MIN_ESCENARIOS
+        <= cantidad_escenarios
+        <= MAX_ESCENARIOS
     ):
-        score_estructura_escenarios = 1.0
+        return 1.0
+
+    if cantidad_escenarios < MIN_ESCENARIOS:
+
+        distancia = (
+            MIN_ESCENARIOS
+            - cantidad_escenarios
+        )
+
     else:
-        distancia = min(
-            abs(
-                cantidad_escenarios
-                - MIN_ESCENARIOS
-            ),
-            abs(
-                cantidad_escenarios
-                - MAX_ESCENARIOS
-            ),
+
+        distancia = (
+            cantidad_escenarios
+            - MAX_ESCENARIOS
         )
 
-        score_estructura_escenarios = max(
+    return float(
+        max(
             0.0,
-            1.0 - 0.25 * distancia,
-        )
-
-    tamaño = float(
-        np.mean(
-            [
-                1.0
-                if n >= MIN_PROYECTOS
-                else n / MIN_PROYECTOS
-                for n in cantidades
-            ]
+            1.0
+            - 0.25
+            * distancia,
         )
     )
 
-    balance = calcular_balance(
+
+# ==============================================================================
+# FUNCIÓN OBJETIVO
+# ==============================================================================
+
+def evaluar_estado(
+    gdf_original: gpd.GeoDataFrame,
+    gdf_actual: gpd.GeoDataFrame,
+    escenario_col: str,
+    proyecto_col: str,
+    matriz_indicadores: pd.DataFrame,
+    score_col: Optional[str],
+) -> Dict[str, float]:
+
+    gdf_metric = preparar_geometria_metrica(
+        gdf_actual
+    )
+
+    cantidades = (
+        gdf_actual
+        .groupby(
+            escenario_col
+        )[
+            proyecto_col
+        ]
+        .count()
+        .to_numpy(
+            dtype=int
+        )
+    )
+
+    cantidad_escenarios = len(
         cantidades
     )
 
-    cohesion = calcular_cohesion(
-        gdf_metric,
-        escenario_col,
-    )
+    cobertura = 1.0
 
-    indicadores_score = (
-        calcular_concentracion_indicadores(
-            gdf,
-            escenario_col,
-            indicadores,
+    estructura = (
+        calcular_estructura_escenarios(
+            cantidad_escenarios
         )
     )
 
-    global_score = (
-        0.15 * cobertura
-        + 0.10 * score_estructura_escenarios
-        + 0.20 * tamaño
-        + PESO_COHESION * cohesion
-        + PESO_BALANCE * balance
-        + PESO_INDICADORES * indicadores_score
+    tamano = (
+        calcular_score_tamano(
+            cantidades
+        )
+    )
+
+    balance = (
+        calcular_balance(
+            cantidades
+        )
+    )
+
+    cohesion = (
+        calcular_cohesion(
+            gdf_metric,
+            escenario_col,
+        )
+    )
+
+    indicadores = (
+        calcular_coherencia_indicadores(
+            gdf_actual,
+            escenario_col,
+            matriz_indicadores,
+        )
+    )
+
+    score_original = (
+        calcular_conservacion_score(
+            gdf_original,
+            gdf_actual,
+            proyecto_col,
+            score_col,
+        )
+    )
+
+    estabilidad = (
+        calcular_estabilidad(
+            gdf_original,
+            gdf_actual,
+            escenario_col,
+            proyecto_col,
+        )
+    )
+
+    score_global = (
+        PESO_COHESION
+        * cohesion
+        +
+        PESO_BALANCE
+        * balance
+        +
+        PESO_INDICADORES
+        * indicadores
+        +
+        PESO_SCORE_ORIGINAL
+        * score_original
+        +
+        PESO_ESTABILIDAD
+        * estabilidad
     )
 
     return {
-        "cobertura": cobertura,
-        "estructura_escenarios": score_estructura_escenarios,
-        "tamano": tamaño,
-        "cohesion": cohesion,
-        "balance": balance,
-        "indicadores": indicadores_score,
+        "cobertura": float(
+            cobertura
+        ),
+        "estructura_escenarios": float(
+            estructura
+        ),
+        "tamano": float(
+            tamano
+        ),
+        "cohesion": float(
+            cohesion
+        ),
+        "balance": float(
+            balance
+        ),
+        "indicadores": float(
+            indicadores
+        ),
+        "score_original": float(
+            score_original
+        ),
+        "estabilidad": float(
+            estabilidad
+        ),
         "score_global": float(
-            min(1.0, max(0.0, global_score))
+            max(
+                0.0,
+                min(
+                    1.0,
+                    score_global,
+                ),
+            )
         ),
     }
 
 
 # ==============================================================================
-# CENTROIDE DE ESCENARIO
+# CENTROIDES DE ESCENARIOS
 # ==============================================================================
 
-def obtener_centroides_escenarios(
+def obtener_centroides(
     gdf_metric: gpd.GeoDataFrame,
     escenario_col: str,
-) -> Dict[str, object]:
+) -> Dict[Any, Any]:
 
     resultado = {}
 
@@ -686,97 +1347,165 @@ def obtener_centroides_escenarios(
         escenario_col
     ):
 
-        resultado[escenario] = (
+        if len(grupo) == 0:
+            continue
+
+        # Se utiliza el centroid de la unión geométrica.
+        centro = (
             grupo.geometry
-            .unary_union
+            .union_all()
             .centroid
         )
+
+        resultado[
+            escenario
+        ] = centro
 
     return resultado
 
 
 # ==============================================================================
-# SCORE DE TRANSFERENCIA
+# DISTANCIAS ESPACIALES
 # ==============================================================================
 
-def evaluar_transferencia(
-    gdf_metric: gpd.GeoDataFrame,
-    escenario_col: str,
-    fila_idx,
-    escenario_origen: str,
-    escenario_destino: str,
-) -> float:
+def obtener_destinos_candidatos(
+    geometria,
+    centroides: Dict[Any, Any],
+    escenario_actual: Any,
+) -> List[Tuple[Any, float]]:
 
-    grupo_origen = gdf_metric[
-        gdf_metric[escenario_col]
-        == escenario_origen
+    candidatos = []
+
+    for escenario, centro in centroides.items():
+
+        if escenario == escenario_actual:
+            continue
+
+        try:
+
+            distancia = float(
+                geometria.distance(
+                    centro
+                )
+            )
+
+        except Exception:
+
+            continue
+
+        if math.isfinite(
+            distancia
+        ):
+
+            candidatos.append(
+                (
+                    escenario,
+                    distancia,
+                )
+            )
+
+    candidatos.sort(
+        key=lambda x: x[1]
+    )
+
+    return candidatos[
+        :MAX_DESTINOS_CANDIDATOS
     ]
-
-    grupo_destino = gdf_metric[
-        gdf_metric[escenario_col]
-        == escenario_destino
-    ]
-
-    if len(grupo_origen) <= MIN_PROYECTOS:
-        return -np.inf
-
-    if len(grupo_destino) == 0:
-        return -np.inf
-
-    geometria = gdf_metric.loc[
-        fila_idx,
-        "geometry",
-    ]
-
-    centro_origen_antes = (
-        grupo_origen.geometry
-        .unary_union
-        .centroid
-    )
-
-    centro_destino_antes = (
-        grupo_destino.geometry
-        .unary_union
-        .centroid
-    )
-
-    dist_origen_antes = float(
-        geometria.distance(
-            centro_origen_antes
-        )
-    )
-
-    dist_destino_antes = float(
-        geometria.distance(
-            centro_destino_antes
-        )
-    )
-
-    # Queremos mover el proyecto hacia el escenario
-    # donde esté espacialmente más próximo.
-    mejora = (
-        dist_origen_antes
-        - dist_destino_antes
-    )
-
-    return float(mejora)
 
 
 # ==============================================================================
-# OPTIMIZACIÓN ESPACIAL
+# RESTRICCIONES DE MOVIMIENTO
 # ==============================================================================
 
-def optimizar_movimientos(
-    gdf: gpd.GeoDataFrame,
+def movimiento_permitido(
+    gdf_actual: gpd.GeoDataFrame,
     escenario_col: str,
     proyecto_col: str,
-) -> Tuple[gpd.GeoDataFrame, List[Dict]]:
+    idx,
+    escenario_origen,
+    escenario_destino,
+) -> Tuple[bool, str]:
 
-    encabezado(
-        "5. OPTIMIZANDO ASIGNACIÓN TERRITORIAL"
+    conteos = (
+        gdf_actual
+        .groupby(
+            escenario_col
+        )[
+            proyecto_col
+        ]
+        .count()
+        .to_dict()
     )
 
-    gdf_opt = gdf.copy()
+    origen_n = int(
+        conteos.get(
+            escenario_origen,
+            0,
+        )
+    )
+
+    destino_n = int(
+        conteos.get(
+            escenario_destino,
+            0,
+        )
+    )
+
+    # Nunca vaciar un escenario por debajo
+    # del mínimo estructural.
+    if (
+        origen_n
+        <= MIN_PROYECTOS
+    ):
+
+        return (
+            False,
+            "ORIGEN_MINIMO",
+        )
+
+    # El destino no debe quedar excesivamente
+    # más grande que el origen.
+    if (
+        destino_n
+        >
+        origen_n
+        + MAX_DIFERENCIA_TAMANO
+    ):
+
+        return (
+            False,
+            "DESTINO_DESBALANCEADO",
+        )
+
+    return (
+        True,
+        "OK",
+    )
+
+
+# ==============================================================================
+# OPTIMIZACIÓN
+# ==============================================================================
+
+def optimizar_asignacion(
+    gdf_original: gpd.GeoDataFrame,
+    escenario_col: str,
+    proyecto_col: str,
+    matriz_indicadores: pd.DataFrame,
+    score_col: Optional[str],
+) -> Tuple[
+    gpd.GeoDataFrame,
+    List[Dict[str, Any]],
+]:
+
+    encabezado(
+        "6. OPTIMIZACIÓN ITERATIVA DE ASIGNACIONES"
+    )
+
+    gdf_opt = (
+        gdf_original
+        .copy()
+    )
 
     gdf_metric = preparar_geometria_metrica(
         gdf_opt
@@ -784,11 +1513,28 @@ def optimizar_movimientos(
 
     movimientos = []
 
-    escenarios = sorted(
-        gdf_opt[escenario_col]
-        .dropna()
-        .unique()
+    estado_actual = evaluar_estado(
+        gdf_original,
+        gdf_opt,
+        escenario_col,
+        proyecto_col,
+        matriz_indicadores,
+        score_col,
     )
+
+    print()
+    print(
+        "SCORE INICIAL"
+    )
+
+    for clave, valor in estado_actual.items():
+
+        imprimir_metrica(
+            clave,
+            valor,
+        )
+
+    print()
 
     for iteracion in range(
         1,
@@ -797,208 +1543,344 @@ def optimizar_movimientos(
 
         cambios = 0
 
-        cantidades = (
-            gdf_opt.groupby(
+        escenarios = sorted(
+            gdf_opt[
                 escenario_col
-            )[proyecto_col]
-            .count()
-            .to_dict()
+            ]
+            .dropna()
+            .unique()
         )
 
-        centroides = obtener_centroides_escenarios(
+        centroides = obtener_centroides(
             gdf_metric,
             escenario_col,
         )
 
+        # --------------------------------------------------------------
+        # Evaluar todos los proyectos.
+        #
+        # En lugar de aplicar inmediatamente el primer movimiento
+        # espacialmente favorable, se busca el mejor movimiento
+        # disponible según la función objetivo.
+        # --------------------------------------------------------------
+
+        mejor_movimiento = None
+        mejor_estado = None
+        mejor_mejora = 0.0
+
         for idx in gdf_opt.index:
 
-            escenario_actual = gdf_opt.loc[
-                idx,
-                escenario_col,
-            ]
-
-            if cantidades.get(
-                escenario_actual,
-                0,
-            ) <= MIN_PROYECTOS:
-                continue
-
-            centro_actual = centroides.get(
-                escenario_actual
+            escenario_origen = (
+                gdf_opt.loc[
+                    idx,
+                    escenario_col,
+                ]
             )
-
-            if centro_actual is None:
-                continue
 
             geometria = gdf_metric.loc[
                 idx,
                 "geometry",
             ]
 
-            distancia_actual = float(
-                geometria.distance(
-                    centro_actual
-                )
+            destinos = obtener_destinos_candidatos(
+                geometria,
+                centroides,
+                escenario_origen,
             )
 
-            mejor_escenario = None
-            mejor_distancia = distancia_actual
-
-            for escenario_destino in escenarios:
-
-                if (
-                    escenario_destino
-                    == escenario_actual
-                ):
-                    continue
-
-                if escenario_destino not in centroides:
-                    continue
-
-                distancia_destino = float(
-                    geometria.distance(
-                        centroides[
-                            escenario_destino
-                        ]
-                    )
-                )
-
-                # Solo considerar un movimiento
-                # cuando existe mejora espacial real.
-                if (
-                    distancia_destino
-                    < mejor_distancia
-                    * (1.0 - MEJORA_MINIMA)
-                ):
-
-                    # No permitir que el escenario
-                    # receptor quede desbalanceado.
-                    cantidad_destino = cantidades.get(
-                        escenario_destino,
-                        0,
-                    )
-
-                    cantidad_origen = cantidades.get(
-                        escenario_actual,
-                        0,
-                    )
-
-                    if (
-                        cantidad_destino
-                        >= cantidad_origen + 8
-                    ):
-                        continue
-
-                    mejor_distancia = (
-                        distancia_destino
-                    )
-
-                    mejor_escenario = (
-                        escenario_destino
-                    )
-
-            if mejor_escenario is None:
+            if not destinos:
                 continue
 
-            proyecto = gdf_opt.loc[
-                idx,
-                proyecto_col,
-            ]
-
-            movimientos.append(
-                {
-                    "iteracion": iteracion,
-                    "proyecto_id": proyecto,
-                    "escenario_origen": escenario_actual,
-                    "escenario_destino": mejor_escenario,
-                    "distancia_origen": distancia_actual,
-                    "distancia_destino": mejor_distancia,
-                    "mejora_distancia": (
-                        distancia_actual
-                        - mejor_distancia
-                    ),
-                }
+            centro_origen = centroides.get(
+                escenario_origen
             )
 
-            gdf_opt.loc[
-                idx,
-                escenario_col,
-            ] = mejor_escenario
+            if centro_origen is None:
+                continue
 
-            cantidades[
-                escenario_actual
-            ] -= 1
+            distancia_origen = float(
+                geometria.distance(
+                    centro_origen
+                )
+            )
 
-            cantidades[
-                mejor_escenario
-            ] = cantidades.get(
-                mejor_escenario,
-                0,
-            ) + 1
+            for (
+                escenario_destino,
+                distancia_destino,
+            ) in destinos:
 
-            cambios += 1
+                # ------------------------------------------------------
+                # Restricciones duras
+                # ------------------------------------------------------
 
-            # Actualizar centroides para evitar
-            # acumulación excesiva de errores.
-            grupo_origen = gdf_metric[
-                gdf_opt[escenario_col]
-                == escenario_actual
-            ]
-
-            grupo_destino = gdf_metric[
-                gdf_opt[escenario_col]
-                == mejor_escenario
-            ]
-
-            if len(grupo_origen):
-                centroides[
-                    escenario_actual
-                ] = (
-                    grupo_origen.geometry
-                    .unary_union
-                    .centroid
+                permitido, motivo = (
+                    movimiento_permitido(
+                        gdf_opt,
+                        escenario_col,
+                        proyecto_col,
+                        idx,
+                        escenario_origen,
+                        escenario_destino,
+                    )
                 )
 
-            centroides[
-                mejor_escenario
-            ] = (
-                grupo_destino.geometry
-                .unary_union
-                .centroid
+                if not permitido:
+                    continue
+
+                # El destino debe ser espacialmente razonable.
+                if (
+                    distancia_origen > 0
+                    and
+                    distancia_destino
+                    >
+                    distancia_origen
+                    * (
+                        1.0
+                        / FACTOR_DISTANCIA_DESTINO
+                    )
+                ):
+                    continue
+
+                # ------------------------------------------------------
+                # Simulación del movimiento
+                # ------------------------------------------------------
+
+                candidato = (
+                    gdf_opt
+                    .copy()
+                )
+
+                candidato.loc[
+                    idx,
+                    escenario_col,
+                ] = escenario_destino
+
+                estado_candidato = evaluar_estado(
+                    gdf_original,
+                    candidato,
+                    escenario_col,
+                    proyecto_col,
+                    matriz_indicadores,
+                    score_col,
+                )
+
+                # ------------------------------------------------------
+                # Diferencias
+                # ------------------------------------------------------
+
+                mejora = (
+                    estado_candidato[
+                        "score_global"
+                    ]
+                    -
+                    estado_actual[
+                        "score_global"
+                    ]
+                )
+
+                deterioro_score = (
+                    estado_candidato[
+                        "score_original"
+                    ]
+                    -
+                    estado_actual[
+                        "score_original"
+                    ]
+                )
+
+                deterioro_cohesion = (
+                    estado_candidato[
+                        "cohesion"
+                    ]
+                    -
+                    estado_actual[
+                        "cohesion"
+                    ]
+                )
+
+                # ------------------------------------------------------
+                # Restricciones de calidad
+                # ------------------------------------------------------
+
+                if mejora < MEJORA_MINIMA:
+                    continue
+
+                if (
+                    deterioro_score
+                    <
+                    -MAX_DETERIORO_SCORE_ORIGINAL
+                ):
+                    continue
+
+                if (
+                    deterioro_cohesion
+                    <
+                    -MAX_DETERIORO_COHESION
+                ):
+                    continue
+
+                # ------------------------------------------------------
+                # Guardar mejor candidato
+                # ------------------------------------------------------
+
+                if mejora > mejor_mejora:
+
+                    mejor_mejora = mejora
+
+                    mejor_movimiento = {
+                        "idx": idx,
+                        "proyecto_id": gdf_opt.loc[
+                            idx,
+                            proyecto_col,
+                        ],
+                        "escenario_origen":
+                            escenario_origen,
+                        "escenario_destino":
+                            escenario_destino,
+                        "distancia_origen":
+                            distancia_origen,
+                        "distancia_destino":
+                            distancia_destino,
+                        "mejora_distancia":
+                            (
+                                distancia_origen
+                                -
+                                distancia_destino
+                            ),
+                        "mejora_score_global":
+                            mejora,
+                        "deterioro_score_original":
+                            deterioro_score,
+                        "deterioro_cohesion":
+                            deterioro_cohesion,
+                        "iteracion":
+                            iteracion,
+                        "motivo":
+                            "MEJORA_OBJETIVO_GLOBAL",
+                    }
+
+                    mejor_estado = (
+                        estado_candidato
+                    )
+
+        # --------------------------------------------------------------
+        # No hubo movimiento mejorador
+        # --------------------------------------------------------------
+
+        if (
+            mejor_movimiento is None
+            or mejor_estado is None
+        ):
+
+            print(
+                f"Iteración {iteracion:02d} "
+                f"| sin movimientos aceptables"
             )
+
+            break
+
+        # --------------------------------------------------------------
+        # Aplicar mejor movimiento
+        # --------------------------------------------------------------
+
+        idx = mejor_movimiento[
+            "idx"
+        ]
+
+        gdf_opt.loc[
+            idx,
+            escenario_col,
+        ] = (
+            mejor_movimiento[
+                "escenario_destino"
+            ]
+        )
+
+        estado_anterior = estado_actual
+
+        estado_actual = mejor_estado
+
+        movimientos.append(
+            mejor_movimiento
+        )
+
+        cambios += 1
 
         print(
             f"Iteración {iteracion:02d} "
-            f"| movimientos: {cambios}"
+            f"| proyecto="
+            f"{mejor_movimiento['proyecto_id']} "
+            f"| "
+            f"{mejor_movimiento['escenario_origen']}"
+            f" -> "
+            f"{mejor_movimiento['escenario_destino']} "
+            f"| "
+            f"Δscore="
+            f"{mejor_movimiento['mejora_score_global']:+.6f}"
         )
+
+        # --------------------------------------------------------------
+        # Actualizar geometría métrica.
+        #
+        # La geometría no cambia, solamente cambia su asignación.
+        # Por eso no necesitamos reproyectar nuevamente.
+        # --------------------------------------------------------------
 
         if cambios == 0:
             break
 
     print()
     print(
-        f"Movimientos realizados : {len(movimientos)}"
+        f"Movimientos espaciales aceptados : "
+        f"{len(movimientos)}"
     )
 
-    return gdf_opt, movimientos
+    print(
+        f"Score final de esta etapa        : "
+        f"{estado_actual['score_global']:.6f}"
+    )
+
+    return (
+        gdf_opt,
+        movimientos,
+    )
 
 
 # ==============================================================================
-# OPTIMIZACIÓN POR TAMAÑO
+# SEGUNDA ETAPA: REFINAMIENTO DE BALANCE
 # ==============================================================================
 
-def equilibrar_tamanos(
-    gdf: gpd.GeoDataFrame,
+def optimizar_balance(
+    gdf_original: gpd.GeoDataFrame,
+    gdf_actual: gpd.GeoDataFrame,
     escenario_col: str,
     proyecto_col: str,
-) -> Tuple[gpd.GeoDataFrame, List[Dict]]:
+    matriz_indicadores: pd.DataFrame,
+    score_col: Optional[str],
+) -> Tuple[
+    gpd.GeoDataFrame,
+    List[Dict[str, Any]],
+]:
 
     encabezado(
-        "6. EQUILIBRANDO TAMAÑO DE ESCENARIOS"
+        "7. REFINAMIENTO DE BALANCE"
     )
 
-    gdf_opt = gdf.copy()
+    gdf_opt = (
+        gdf_actual
+        .copy()
+    )
+
     movimientos = []
+
+    estado_actual = evaluar_estado(
+        gdf_original,
+        gdf_opt,
+        escenario_col,
+        proyecto_col,
+        matriz_indicadores,
+        score_col,
+    )
 
     for iteracion in range(
         1,
@@ -1006,53 +1888,77 @@ def equilibrar_tamanos(
     ):
 
         conteos = (
-            gdf_opt.groupby(
+            gdf_opt
+            .groupby(
                 escenario_col
-            )[proyecto_col]
+            )[
+                proyecto_col
+            ]
             .count()
+            .sort_values()
         )
 
         if len(conteos) <= 1:
             break
 
-        max_escenario = conteos.idxmax()
-        min_escenario = conteos.idxmin()
-
-        max_n = int(
-            conteos[max_escenario]
+        escenario_pequeno = (
+            conteos.index[0]
         )
 
-        min_n = int(
-            conteos[min_escenario]
+        escenario_grande = (
+            conteos.index[-1]
+        )
+
+        cantidad_pequeno = int(
+            conteos.iloc[0]
+        )
+
+        cantidad_grande = int(
+            conteos.iloc[-1]
+        )
+
+        diferencia = (
+            cantidad_grande
+            - cantidad_pequeno
         )
 
         if (
-            max_n - min_n
-            <= 4
+            diferencia
+            <= MAX_DIFERENCIA_TAMANO
+        ):
+            break
+
+        if (
+            cantidad_grande
+            <= MIN_PROYECTOS
         ):
             break
 
         candidatos = gdf_opt[
-            gdf_opt[escenario_col]
-            == max_escenario
+            gdf_opt[
+                escenario_col
+            ]
+            ==
+            escenario_grande
         ]
 
-        if len(candidatos) <= MIN_PROYECTOS:
+        if candidatos.empty:
             break
 
-        # Buscar el proyecto más cercano
-        # al centroide del escenario receptor.
         gdf_metric = preparar_geometria_metrica(
             gdf_opt
         )
 
-        centro_receptor = (
+        centro_pequeno = (
             gdf_metric[
-                gdf_opt[escenario_col]
-                == min_escenario
+                gdf_opt[
+                    escenario_col
+                ]
+                ==
+                escenario_pequeno
             ]
             .geometry
-            .unary_union
+            .union_all()
             .centroid
         )
 
@@ -1062,152 +1968,297 @@ def equilibrar_tamanos(
             ]
             .geometry
             .distance(
-                centro_receptor
+                centro_pequeno
             )
         )
 
-        idx = distancias.idxmin()
+        candidatos_ordenados = (
+            distancias
+            .sort_values()
+            .index
+        )
 
-        proyecto = gdf_opt.loc[
-            idx,
+        mejor_candidato = None
+        mejor_estado = None
+        mejor_mejora = 0.0
+
+        for idx in candidatos_ordenados:
+
+            permitido, motivo = (
+                movimiento_permitido(
+                    gdf_opt,
+                    escenario_col,
+                    proyecto_col,
+                    idx,
+                    escenario_grande,
+                    escenario_pequeno,
+                )
+            )
+
+            if not permitido:
+                continue
+
+            candidato = (
+                gdf_opt
+                .copy()
+            )
+
+            candidato.loc[
+                idx,
+                escenario_col,
+            ] = escenario_pequeno
+
+            estado_candidato = evaluar_estado(
+                gdf_original,
+                candidato,
+                escenario_col,
+                proyecto_col,
+                matriz_indicadores,
+                score_col,
+            )
+
+            mejora = (
+                estado_candidato[
+                    "score_global"
+                ]
+                -
+                estado_actual[
+                    "score_global"
+                ]
+            )
+
+            if mejora < MEJORA_MINIMA:
+                continue
+
+            deterioro_score = (
+                estado_candidato[
+                    "score_original"
+                ]
+                -
+                estado_actual[
+                    "score_original"
+                ]
+            )
+
+            if (
+                deterioro_score
+                <
+                -MAX_DETERIORO_SCORE_ORIGINAL
+            ):
+                continue
+
+            if mejora > mejor_mejora:
+
+                mejor_mejora = mejora
+
+                mejor_candidato = idx
+
+                mejor_estado = (
+                    estado_candidato
+                )
+
+        if (
+            mejor_candidato is None
+            or mejor_estado is None
+        ):
+
+            print(
+                f"Iteración balance {iteracion:02d} "
+                f"| no se encontró movimiento mejorador"
+            )
+
+            break
+
+        proyecto_id = gdf_opt.loc[
+            mejor_candidato,
             proyecto_col,
         ]
 
         gdf_opt.loc[
-            idx,
+            mejor_candidato,
             escenario_col,
-        ] = min_escenario
+        ] = escenario_pequeno
 
         movimientos.append(
             {
-                "iteracion": iteracion,
-                "proyecto_id": proyecto,
-                "escenario_origen": max_escenario,
-                "escenario_destino": min_escenario,
-                "tipo_movimiento": "BALANCE_TAMANO",
+                "iteracion":
+                    iteracion,
+                "proyecto_id":
+                    proyecto_id,
+                "escenario_origen":
+                    escenario_grande,
+                "escenario_destino":
+                    escenario_pequeno,
+                "tipo_movimiento":
+                    "BALANCE_OBJETIVO",
+                "mejora_score_global":
+                    mejor_mejora,
+                "score_global_antes":
+                    estado_actual[
+                        "score_global"
+                    ],
+                "score_global_despues":
+                    mejor_estado[
+                        "score_global"
+                    ],
+                "cantidad_origen_antes":
+                    cantidad_grande,
+                "cantidad_destino_antes":
+                    cantidad_pequeno,
             }
         )
 
-    print(
-        f"Movimientos de balance : {len(movimientos)}"
-    )
-
-    return gdf_opt, movimientos
-
-
-# ==============================================================================
-# EVALUACIÓN FINAL
-# ==============================================================================
-
-def construir_evaluacion_final(
-    gdf_original: gpd.GeoDataFrame,
-    gdf_optimizado: gpd.GeoDataFrame,
-    escenario_col: str,
-    proyecto_col: str,
-    indicadores: List[str],
-) -> pd.DataFrame:
-
-    encabezado(
-        "7. EVALUANDO RESULTADO DE LA OPTIMIZACIÓN"
-    )
-
-    original = evaluar_estructura(
-        gdf_original,
-        escenario_col,
-        proyecto_col,
-        indicadores,
-    )
-
-    optimizado = evaluar_estructura(
-        gdf_optimizado,
-        escenario_col,
-        proyecto_col,
-        indicadores,
-    )
-
-    print()
-    print("MÉTRICAS")
-    print(
-        f"{'Métrica':<25}"
-        f"{'Original':>15}"
-        f"{'Optimizado':>15}"
-        f"{'Cambio':>15}"
-    )
-
-    for clave in [
-        "cobertura",
-        "estructura_escenarios",
-        "tamano",
-        "cohesion",
-        "balance",
-        "indicadores",
-        "score_global",
-    ]:
-
-        a = original[clave]
-        b = optimizado[clave]
+        estado_actual = (
+            mejor_estado
+        )
 
         print(
-            f"{clave:<25}"
-            f"{a:>15.4f}"
-            f"{b:>15.4f}"
-            f"{b-a:>15.4f}"
+            f"Iteración balance {iteracion:02d} "
+            f"| proyecto={proyecto_id} "
+            f"| "
+            f"{escenario_grande} -> "
+            f"{escenario_pequeno} "
+            f"| "
+            f"Δscore={mejor_mejora:+.6f}"
         )
+
+    print()
+    print(
+        f"Movimientos de balance aceptados : "
+        f"{len(movimientos)}"
+    )
+
+    return (
+        gdf_opt,
+        movimientos,
+    )
+
+
+# ==============================================================================
+# EVALUACIÓN POR ESCENARIO
+# ==============================================================================
+
+def evaluar_escenarios(
+    gdf: gpd.GeoDataFrame,
+    escenario_col: str,
+    proyecto_col: str,
+    score_col: Optional[str],
+    matriz_indicadores: pd.DataFrame,
+) -> pd.DataFrame:
 
     filas = []
 
     conteos = (
-        gdf_optimizado
-        .groupby(escenario_col)[proyecto_col]
+        gdf
+        .groupby(
+            escenario_col
+        )[
+            proyecto_col
+        ]
         .count()
         .sort_values(
             ascending=False
         )
     )
 
-    ranking = 0
+    total = len(gdf)
 
-    for escenario, cantidad in conteos.items():
+    for ranking, (
+        escenario,
+        cantidad,
+    ) in enumerate(
+        conteos.items(),
+        start=1,
+    ):
 
-        ranking += 1
-
-        grupo = gdf_optimizado[
-            gdf_optimizado[
+        grupo = gdf[
+            gdf[
                 escenario_col
             ]
-            == escenario
+            ==
+            escenario
         ]
 
-        score = calcular_score_escenario(
-            grupo,
-            "score_cartera"
-            if "score_cartera"
-            in grupo.columns
-            else None,
+        porcentaje = (
+            cantidad / total
+            if total > 0
+            else 0.0
+        )
+
+        if score_col is not None:
+
+            score_valores = pd.to_numeric(
+                grupo[
+                    score_col
+                ],
+                errors="coerce",
+            )
+
+            score_medio = float(
+                score_valores.mean()
+            )
+
+        else:
+
+            score_medio = 0.5
+
+        indicadores_score = []
+
+        for indicador in matriz_indicadores.columns:
+
+            if indicador.startswith(
+                "__"
+            ):
+                continue
+
+            valores = matriz_indicadores.loc[
+                grupo.index,
+                indicador,
+            ]
+
+            if len(valores):
+
+                indicadores_score.append(
+                    float(
+                        valores.mean()
+                    )
+                )
+
+        score_indicadores = (
+            float(
+                np.mean(
+                    indicadores_score
+                )
+            )
+            if indicadores_score
+            else 0.5
         )
 
         filas.append(
             {
-                "escenario_id": escenario,
-                "cantidad_proyectos": int(
-                    cantidad
-                ),
-                "score_escenario_optimizado": score,
-                "ranking_escenario": ranking,
+                "escenario_id":
+                    escenario,
+                "cantidad_proyectos":
+                    int(cantidad),
+                "porcentaje_proyectos":
+                    porcentaje,
+                "score_medio":
+                    score_medio,
+                "score_indicadores":
+                    score_indicadores,
+                "cumple_minimo":
+                    bool(
+                        cantidad
+                        >= MIN_PROYECTOS
+                    ),
+                "ranking_escenario":
+                    ranking,
             }
         )
 
-    resultado = pd.DataFrame(filas)
-
-    resultado.attrs[
-        "metricas_originales"
-    ] = original
-
-    resultado.attrs[
-        "metricas_optimizadas"
-    ] = optimizado
-
-    return resultado
+    return pd.DataFrame(
+        filas
+    )
 
 
 # ==============================================================================
@@ -1219,7 +2270,7 @@ def validar_resultado(
     gdf_optimizado: gpd.GeoDataFrame,
     escenario_col: str,
     proyecto_col: str,
-) -> Dict:
+) -> Dict[str, Any]:
 
     encabezado(
         "8. VALIDACIÓN FINAL"
@@ -1228,110 +2279,266 @@ def validar_resultado(
     proyectos_originales = set(
         gdf_original[
             proyecto_col
-        ].astype(str)
+        ]
+        .astype(str)
     )
 
     proyectos_optimizados = set(
         gdf_optimizado[
             proyecto_col
-        ].astype(str)
+        ]
+        .astype(str)
     )
 
-    asignados = int(
+    sin_escenario = int(
         gdf_optimizado[
             escenario_col
-        ].notna().sum()
+        ]
+        .isna()
+        .sum()
+    )
+
+    duplicados = int(
+        gdf_optimizado[
+            proyecto_col
+        ]
+        .duplicated()
+        .sum()
     )
 
     conteos = (
         gdf_optimizado
-        .groupby(escenario_col)[proyecto_col]
+        .groupby(
+            escenario_col
+        )[
+            proyecto_col
+        ]
         .count()
     )
 
-    validaciones = {
-        "mismos_proyectos": (
-            proyectos_originales
-            == proyectos_optimizados
-        ),
-        "proyectos_sin_escenario": int(
-            gdf_optimizado[
-                escenario_col
-            ].isna().sum()
-        ),
-        "escenarios": int(
-            gdf_optimizado[
-                escenario_col
-            ].nunique()
-        ),
-        "min_proyectos": int(
+    cantidad_escenarios = int(
+        len(conteos)
+    )
+
+    min_proyectos = (
+        int(
             conteos.min()
-        ),
-        "max_proyectos": int(
+        )
+        if len(conteos)
+        else 0
+    )
+
+    max_proyectos = (
+        int(
             conteos.max()
-        ),
-        "proyectos_asignados": asignados,
-        "proyectos_totales": len(
-            gdf_original
-        ),
+        )
+        if len(conteos)
+        else 0
+    )
+
+    cobertura = (
+        proyectos_originales
+        ==
+        proyectos_optimizados
+    )
+
+    mismos_registros = (
+        len(gdf_original)
+        ==
+        len(gdf_optimizado)
+    )
+
+    validacion = {
+        "mismos_proyectos":
+            bool(cobertura),
+
+        "mismos_registros":
+            bool(mismos_registros),
+
+        "duplicados_proyecto":
+            duplicados,
+
+        "proyectos_sin_escenario":
+            sin_escenario,
+
+        "escenarios":
+            cantidad_escenarios,
+
+        "min_proyectos":
+            min_proyectos,
+
+        "max_proyectos":
+            max_proyectos,
+
+        "proyectos_totales":
+            int(len(gdf_original)),
+
+        "proyectos_asignados":
+            int(
+                len(gdf_optimizado)
+                - sin_escenario
+            ),
+
+        "cantidad_escenarios_valida":
+            bool(
+                MIN_ESCENARIOS
+                <= cantidad_escenarios
+                <= MAX_ESCENARIOS
+            ),
+
+        "todos_los_escenarios_cumplen_minimo":
+            bool(
+                min_proyectos
+                >= MIN_PROYECTOS
+            ),
     }
 
     print(
-        f"Proyectos totales       : "
-        f"{validaciones['proyectos_totales']}"
+        f"Proyectos totales            : "
+        f"{validacion['proyectos_totales']:,}"
     )
 
     print(
-        f"Proyectos asignados     : "
-        f"{validaciones['proyectos_asignados']}"
+        f"Proyectos asignados          : "
+        f"{validacion['proyectos_asignados']:,}"
     )
 
     print(
-        f"Proyectos sin escenario : "
-        f"{validaciones['proyectos_sin_escenario']}"
+        f"Proyectos sin escenario      : "
+        f"{sin_escenario}"
     )
 
     print(
-        f"Escenarios              : "
-        f"{validaciones['escenarios']}"
+        f"Duplicados                   : "
+        f"{duplicados}"
     )
 
     print(
-        f"Mínimo proyectos       : "
-        f"{validaciones['min_proyectos']}"
+        f"Escenarios                   : "
+        f"{cantidad_escenarios}"
     )
 
     print(
-        f"Máximo proyectos       : "
-        f"{validaciones['max_proyectos']}"
+        f"Mínimo proyectos             : "
+        f"{min_proyectos}"
     )
 
-    if not validaciones[
-        "mismos_proyectos"
-    ]:
+    print(
+        f"Máximo proyectos             : "
+        f"{max_proyectos}"
+    )
+
+    print(
+        f"Cobertura proyectos          : "
+        f"{cobertura}"
+    )
+
+    print(
+        f"Cantidad escenarios válida   : "
+        f"{validacion['cantidad_escenarios_valida']}"
+    )
+
+    print(
+        f"Mínimo por escenario válido  : "
+        f"{validacion['todos_los_escenarios_cumplen_minimo']}"
+    )
+
+    if not cobertura:
+
         raise ValueError(
             "La optimización alteró el conjunto de proyectos."
         )
 
-    if validaciones[
-        "proyectos_sin_escenario"
-    ] > 0:
+    if not mismos_registros:
+
+        raise ValueError(
+            "La optimización alteró la cantidad de registros."
+        )
+
+    if duplicados > 0:
+
+        raise ValueError(
+            "La optimización generó proyectos duplicados."
+        )
+
+    if sin_escenario > 0:
+
         raise ValueError(
             "Existen proyectos sin escenario."
         )
 
-    if validaciones[
-        "min_proyectos"
-    ] < MIN_PROYECTOS:
+    if min_proyectos < MIN_PROYECTOS:
+
         raise ValueError(
-            "Existe un escenario por debajo del mínimo permitido."
+            "Existe un escenario por debajo del mínimo "
+            f"de {MIN_PROYECTOS} proyectos."
         )
 
+    print()
     print(
-        "Validación final: OK"
+        "VALIDACIÓN FINAL: OK"
     )
 
-    return validaciones
+    return validacion
+
+
+# ==============================================================================
+# COMPARACIÓN ORIGINAL VS OPTIMIZADO
+# ==============================================================================
+
+def construir_resumen_metricas(
+    original: Dict[str, float],
+    optimizado: Dict[str, float],
+) -> pd.DataFrame:
+
+    filas = []
+
+    claves = [
+        "cobertura",
+        "estructura_escenarios",
+        "tamano",
+        "cohesion",
+        "balance",
+        "indicadores",
+        "score_original",
+        "estabilidad",
+        "score_global",
+    ]
+
+    for clave in claves:
+
+        valor_original = float(
+            original.get(
+                clave,
+                np.nan,
+            )
+        )
+
+        valor_optimizado = float(
+            optimizado.get(
+                clave,
+                np.nan,
+            )
+        )
+
+        filas.append(
+            {
+                "metrica":
+                    clave,
+                "original":
+                    valor_original,
+                "optimizado":
+                    valor_optimizado,
+                "cambio":
+                    valor_optimizado
+                    -
+                    valor_original,
+            }
+        )
+
+    return pd.DataFrame(
+        filas
+    )
 
 
 # ==============================================================================
@@ -1340,16 +2547,18 @@ def validar_resultado(
 
 def exportar_resultados(
     gdf_optimizado: gpd.GeoDataFrame,
-    evaluacion: pd.DataFrame,
-    movimientos: List[Dict],
-    metricas_originales: Dict,
-    metricas_optimizadas: Dict,
-    validacion: Dict,
-    tiempo: float,
+    evaluacion_escenarios: pd.DataFrame,
+    movimientos: List[Dict[str, Any]],
+    resumen_metricas: pd.DataFrame,
+    metricas_originales: Dict[str, float],
+    metricas_optimizadas: Dict[str, float],
+    validacion: Dict[str, Any],
+    tiempo_segundos: float,
+    escenario_col: str,
 ) -> None:
 
     encabezado(
-        "9. EXPORTANDO RESULTADOS"
+        "9. EXPORTACIÓN DE RESULTADOS"
     )
 
     INPUT_DIR.mkdir(
@@ -1357,44 +2566,66 @@ def exportar_resultados(
         exist_ok=True,
     )
 
+    # --------------------------------------------------------------------------
+    # GeoParquet
+    # --------------------------------------------------------------------------
+
     gdf_optimizado.to_parquet(
         OUTPUT_OPTIMIZADO,
         index=False,
     )
 
-    gdf_export = gdf_optimizado.copy()
+    # --------------------------------------------------------------------------
+    # CSV
+    # --------------------------------------------------------------------------
 
-    # GeoDataFrame -> CSV sin geometry
-    if "geometry" in gdf_export.columns:
-        gdf_export = pd.DataFrame(
-            gdf_export.drop(
-                columns=["geometry"]
+    gdf_csv = gdf_optimizado.copy()
+
+    if "geometry" in gdf_csv.columns:
+
+        gdf_csv = pd.DataFrame(
+            gdf_csv.drop(
+                columns=[
+                    "geometry"
+                ]
             )
         )
 
-    gdf_export.to_csv(
+    gdf_csv.to_csv(
         OUTPUT_CSV,
         index=False,
         encoding="utf-8-sig",
     )
 
-    evaluacion.to_csv(
+    # --------------------------------------------------------------------------
+    # Evaluación por escenario
+    # --------------------------------------------------------------------------
+
+    evaluacion_escenarios.to_csv(
         OUTPUT_EVALUACION,
         index=False,
         encoding="utf-8-sig",
     )
 
-    movimientos_df = pd.DataFrame(
-        movimientos
-    )
+    # --------------------------------------------------------------------------
+    # Movimientos
+    # --------------------------------------------------------------------------
 
-    if movimientos_df.empty:
+    if movimientos:
+
+        movimientos_df = pd.DataFrame(
+            movimientos
+        )
+
+    else:
+
         movimientos_df = pd.DataFrame(
             columns=[
                 "iteracion",
                 "proyecto_id",
                 "escenario_origen",
                 "escenario_destino",
+                "mejora_score_global",
             ]
         )
 
@@ -1404,67 +2635,113 @@ def exportar_resultados(
         encoding="utf-8-sig",
     )
 
-    resumen = pd.DataFrame(
-        [
-            {
-                "metrica": clave,
-                "original": metricas_originales[
-                    clave
-                ],
-                "optimizado": metricas_optimizadas[
-                    clave
-                ],
-                "cambio": (
-                    metricas_optimizadas[
-                        clave
-                    ]
-                    - metricas_originales[
-                        clave
-                    ]
-                ),
-            }
-            for clave in metricas_originales
-        ]
-    )
+    # --------------------------------------------------------------------------
+    # Resumen
+    # --------------------------------------------------------------------------
 
-    resumen.to_csv(
+    resumen_metricas.to_csv(
         OUTPUT_RESUMEN,
         index=False,
         encoding="utf-8-sig",
     )
 
+    # --------------------------------------------------------------------------
+    # Metadata
+    # --------------------------------------------------------------------------
+
+    cantidad_escenarios = int(
+        gdf_optimizado[
+            escenario_col
+        ]
+        .nunique()
+    )
+
     metadata = {
-        "proceso": 29,
-        "nombre": (
+        "proceso":
+            PROCESO,
+
+        "nombre":
             "Optimización de escenarios "
-            "territoriales AMBA"
-        ),
-        "version": VERSION,
-        "fecha_ejecucion": pd.Timestamp.now(
-            tz="America/Argentina/Buenos_Aires"
-        ).isoformat(),
-        "proyectos": int(
-            len(gdf_optimizado)
-        ),
-        "escenarios": int(
-            gdf_optimizado[
-                "escenario_id"
-                if "escenario_id"
-                in gdf_optimizado.columns
-                else "id_escenario"
-            ].nunique()
-        ),
-        "movimientos": len(
-            movimientos
-        ),
-        "metricas_originales": (
-            metricas_originales
-        ),
-        "metricas_optimizadas": (
-            metricas_optimizadas
-        ),
-        "validacion": validacion,
-        "duracion_segundos": tiempo,
+            "territoriales AMBA",
+
+        "version":
+            VERSION,
+
+        "fecha_ejecucion":
+            pd.Timestamp.now(
+                tz="America/Argentina/Buenos_Aires"
+            ).isoformat(),
+
+        "project_root":
+            str(PROJECT_ROOT),
+
+        "input":
+            str(INPUT_ESCENARIOS),
+
+        "output":
+            str(OUTPUT_OPTIMIZADO),
+
+        "proyectos":
+            int(len(gdf_optimizado)),
+
+        "escenarios":
+            cantidad_escenarios,
+
+        "movimientos":
+            len(movimientos),
+
+        "configuracion": {
+            "min_proyectos":
+                MIN_PROYECTOS,
+
+            "min_escenarios":
+                MIN_ESCENARIOS,
+
+            "max_escenarios":
+                MAX_ESCENARIOS,
+
+            "max_iteraciones":
+                MAX_ITERACIONES,
+
+            "peso_cohesion":
+                PESO_COHESION,
+
+            "peso_balance":
+                PESO_BALANCE,
+
+            "peso_indicadores":
+                PESO_INDICADORES,
+
+            "peso_score_original":
+                PESO_SCORE_ORIGINAL,
+
+            "peso_estabilidad":
+                PESO_ESTABILIDAD,
+
+            "mejora_minima":
+                MEJORA_MINIMA,
+
+            "max_deterioro_score_original":
+                MAX_DETERIORO_SCORE_ORIGINAL,
+
+            "max_deterioro_cohesion":
+                MAX_DETERIORO_COHESION,
+
+            "max_diferencia_tamano":
+                MAX_DIFERENCIA_TAMANO,
+        },
+
+        "metricas_originales":
+            metricas_originales,
+
+        "metricas_optimizadas":
+            metricas_optimizadas,
+
+        "validacion":
+            validacion,
+
+        "duracion_segundos":
+            float(tiempo_segundos),
     }
 
     OUTPUT_METADATA.write_text(
@@ -1472,32 +2749,33 @@ def exportar_resultados(
             metadata,
             ensure_ascii=False,
             indent=2,
+            default=str,
         ),
         encoding="utf-8",
     )
 
     print(
-        f"GeoParquet optimizado : {OUTPUT_OPTIMIZADO}"
+        f"GeoParquet : {OUTPUT_OPTIMIZADO}"
     )
 
     print(
-        f"CSV optimizado        : {OUTPUT_CSV}"
+        f"CSV        : {OUTPUT_CSV}"
     )
 
     print(
-        f"Evaluación            : {OUTPUT_EVALUACION}"
+        f"Evaluación  : {OUTPUT_EVALUACION}"
     )
 
     print(
-        f"Movimientos           : {OUTPUT_MOVIMIENTOS}"
+        f"Movimientos : {OUTPUT_MOVIMIENTOS}"
     )
 
     print(
-        f"Resumen               : {OUTPUT_RESUMEN}"
+        f"Resumen     : {OUTPUT_RESUMEN}"
     )
 
     print(
-        f"Metadata              : {OUTPUT_METADATA}"
+        f"Metadata    : {OUTPUT_METADATA}"
     )
 
 
@@ -1510,7 +2788,8 @@ def main() -> None:
     inicio = time.perf_counter()
 
     encabezado(
-        f"29 - OPTIMIZACIÓN DE ESCENARIOS TERRITORIALES AMBA - {VERSION}"
+        f"29 - OPTIMIZACIÓN DE ESCENARIOS "
+        f"TERRITORIALES AMBA - {VERSION}"
     )
 
     print(
@@ -1525,52 +2804,102 @@ def main() -> None:
         f"Salida   : {INPUT_DIR}"
     )
 
+    # --------------------------------------------------------------------------
+    # Validar configuración
+    # --------------------------------------------------------------------------
+
+    validar_pesos()
+
     print()
-    print("CONFIGURACIÓN")
     print(
-        f"  Versión             : {VERSION}"
-    )
-    print(
-        f"  Mínimo proyectos    : {MIN_PROYECTOS}"
-    )
-    print(
-        f"  Escenarios válidos  : "
-        f"{MIN_ESCENARIOS} - {MAX_ESCENARIOS}"
-    )
-    print(
-        f"  Máx. iteraciones    : {MAX_ITERACIONES}"
-    )
-    print(
-        f"  Peso cohesión       : {PESO_COHESION:.0%}"
-    )
-    print(
-        f"  Peso balance        : {PESO_BALANCE:.0%}"
-    )
-    print(
-        f"  Peso indicadores    : {PESO_INDICADORES:.0%}"
+        "CONFIGURACIÓN V2.0"
     )
 
-    # --------------------------------------------------------------------------
-    # 1
-    # --------------------------------------------------------------------------
+    print(
+        f"  Mínimo proyectos              : "
+        f"{MIN_PROYECTOS}"
+    )
+
+    print(
+        f"  Escenarios válidos             : "
+        f"{MIN_ESCENARIOS} - {MAX_ESCENARIOS}"
+    )
+
+    print(
+        f"  Máx. iteraciones               : "
+        f"{MAX_ITERACIONES}"
+    )
+
+    print(
+        f"  Peso cohesión                  : "
+        f"{PESO_COHESION:.0%}"
+    )
+
+    print(
+        f"  Peso balance                   : "
+        f"{PESO_BALANCE:.0%}"
+    )
+
+    print(
+        f"  Peso indicadores               : "
+        f"{PESO_INDICADORES:.0%}"
+    )
+
+    print(
+        f"  Peso score original            : "
+        f"{PESO_SCORE_ORIGINAL:.0%}"
+    )
+
+    print(
+        f"  Peso estabilidad               : "
+        f"{PESO_ESTABILIDAD:.0%}"
+    )
+
+    print(
+        f"  Mejora mínima                  : "
+        f"{MEJORA_MINIMA}"
+    )
+
+    print(
+        f"  Deterioro máximo score original: "
+        f"{MAX_DETERIORO_SCORE_ORIGINAL}"
+    )
+
+    # ==========================================================================
+    # 1. CARGA
+    # ==========================================================================
 
     gdf_original = cargar_escenarios()
 
-    # --------------------------------------------------------------------------
-    # 2
-    # --------------------------------------------------------------------------
+    # ==========================================================================
+    # 2. EVALUACIÓN PROCESO 28
+    # ==========================================================================
 
-    escenario_col, proyecto_col = validar_entrada(
-        gdf_original
+    evaluacion_proceso_28 = (
+        cargar_evaluacion()
     )
 
-    # --------------------------------------------------------------------------
-    # 3
-    # --------------------------------------------------------------------------
+    # ==========================================================================
+    # 3. RECOMENDACIONES
+    # ==========================================================================
 
-    encabezado(
-        "3. DETECTANDO INDICADORES"
+    recomendaciones = (
+        cargar_recomendaciones()
     )
+
+    # ==========================================================================
+    # 4. VALIDACIÓN
+    # ==========================================================================
+
+    escenario_col, proyecto_col = (
+        validar_entrada(
+            gdf_original
+        )
+    )
+
+    # ==========================================================================
+    # 5. INDICADORES
+    # ==========================================================================
 
     indicadores = detectar_indicadores(
         gdf_original,
@@ -1578,77 +2907,171 @@ def main() -> None:
         proyecto_col,
     )
 
-    # --------------------------------------------------------------------------
-    # 4
-    # --------------------------------------------------------------------------
-
-    encabezado(
-        "4. EVALUACIÓN BASE"
+    matriz_indicadores = (
+        construir_matriz_indicadores(
+            gdf_original,
+            indicadores,
+        )
     )
 
-    metricas_originales = evaluar_estructura(
+    score_col = detectar_score_original(
+        gdf_original
+    )
+
+    print()
+
+    if score_col:
+
+        print(
+            f"Score territorial utilizado : "
+            f"{score_col}"
+        )
+
+    else:
+
+        print(
+            "Score territorial utilizado : "
+            "NO DISPONIBLE"
+        )
+
+    # ==========================================================================
+    # 6. EVALUACIÓN BASE
+    # ==========================================================================
+
+    encabezado(
+        "6. EVALUACIÓN DE ESTADO ORIGINAL"
+    )
+
+    metricas_originales = evaluar_estado(
+        gdf_original,
         gdf_original,
         escenario_col,
         proyecto_col,
-        indicadores,
+        matriz_indicadores,
+        score_col,
     )
 
-    for clave, valor in metricas_originales.items():
-        print(
-            f"{clave:<25}: {valor:.4f}"
+    for clave, valor in (
+        metricas_originales.items()
+    ):
+
+        imprimir_metrica(
+            clave,
+            valor,
         )
 
-    # --------------------------------------------------------------------------
-    # 5
-    # --------------------------------------------------------------------------
+    # ==========================================================================
+    # 7. OPTIMIZACIÓN ESPACIAL + FUNCIÓN OBJETIVO
+    # ==========================================================================
 
     gdf_optimizado, movimientos_espaciales = (
-        optimizar_movimientos(
+        optimizar_asignacion(
             gdf_original,
             escenario_col,
             proyecto_col,
+            matriz_indicadores,
+            score_col,
         )
     )
 
-    # --------------------------------------------------------------------------
-    # 6
-    # --------------------------------------------------------------------------
+    # ==========================================================================
+    # 8. REFINAMIENTO DE BALANCE
+    # ==========================================================================
 
     gdf_optimizado, movimientos_balance = (
-        equilibrar_tamanos(
+        optimizar_balance(
+            gdf_original,
             gdf_optimizado,
             escenario_col,
             proyecto_col,
+            matriz_indicadores,
+            score_col,
         )
     )
 
     movimientos = (
         movimientos_espaciales
-        + movimientos_balance
+        +
+        movimientos_balance
     )
 
-    # --------------------------------------------------------------------------
-    # 7
-    # --------------------------------------------------------------------------
+    # ==========================================================================
+    # 9. EVALUACIÓN FINAL
+    # ==========================================================================
 
-    evaluacion = construir_evaluacion_final(
+    encabezado(
+        "10. EVALUACIÓN DEL RESULTADO"
+    )
+
+    metricas_optimizadas = evaluar_estado(
         gdf_original,
         gdf_optimizado,
         escenario_col,
         proyecto_col,
-        indicadores,
+        matriz_indicadores,
+        score_col,
     )
 
-    metricas_optimizadas = evaluar_estructura(
+    print()
+    print(
+        f"{'MÉTRICA':<35}"
+        f"{'ORIGINAL':>15}"
+        f"{'OPTIMIZADO':>15}"
+        f"{'CAMBIO':>15}"
+    )
+
+    print(
+        "-" * 80
+    )
+
+    for clave in [
+        "cobertura",
+        "estructura_escenarios",
+        "tamano",
+        "cohesion",
+        "balance",
+        "indicadores",
+        "score_original",
+        "estabilidad",
+        "score_global",
+    ]:
+
+        original = metricas_originales[
+            clave
+        ]
+
+        optimizado = metricas_optimizadas[
+            clave
+        ]
+
+        cambio = (
+            optimizado
+            -
+            original
+        )
+
+        print(
+            f"{clave:<35}"
+            f"{original:>15.6f}"
+            f"{optimizado:>15.6f}"
+            f"{cambio:>+15.6f}"
+        )
+
+    # ==========================================================================
+    # 10. EVALUACIÓN POR ESCENARIO
+    # ==========================================================================
+
+    evaluacion_final = evaluar_escenarios(
         gdf_optimizado,
         escenario_col,
         proyecto_col,
-        indicadores,
+        score_col,
+        matriz_indicadores,
     )
 
-    # --------------------------------------------------------------------------
-    # 8
-    # --------------------------------------------------------------------------
+    # ==========================================================================
+    # 11. VALIDACIÓN FINAL
+    # ==========================================================================
 
     validacion = validar_resultado(
         gdf_original,
@@ -1657,83 +3080,116 @@ def main() -> None:
         proyecto_col,
     )
 
-    # --------------------------------------------------------------------------
-    # 9
-    # --------------------------------------------------------------------------
+    # ==========================================================================
+    # 12. RESUMEN
+    # ==========================================================================
+
+    resumen_metricas = (
+        construir_resumen_metricas(
+            metricas_originales,
+            metricas_optimizadas,
+        )
+    )
+
+    # ==========================================================================
+    # 13. EXPORTACIÓN
+    # ==========================================================================
 
     tiempo = (
         time.perf_counter()
-        - inicio
+        -
+        inicio
     )
 
     exportar_resultados(
         gdf_optimizado,
-        evaluacion,
+        evaluacion_final,
         movimientos,
+        resumen_metricas,
         metricas_originales,
         metricas_optimizadas,
         validacion,
         tiempo,
+        escenario_col,
     )
 
-    # --------------------------------------------------------------------------
-    # 10
-    # --------------------------------------------------------------------------
+    # ==========================================================================
+    # 14. RESULTADO FINAL
+    # ==========================================================================
 
     encabezado(
-        "10. PROCESO 29 FINALIZADO CORRECTAMENTE"
+        "29 - PROCESO FINALIZADO"
     )
 
     print(
-        f"Proyectos procesados    : "
-        f"{len(gdf_optimizado)}"
+        f"Versión                   : {VERSION}"
     )
 
     print(
-        f"Escenarios              : "
+        f"Proyectos procesados      : "
+        f"{len(gdf_optimizado):,}"
+    )
+
+    print(
+        f"Escenarios                : "
         f"{gdf_optimizado[escenario_col].nunique()}"
     )
 
     print(
-        f"Movimientos realizados  : "
+        f"Movimientos espaciales    : "
+        f"{len(movimientos_espaciales)}"
+    )
+
+    print(
+        f"Movimientos balance       : "
+        f"{len(movimientos_balance)}"
+    )
+
+    print(
+        f"Movimientos totales       : "
         f"{len(movimientos)}"
     )
 
+    print()
+
     print(
-        f"Score global original   : "
-        f"{metricas_originales['score_global']:.4f}"
+        f"Score global original     : "
+        f"{metricas_originales['score_global']:.6f}"
     )
 
     print(
-        f"Score global optimizado : "
-        f"{metricas_optimizadas['score_global']:.4f}"
+        f"Score global optimizado   : "
+        f"{metricas_optimizadas['score_global']:.6f}"
     )
 
     mejora = (
         metricas_optimizadas[
             "score_global"
         ]
-        - metricas_originales[
+        -
+        metricas_originales[
             "score_global"
         ]
     )
 
     print(
-        f"Mejora global           : "
-        f"{mejora:+.4f}"
-    )
-
-    print(
-        f"Duración                : "
-        f"{tiempo:.2f} segundos"
+        f"Mejora global              : "
+        f"{mejora:+.6f}"
     )
 
     print()
-    print("ESCENARIOS OPTIMIZADOS")
+
+    print(
+        "ESCENARIOS OPTIMIZADOS"
+    )
 
     conteos = (
         gdf_optimizado
-        .groupby(escenario_col)[proyecto_col]
+        .groupby(
+            escenario_col
+        )[
+            proyecto_col
+        ]
         .count()
         .sort_values(
             ascending=False
@@ -1745,17 +3201,52 @@ def main() -> None:
     )
 
     print()
+
     print(
-        "Salida principal:"
+        "SALIDAS"
     )
 
     print(
-        OUTPUT_OPTIMIZADO
+        f"  {OUTPUT_OPTIMIZADO}"
+    )
+
+    print(
+        f"  {OUTPUT_CSV}"
+    )
+
+    print(
+        f"  {OUTPUT_EVALUACION}"
+    )
+
+    print(
+        f"  {OUTPUT_MOVIMIENTOS}"
+    )
+
+    print(
+        f"  {OUTPUT_RESUMEN}"
+    )
+
+    print(
+        f"  {OUTPUT_METADATA}"
     )
 
     print()
-    print("=" * 88)
 
+    print(
+        f"Duración                  : "
+        f"{tiempo:.2f} segundos"
+    )
+
+    print()
+
+    print(
+        "=" * 90
+    )
+
+
+# ==============================================================================
+# EJECUCIÓN
+# ==============================================================================
 
 if __name__ == "__main__":
     main()

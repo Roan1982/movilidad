@@ -1,37 +1,63 @@
 {
   "proceso": 29,
   "nombre": "Optimización de escenarios territoriales AMBA",
-  "version": "V1.0",
-  "fecha_ejecucion": "2026-08-21T10:57:23.332075-03:00",
+  "version": "V2.0",
+  "fecha_ejecucion": "2026-08-21T11:14:33.060965-03:00",
+  "project_root": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
+  "input": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba.parquet",
+  "output": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba_optimizado.parquet",
   "proyectos": 144,
   "escenarios": 7,
-  "movimientos": 39,
+  "movimientos": 6,
+  "configuracion": {
+    "min_proyectos": 8,
+    "min_escenarios": 6,
+    "max_escenarios": 12,
+    "max_iteraciones": 50,
+    "peso_cohesion": 0.3,
+    "peso_balance": 0.2,
+    "peso_indicadores": 0.25,
+    "peso_score_original": 0.15,
+    "peso_estabilidad": 0.1,
+    "mejora_minima": 0.0005,
+    "max_deterioro_score_original": 0.015,
+    "max_deterioro_cohesion": 0.02,
+    "max_diferencia_tamano": 8
+  },
   "metricas_originales": {
     "cobertura": 1.0,
     "estructura_escenarios": 1.0,
     "tamano": 1.0,
     "cohesion": 0.850387146735774,
     "balance": 0.8422525459499924,
-    "indicadores": 0.9010073669330645,
-    "score_global": 1.0
+    "indicadores": 0.8522546468788619,
+    "score_original": 1.0,
+    "estabilidad": 1.0,
+    "score_global": 0.8866303149304462
   },
   "metricas_optimizadas": {
     "cobertura": 1.0,
     "estructura_escenarios": 1.0,
     "tamano": 1.0,
-    "cohesion": 0.8435478166112644,
-    "balance": 0.91842124913562,
-    "indicadores": 0.9119117979133236,
-    "score_global": 1.0
+    "cohesion": 0.8490168124757802,
+    "balance": 0.9319586182560229,
+    "indicadores": 0.8627179051974261,
+    "score_original": 1.0,
+    "estabilidad": 0.9583333333333334,
+    "score_global": 0.9026095770266285
   },
   "validacion": {
     "mismos_proyectos": true,
+    "mismos_registros": true,
+    "duplicados_proyecto": 0,
     "proyectos_sin_escenario": 0,
     "escenarios": 7,
     "min_proyectos": 19,
     "max_proyectos": 23,
+    "proyectos_totales": 144,
     "proyectos_asignados": 144,
-    "proyectos_totales": 144
+    "cantidad_escenarios_valida": true,
+    "todos_los_escenarios_cumplen_minimo": true
   },
-  "duracion_segundos": 2.9353629000252113
+  "duracion_segundos": 17.492806799942628
 }

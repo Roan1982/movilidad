@@ -1,0 +1,40 @@
+{
+  "proceso": 30,
+  "version": "V1.0",
+  "fecha_ejecucion": "2026-08-21T11:06:46.321132",
+  "proyecto": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
+  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\escenarios_territoriales_amba_optimizado.parquet",
+  "salida_principal": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\validacion_final_escenarios_territoriales_amba.parquet",
+  "crs_original": "{\"$schema\": \"https://proj.org/schemas/v0.7/projjson.schema.json\", \"type\": \"GeographicCRS\", \"name\": \"WGS 84\", \"datum_ensemble\": {\"name\": \"World Geodetic System 1984 ensemble\", \"members\": [{\"name\": \"World Geodetic System 1984 (Transit)\"}, {\"name\": \"World Geodetic System 1984 (G730)\"}, {\"name\": \"World Geodetic System 1984 (G873)\"}, {\"name\": \"World Geodetic System 1984 (G1150)\"}, {\"name\": \"World Geodetic System 1984 (G1674)\"}, {\"name\": \"World Geodetic System 1984 (G1762)\"}, {\"name\": \"World Geodetic System 1984 (G2139)\"}, {\"name\": \"World Geodetic System 1984 (G2296)\"}], \"ellipsoid\": {\"name\": \"WGS 84\", \"semi_major_axis\": 6378137, \"inverse_flattening\": 298.257223563}, \"accuracy\": \"2.0\", \"id\": {\"authority\": \"EPSG\", \"code\": 6326}}, \"coordinate_system\": {\"subtype\": \"ellipsoidal\", \"axis\": [{\"name\": \"Geodetic latitude\", \"abbreviation\": \"Lat\", \"direction\": \"north\", \"unit\": \"degree\"}, {\"name\": \"Geodetic longitude\", \"abbreviation\": \"Lon\", \"direction\": \"east\", \"unit\": \"degree\"}]}, \"scope\": \"Horizontal component of 3D system.\", \"area\": \"World.\", \"bbox\": {\"south_latitude\": -90, \"west_longitude\": -180, \"north_latitude\": 90, \"east_longitude\": 180}, \"id\": {\"authority\": \"EPSG\", \"code\": 4326}}",
+  "crs_metrico": "EPSG:22185",
+  "proyectos": 144,
+  "escenarios": 7,
+  "cobertura": 1.0,
+  "score_validacion": 0.0,
+  "clasificacion_score": "RECHAZADO",
+  "dictamen": "RECHAZADO",
+  "fundamento": "Se detectaron errores estructurales o de integridad que impiden validar el resultado.",
+  "errores": 21,
+  "warnings": 0,
+  "comparacion_proceso_27": {
+    "archivo_disponible": true,
+    "proyectos_original": 144,
+    "proyectos_optimizado": 144,
+    "escenarios_original": 7,
+    "escenarios_optimizado": 7,
+    "asignaciones_modificadas": 21,
+    "proyectos_solo_original": 0,
+    "proyectos_solo_optimizado": 0
+  },
+  "comparacion_proceso_28": {
+    "archivo_disponible": true,
+    "score_global_28": 0.420487057376674,
+    "escenarios_28": 7
+  },
+  "comparacion_proceso_29": {
+    "archivo_disponible": true,
+    "score_global_29": null,
+    "score_global_30": 0.918914658356371,
+    "diferencia_score": null
+  }
+}

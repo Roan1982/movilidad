@@ -1,0 +1,22 @@
+﻿nivel,codigo,escenario_id,mensaje
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E001,El campo score_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E001,El campo dimension_dominante contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E002,El campo score_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E002,El campo tipo_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E002,El campo dimension_dominante contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E002,El campo prioridad_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E003,El campo score_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E003,El campo tipo_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E003,El campo dimension_dominante contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E004,El campo score_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E005,El campo score_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E005,El campo tipo_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E005,El campo dimension_dominante contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E006,El campo score_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E006,El campo tipo_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E006,El campo dimension_dominante contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E006,El campo prioridad_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E007,El campo score_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E007,El campo tipo_escenario contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E007,El campo dimension_dominante contiene múltiples valores dentro del escenario.
+ERROR,CAMPO_ESCENARIO_INCONSISTENTE,AMBA-E007,El campo prioridad_escenario contiene múltiples valores dentro del escenario.
