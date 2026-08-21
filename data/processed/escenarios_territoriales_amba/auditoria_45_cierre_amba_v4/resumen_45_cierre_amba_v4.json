@@ -1,0 +1,54 @@
+{
+  "proceso": 45,
+  "version": "V4.1-FINAL",
+  "script": "45_auditoria_cierre_amba_v4.py",
+  "fecha": "2026-08-21T17:32:57",
+  "proyecto_root": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
+  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
+  "paquete": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1",
+  "salida": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\auditoria_45_cierre_amba_v4",
+  "proyectos": 144,
+  "escenarios": 7,
+  "procesos": {
+    "42": {
+      "dictamen": "GO",
+      "score": null,
+      "ok": true
+    },
+    "43": {
+      "dictamen": "GO",
+      "score": 100.0,
+      "ok": true
+    },
+    "44": {
+      "dictamen": "GO",
+      "score": 100.0,
+      "ok": true
+    }
+  },
+  "inventario": {
+    "archivos_fisicos": 16,
+    "directorios_faltantes": 0,
+    "archivos_faltantes": 0,
+    "archivos_vacios": 0
+  },
+  "sha256": {
+    "archivos_validados": 9,
+    "errores": 0
+  },
+  "coherencia_numerica": {
+    "evaluated": 10,
+    "anomalies": 0,
+    "details": []
+  },
+  "resultado": {
+    "controles_totales": 29,
+    "controles_ok": 29,
+    "controles_error": 0,
+    "fallas_criticas": 0,
+    "fallas_importantes": 0,
+    "score": 100.0,
+    "auditoria": "OK",
+    "dictamen": "GO"
+  }
+}
