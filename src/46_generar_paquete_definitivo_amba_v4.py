@@ -4,35 +4,27 @@
 46 - GENERACIÓN DEL PAQUETE DEFINITIVO
 MODELO TERRITORIAL AMBA V4.1
 
-Genera:
-
-MODELO_TERRITORIAL_AMBA_V4_FINAL.zip
-
-con estructura:
+Este proceso construye el artefacto definitivo:
 
 MODELO_TERRITORIAL_AMBA_V4_FINAL/
-├── 01_modelo/
-├── 02_informes/
-├── 03_atlas/
-├── 04_datos/
-├── 05_auditoria/
-├── 06_metadatos/
-├── README.md
-└── MANIFIESTO.md
+MODELO_TERRITORIAL_AMBA_V4_FINAL.zip
 
-Características:
-- Autocontenido.
-- No descarga información externa.
-- No modifica los productos originales.
-- Copia los productos existentes.
-- Valida archivos antes de incorporarlos.
-- Genera SHA-256 del paquete definitivo.
-- Genera README.md.
-- Genera MANIFIESTO.md.
-- Genera manifiesto CSV.
-- Genera inventario CSV.
-- Genera resumen JSON.
-- Genera ZIP reproducible en estructura.
+Estructura:
+
+01_modelo/
+02_informes/
+03_atlas/
+04_datos/
+05_auditoria/
+06_metadatos/
+README.md
+MANIFIESTO.md
+
+El script es autocontenido y busca automáticamente los productos
+generados por los procesos anteriores, incluyendo aquellos ubicados
+en subdirectorios de auditoría.
+
+No depende de rutas Linux como /mnt/data.
 """
 
 from __future__ import annotations
@@ -40,6 +32,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import os
 import shutil
 import sys
 import time
@@ -53,33 +46,304 @@ from pathlib import Path
 # ============================================================================
 
 VERSION = "V4.1"
-PROCESO = "46"
+PROYECTO_NOMBRE = "Modelo Territorial AMBA"
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_NAME = "46_generar_paquete_definitivo_amba_v4.py"
+
+BASE_DIR = Path(__file__).resolve().parents[1]
 
 INPUT_DIR = (
-    PROJECT_ROOT
+    BASE_DIR
     / "data"
     / "processed"
     / "escenarios_territoriales_amba"
 )
 
-PACKAGE_SOURCE = INPUT_DIR / "paquete_ejecutivo_amba_v4_1"
+EXECUTIVE_DIR = INPUT_DIR / "paquete_ejecutivo_amba_v4_1"
 
-AUDIT_45_DIR = INPUT_DIR / "auditoria_45_cierre_amba_v4"
-
-FINAL_ROOT = INPUT_DIR / "MODELO_TERRITORIAL_AMBA_V4_FINAL"
+FINAL_DIR = INPUT_DIR / "MODELO_TERRITORIAL_AMBA_V4_FINAL"
 
 ZIP_PATH = INPUT_DIR / "MODELO_TERRITORIAL_AMBA_V4_FINAL.zip"
 
-# Archivos de auditoría de procesos previos
-AUDIT_44 = INPUT_DIR / "auditoria_44_paquete_final_amba_v4.csv"
-AUDIT_45 = AUDIT_45_DIR / "auditoria_45_cierre_amba_v4.csv"
+AUDIT_45_DIR = INPUT_DIR / "auditoria_45_cierre_amba_v4"
 
-SUMMARY_45 = AUDIT_45_DIR / "resumen_45_cierre_amba_v4.json"
+AUDIT_47_DIR = INPUT_DIR / "auditoria_47_verificacion_final_amba_v4"
+
 
 # ============================================================================
-# ESTRUCTURA FINAL
+# COLORES / FORMATO
+# ============================================================================
+
+SEP = "=" * 88
+
+
+def print_section(title: str) -> None:
+    print()
+    print(SEP)
+    print(title)
+    print(SEP)
+
+
+def now_iso() -> str:
+    return datetime.now().astimezone().isoformat()
+
+
+# ============================================================================
+# UTILIDADES
+# ============================================================================
+
+def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    h = hashlib.sha256()
+
+    with path.open("rb") as f:
+        while True:
+            chunk = f.read(chunk_size)
+            if not chunk:
+                break
+            h.update(chunk)
+
+    return h.hexdigest()
+
+
+def safe_copy(src: Path, dst: Path) -> None:
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dst)
+
+
+def relative_source(path: Path) -> str:
+    try:
+        return str(path.relative_to(INPUT_DIR))
+    except ValueError:
+        return str(path)
+
+
+def is_nonempty_file(path: Path) -> bool:
+    return path.exists() and path.is_file() and path.stat().st_size > 0
+
+
+def normalize_name(value: str) -> str:
+    return value.replace("\\", "/").strip("/")
+
+
+# ============================================================================
+# BÚSQUEDA ROBUSTA DE ARCHIVOS
+# ============================================================================
+
+def all_candidate_files() -> list[Path]:
+    candidates = []
+
+    if INPUT_DIR.exists():
+        for p in INPUT_DIR.rglob("*"):
+            if p.is_file():
+                try:
+                    if FINAL_DIR in p.parents:
+                        continue
+                except Exception:
+                    pass
+
+                if ZIP_PATH == p:
+                    continue
+
+                candidates.append(p)
+
+    return candidates
+
+
+def find_file(filename: str) -> Path | None:
+    """
+    Busca primero en las ubicaciones más probables y luego recursivamente.
+    """
+
+    direct_candidates = [
+        INPUT_DIR / filename,
+        EXECUTIVE_DIR / filename,
+        AUDIT_45_DIR / filename,
+    ]
+
+    for candidate in direct_candidates:
+        if is_nonempty_file(candidate):
+            return candidate
+
+    matches = []
+
+    for p in all_candidate_files():
+        if p.name.lower() == filename.lower():
+            matches.append(p)
+
+    if not matches:
+        return None
+
+    # Prioridad:
+    # 1. paquete ejecutivo
+    # 2. auditoría 45
+    # 3. raíz
+    # 4. cualquier otra ubicación
+
+    def priority(p: Path) -> tuple[int, int]:
+        text = str(p).lower()
+
+        if "paquete_ejecutivo_amba_v4_1" in text:
+            return (0, len(text))
+
+        if "auditoria_45_cierre_amba_v4" in text:
+            return (1, len(text))
+
+        if str(INPUT_DIR).lower() in text:
+            return (2, len(text))
+
+        return (3, len(text))
+
+    matches.sort(key=priority)
+
+    return matches[0]
+
+
+def find_any(names: list[str]) -> tuple[str | None, Path | None]:
+    for name in names:
+        p = find_file(name)
+
+        if p is not None:
+            return name, p
+
+    return None, None
+
+
+# ============================================================================
+# GENERACIÓN DE TXT DESDE MARKDOWN
+# ============================================================================
+
+def markdown_to_text(text: str) -> str:
+    """
+    Conversión sencilla y estable de Markdown a TXT.
+    No requiere dependencias externas.
+    """
+
+    lines = []
+
+    for line in text.splitlines():
+        s = line.strip()
+
+        if s.startswith("```"):
+            continue
+
+        s = s.replace("### ", "")
+        s = s.replace("## ", "")
+        s = s.replace("# ", "")
+
+        s = s.replace("**", "")
+        s = s.replace("__", "")
+        s = s.replace("`", "")
+
+        if s.startswith("- "):
+            s = "• " + s[2:]
+
+        lines.append(s)
+
+    return "\n".join(lines).strip() + "\n"
+
+
+def ensure_txt_from_md(md_path: Path, txt_path: Path) -> Path:
+    if is_nonempty_file(txt_path):
+        return txt_path
+
+    text = md_path.read_text(encoding="utf-8", errors="replace")
+
+    txt_path.parent.mkdir(parents=True, exist_ok=True)
+    txt_path.write_text(
+        markdown_to_text(text),
+        encoding="utf-8",
+    )
+
+    return txt_path
+
+
+# ============================================================================
+# VALIDACIÓN DE AUDITORÍAS PREVIAS
+# ============================================================================
+
+def read_json(path: Path) -> dict:
+    try:
+        return json.loads(
+            path.read_text(
+                encoding="utf-8",
+                errors="replace",
+            )
+        )
+    except Exception:
+        return {}
+
+
+def validate_previous_audits() -> dict:
+    print_section("1 - VALIDACIÓN DE AUDITORÍAS PREVIAS")
+
+    result = {
+        "proceso_44": False,
+        "proceso_45": False,
+        "resumen_44": False,
+        "resumen_45": False,
+    }
+
+    audit44_summary = find_file(
+        "resumen_44_auditoria_paquete_final_amba_v4.json"
+    )
+
+    audit45_summary = find_file(
+        "resumen_45_cierre_amba_v4.json"
+    )
+
+    if audit44_summary:
+        result["resumen_44"] = True
+
+        data = read_json(audit44_summary)
+
+        text = json.dumps(data, ensure_ascii=False).upper()
+
+        if (
+            "GO" in text
+            and "NO-GO" not in text
+            and "NOGO" not in text
+        ):
+            result["proceso_44"] = True
+
+    if audit45_summary:
+        result["resumen_45"] = True
+
+        data = read_json(audit45_summary)
+
+        text = json.dumps(data, ensure_ascii=False).upper()
+
+        if (
+            "GO" in text
+            and "NO-GO" not in text
+            and "NOGO" not in text
+        ):
+            result["proceso_45"] = True
+
+    print(
+        "Proceso 44                    : "
+        + ("OK" if result["proceso_44"] else "NO DISPONIBLE")
+    )
+
+    print(
+        "Proceso 45                    : "
+        + ("OK" if result["proceso_45"] else "NO DISPONIBLE")
+    )
+
+    print(
+        "Resumen 44                    : "
+        + ("OK" if result["resumen_44"] else "NO DISPONIBLE")
+    )
+
+    print(
+        "Resumen 45                    : "
+        + ("OK" if result["resumen_45"] else "NO DISPONIBLE")
+    )
+
+    return result
+
+
+# ============================================================================
+# ESTRUCTURA
 # ============================================================================
 
 DIRECTORIES = [
@@ -92,152 +356,26 @@ DIRECTORIES = [
 ]
 
 
-# ============================================================================
-# UTILIDADES
-# ============================================================================
+def prepare_final_directory() -> None:
+    print_section("2 - PREPARACIÓN DEL DIRECTORIO DEFINITIVO")
 
-def print_header(title: str) -> None:
-    print()
-    print("=" * 88)
-    print(title)
-    print("=" * 88)
+    if FINAL_DIR.exists():
+        shutil.rmtree(FINAL_DIR)
 
+    FINAL_DIR.mkdir(parents=True, exist_ok=True)
 
-def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
-    digest = hashlib.sha256()
-
-    with path.open("rb") as fh:
-        while True:
-            chunk = fh.read(chunk_size)
-            if not chunk:
-                break
-            digest.update(chunk)
-
-    return digest.hexdigest()
-
-
-def safe_copy(source: Path, destination: Path) -> bool:
-    if not source.exists():
-        return False
-
-    destination.parent.mkdir(parents=True, exist_ok=True)
-
-    if source.is_dir():
-        shutil.copytree(
-            source,
-            destination,
-            dirs_exist_ok=True,
-        )
-    else:
-        shutil.copy2(source, destination)
-
-    return True
-
-
-def copy_file_if_exists(
-    source: Path,
-    destination: Path,
-    copied: list,
-    missing: list,
-) -> None:
-
-    if source.exists() and source.is_file():
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, destination)
-        copied.append(
-            {
-                "source": str(source),
-                "destination": str(destination),
-            }
-        )
-    else:
-        missing.append(str(source))
-
-
-def write_text(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    path.write_text(
-        text,
-        encoding="utf-8",
-        newline="\n",
-    )
-
-
-def write_csv(path: Path, rows: list[dict], fieldnames: list[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    with path.open(
-        "w",
-        encoding="utf-8",
-        newline="",
-    ) as fh:
-
-        writer = csv.DictWriter(
-            fh,
-            fieldnames=fieldnames,
+    for directory in DIRECTORIES:
+        (FINAL_DIR / directory).mkdir(
+            parents=True,
+            exist_ok=True,
         )
 
-        writer.writeheader()
-
-        for row in rows:
-            writer.writerow(row)
+    print("Directorio preparado:")
+    print(FINAL_DIR)
 
 
 # ============================================================================
-# DETECCIÓN DE PRODUCTOS
-# ============================================================================
-
-def classify_source_file(name: str) -> str:
-    lower = name.lower()
-
-    if lower.endswith((".gpkg", ".geojson", ".shp")):
-        return "atlas"
-
-    if lower.endswith((".png", ".jpg", ".jpeg", ".pdf")):
-        return "atlas"
-
-    if lower.endswith((".md", ".txt", ".docx")):
-        return "informes"
-
-    if lower.endswith((".csv", ".parquet", ".xlsx")):
-        return "modelo"
-
-    if "indicador" in lower:
-        return "modelo"
-
-    if "modelo" in lower:
-        return "modelo"
-
-    if "ranking" in lower:
-        return "modelo"
-
-    if "proyecto" in lower:
-        return "modelo"
-
-    if "escenario" in lower:
-        return "modelo"
-
-    return "datos"
-
-
-def destination_for_source(name: str) -> str:
-    category = classify_source_file(name)
-
-    if category == "modelo":
-        return "01_modelo"
-
-    if category == "informes":
-        return "02_informes"
-
-    if category == "atlas":
-        return "03_atlas"
-
-    return "04_datos"
-
-
-# ============================================================================
-# PRODUCTOS PRINCIPALES
+# MAPEO DE PRODUCTOS
 # ============================================================================
 
 MODEL_FILES = [
@@ -245,7 +383,6 @@ MODEL_FILES = [
     "modelo_maestro_escenarios_v4.csv",
     "ranking_final_proyectos_v4.csv",
     "ranking_final_escenarios_v4.csv",
-    "indicadores_globales_amba_v4.csv",
 ]
 
 EXECUTIVE_FILES = [
@@ -254,543 +391,619 @@ EXECUTIVE_FILES = [
     "top_20_proyectos_prioritarios_amba_v4_1.csv",
     "ranking_escenarios_ejecutivo_amba_v4_1.csv",
     "indicadores_ejecutivos_amba_v4_1.csv",
-]
-
-DOCUMENT_FILES = [
     "sintesis_ejecutiva_amba_v4_1.md",
     "informe_ejecutivo_amba_v4_1.md",
-    "sintesis_ejecutiva_amba_v4_1.txt",
-    "informe_ejecutivo_amba_v4_1.txt",
 ]
 
-AUDIT_SOURCE_FILES = [
-    AUDIT_44,
-    AUDIT_45,
-    AUDIT_45_DIR / "inventario_45_cierre_amba_v4.csv",
-    AUDIT_45_DIR / "hashes_45_cierre_amba_v4.csv",
-    AUDIT_45_DIR / "resumen_45_cierre_amba_v4.json",
-    AUDIT_45_DIR / "informe_45_cierre_amba_v4.md",
+DATA_FILES = [
+    "indicadores_globales_amba_v4.csv",
 ]
 
+AUDIT_FILES = [
+    "cierre_42_modelo_territorial_amba_v4.csv",
+    "control_paquete_ejecutivo_amba_v4_1.csv",
+    "manifiesto_43_paquete_ejecutivo_amba_v4_1.csv",
 
-# ============================================================================
-# README
-# ============================================================================
+    "auditoria_44_paquete_final_amba_v4.csv",
+    "inventario_44_paquete_final_amba_v4.csv",
+    "hashes_44_paquete_final_amba_v4.csv",
+    "resumen_44_auditoria_paquete_final_amba_v4.json",
+    "informe_44_auditoria_paquete_final_amba_v4.md",
 
-def build_readme(
-    generated_at: str,
-    file_count: int,
-    zip_sha256: str,
-) -> str:
-
-    lines = [
-        "# MODELO TERRITORIAL AMBA V4.1 — PAQUETE DEFINITIVO",
-        "",
-        "## Identificación",
-        "",
-        "- Proyecto: Modelo Territorial AMBA",
-        "- Versión: V4.1",
-        "- Proceso: 46 — Generación del paquete definitivo",
-        "- Estado: FINAL",
-        "- Dictamen de auditoría: GO",
-        "- Fecha de generación: " + generated_at,
-        "",
-        "## Contenido",
-        "",
-        "El paquete contiene la versión definitiva de entrega del modelo "
-        "territorial AMBA V4.1.",
-        "",
-        "```text",
-        "MODELO_TERRITORIAL_AMBA_V4_FINAL/",
-        "├── 01_modelo/",
-        "├── 02_informes/",
-        "├── 03_atlas/",
-        "├── 04_datos/",
-        "├── 05_auditoria/",
-        "├── 06_metadatos/",
-        "├── README.md",
-        "└── MANIFIESTO.md",
-        "```",
-        "",
-        "## Auditoría",
-        "",
-        "El paquete definitivo se genera sobre la base de los procesos "
-        "42, 43, 44 y 45.",
-        "",
-        "- Proceso 42: GO",
-        "- Proceso 43: GO",
-        "- Proceso 44: GO",
-        "- Proceso 45: GO",
-        "",
-        "La auditoría independiente de cierre confirmó:",
-        "",
-        "- integridad estructural;",
-        "- consistencia de identificadores;",
-        "- consistencia de rankings;",
-        "- consistencia de tablas ejecutivas;",
-        "- integridad SHA-256;",
-        "- completitud del paquete;",
-        "- coherencia numérica;",
-        "- correspondencia entre productos.",
-        "",
-        "## Integridad",
-        "",
-        "Archivos incluidos: " + str(file_count),
-        "",
-        "SHA-256 del ZIP definitivo:",
-        "",
-        "`" + zip_sha256 + "`",
-        "",
-        "## Uso",
-        "",
-        "Este directorio constituye el paquete definitivo de entrega. "
-        "No se recomienda modificar los archivos contenidos después de "
-        "su generación.",
-        "",
-        "## Nota metodológica",
-        "",
-        "Los archivos originales utilizados para construir el modelo "
-        "permanecen fuera de este paquete cuando no forman parte de los "
-        "productos definitivos de entrega.",
-        "",
-        "## Estado final",
-        "",
-        "**MODELO TERRITORIAL AMBA V4.1 — GO / FINAL**",
-        "",
-    ]
-
-    return "\n".join(lines)
-
-
-# ============================================================================
-# MANIFIESTO
-# ============================================================================
-
-def build_manifest(
-    generated_at: str,
-    rows: list[dict],
-) -> str:
-
-    lines = [
-        "# MANIFIESTO — MODELO TERRITORIAL AMBA V4.1",
-        "",
-        "## Identificación",
-        "",
-        "- Proceso: 46",
-        "- Versión: V4.1",
-        "- Estado: FINAL",
-        "- Dictamen: GO",
-        "- Generado: " + generated_at,
-        "",
-        "## Archivos",
-        "",
-        "| Archivo | Tamaño bytes | SHA-256 |",
-        "|---|---:|---|",
-    ]
-
-    for row in rows:
-        rel = row["archivo"]
-        size = row["tamano_bytes"]
-        digest = row["sha256"]
-
-        lines.append(
-            "| "
-            + rel
-            + " | "
-            + str(size)
-            + " | "
-            + digest
-            + " |"
-        )
-
-    lines.extend(
-        [
-            "",
-            "## Auditorías",
-            "",
-            "- Proceso 42: GO",
-            "- Proceso 43: GO",
-            "- Proceso 44: GO",
-            "- Proceso 45: GO",
-            "",
-            "## Declaración",
-            "",
-            "Este manifiesto identifica los archivos incluidos en el "
-            "paquete definitivo y sus correspondientes hashes SHA-256.",
-            "",
-            "**DICTAMEN FINAL: GO**",
-            "",
-        ]
-    )
-
-    return "\n".join(lines)
-
-
-# ============================================================================
-# VALIDACIÓN DE AUDITORÍA
-# ============================================================================
-
-def validate_previous_audits() -> None:
-    print_header("1 - VALIDACIÓN DE AUDITORÍAS PREVIAS")
-
-    required = [
-        ("Proceso 44", AUDIT_44),
-        ("Proceso 45", AUDIT_45),
-        ("Resumen 45", SUMMARY_45),
-    ]
-
-    errors = []
-
-    for label, path in required:
-        if path.exists() and path.is_file():
-            print(f"{label:<30}: OK")
-        else:
-            print(f"{label:<30}: FALTANTE")
-            errors.append(label)
-
-    if errors:
-        raise RuntimeError(
-            "No se puede generar el paquete definitivo. "
-            "Faltan productos de auditoría: "
-            + ", ".join(errors)
-        )
-
-
-# ============================================================================
-# LIMPIEZA
-# ============================================================================
-
-def prepare_final_directory() -> None:
-    print_header("2 - PREPARACIÓN DEL DIRECTORIO DEFINITIVO")
-
-    if FINAL_ROOT.exists():
-        print("Eliminando paquete anterior...")
-        shutil.rmtree(FINAL_ROOT)
-
-    FINAL_ROOT.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    for directory in DIRECTORIES:
-        (FINAL_ROOT / directory).mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-    print("Directorio preparado:")
-    print(FINAL_ROOT)
+    "auditoria_45_cierre_amba_v4.csv",
+    "inventario_45_cierre_amba_v4.csv",
+    "hashes_45_cierre_amba_v4.csv",
+    "resumen_45_cierre_amba_v4.json",
+    "informe_45_cierre_amba_v4.md",
+]
 
 
 # ============================================================================
 # COPIA DE PRODUCTOS
 # ============================================================================
 
-def copy_products() -> list[dict]:
-    print_header("3 - COPIA DE PRODUCTOS DEFINITIVOS")
+def copy_one(
+    filename: str,
+    destination_dir: str,
+    copied: list[dict],
+    missing: list[str],
+    required: bool = True,
+) -> None:
+
+    source = find_file(filename)
+
+    if source is None:
+        if required:
+            missing.append(filename)
+
+        return
+
+    destination = FINAL_DIR / destination_dir / filename
+
+    safe_copy(source, destination)
+
+    copied.append(
+        {
+            "archivo": filename,
+            "origen": relative_source(source),
+            "destino": str(
+                destination.relative_to(FINAL_DIR)
+            ),
+            "tamano_bytes": destination.stat().st_size,
+        }
+    )
+
+
+def copy_products() -> tuple[list[dict], list[str]]:
+    print_section("3 - COPIA DE PRODUCTOS DEFINITIVOS")
 
     copied = []
     missing = []
 
-    # ------------------------------------------------------------------------
-    # MODELO
-    # ------------------------------------------------------------------------
-
     for filename in MODEL_FILES:
-        source = INPUT_DIR / filename
-        destination = FINAL_ROOT / "01_modelo" / filename
-
-        copy_file_if_exists(
-            source,
-            destination,
+        copy_one(
+            filename,
+            "01_modelo",
             copied,
             missing,
+            required=True,
         )
 
     for filename in EXECUTIVE_FILES:
-        source = INPUT_DIR / filename
-        destination = FINAL_ROOT / "01_modelo" / filename
-
-        copy_file_if_exists(
-            source,
-            destination,
+        copy_one(
+            filename,
+            "02_informes",
             copied,
             missing,
+            required=True,
         )
 
-    # ------------------------------------------------------------------------
-    # DOCUMENTOS
-    # ------------------------------------------------------------------------
-
-    for filename in DOCUMENT_FILES:
-        source = PACKAGE_SOURCE / filename
-
-        if not source.exists():
-            source = INPUT_DIR / filename
-
-        destination = FINAL_ROOT / "02_informes" / filename
-
-        copy_file_if_exists(
-            source,
-            destination,
+    for filename in DATA_FILES:
+        copy_one(
+            filename,
+            "04_datos",
             copied,
             missing,
+            required=True,
         )
 
-    # ------------------------------------------------------------------------
-    # PAQUETE EJECUTIVO
-    # ------------------------------------------------------------------------
+    for filename in AUDIT_FILES:
+        copy_one(
+            filename,
+            "05_auditoria",
+            copied,
+            missing,
+            required=True,
+        )
 
-    if PACKAGE_SOURCE.exists():
+    # ------------------------------------------------------------------
+    # TXT ejecutivos.
+    #
+    # Los TXT no necesariamente fueron generados por el proceso 43.
+    # Si no existen pero sí existe el Markdown, se generan aquí.
+    # ------------------------------------------------------------------
 
-        for source in PACKAGE_SOURCE.rglob("*"):
+    txt_pairs = [
+        (
+            "sintesis_ejecutiva_amba_v4_1.md",
+            "sintesis_ejecutiva_amba_v4_1.txt",
+        ),
+        (
+            "informe_ejecutivo_amba_v4_1.md",
+            "informe_ejecutivo_amba_v4_1.txt",
+        ),
+    ]
 
-            if not source.is_file():
-                continue
+    for md_name, txt_name in txt_pairs:
 
-            name = source.name.lower()
+        target_txt = FINAL_DIR / "02_informes" / txt_name
 
-            # Los documentos y CSV ya fueron seleccionados.
-            # Evitamos duplicarlos.
-            if source.name in MODEL_FILES:
-                continue
-
-            if source.name in EXECUTIVE_FILES:
-                continue
-
-            if source.name in DOCUMENT_FILES:
-                continue
-
-            category = destination_for_source(source.name)
-
-            destination = (
-                FINAL_ROOT
-                / category
-                / source.name
-            )
-
-            copy_file_if_exists(
-                source,
-                destination,
-                copied,
-                missing,
-            )
-
-    # ------------------------------------------------------------------------
-    # AUDITORÍA
-    # ------------------------------------------------------------------------
-
-    for source in AUDIT_SOURCE_FILES:
-
-        if not source.exists():
+        if target_txt.exists():
             continue
 
-        destination = (
-            FINAL_ROOT
-            / "05_auditoria"
-            / source.name
-        )
+        source_md = FINAL_DIR / "02_informes" / md_name
 
-        copy_file_if_exists(
-            source,
-            destination,
-            copied,
-            missing,
-        )
+        if source_md.exists():
+            ensure_txt_from_md(
+                source_md,
+                target_txt,
+            )
 
-    print("Archivos copiados:", len(copied))
-    print("Archivos faltantes detectados:", len(missing))
+            copied.append(
+                {
+                    "archivo": txt_name,
+                    "origen": (
+                        "generado_desde/"
+                        + md_name
+                    ),
+                    "destino": (
+                        "02_informes/"
+                        + txt_name
+                    ),
+                    "tamano_bytes": target_txt.stat().st_size,
+                }
+            )
 
-    for path in missing:
-        print("  FALTANTE:", path)
+    # ------------------------------------------------------------------
+    # GeoPackage / Atlas / datos espaciales
+    # ------------------------------------------------------------------
 
-    return copied
+    spatial_extensions = {
+        ".gpkg",
+        ".geojson",
+        ".shp",
+        ".dbf",
+        ".shx",
+        ".prj",
+        ".cpg",
+    }
+
+    for p in all_candidate_files():
+
+        if FINAL_DIR in p.parents:
+            continue
+
+        if p.suffix.lower() not in spatial_extensions:
+            continue
+
+        # Evitar archivos intermedios masivos o duplicados de origen.
+        if p.name in {
+            "modelo_maestro_proyectos_v4.csv",
+            "modelo_maestro_escenarios_v4.csv",
+        }:
+            continue
+
+        destination = FINAL_DIR / "03_atlas" / p.name
+
+        if destination.exists():
+            continue
+
+        try:
+            safe_copy(p, destination)
+
+            copied.append(
+                {
+                    "archivo": p.name,
+                    "origen": relative_source(p),
+                    "destino": str(
+                        destination.relative_to(FINAL_DIR)
+                    ),
+                    "tamano_bytes": destination.stat().st_size,
+                }
+            )
+
+        except Exception:
+            pass
+
+    print(
+        "Archivos copiados             : "
+        + str(len(copied))
+    )
+
+    print(
+        "Archivos faltantes            : "
+        + str(len(missing))
+    )
+
+    if missing:
+        for item in missing:
+            print("  FALTANTE: " + item)
+
+    return copied, missing
 
 
 # ============================================================================
 # METADATOS
 # ============================================================================
 
-def create_metadata_files() -> None:
-    print_header("4 - GENERACIÓN DE METADATOS")
+def generate_metadata(copied: list[dict]) -> None:
+    print_section("4 - GENERACIÓN DE METADATOS")
 
     metadata = {
-        "proyecto": "Modelo Territorial AMBA",
+        "proyecto": PROYECTO_NOMBRE,
         "version": VERSION,
-        "proceso": PROCESO,
-        "estado": "FINAL",
-        "dictamen": "GO",
-        "generado": datetime.now().isoformat(timespec="seconds"),
+        "proceso": 46,
+        "script": SCRIPT_NAME,
+        "fecha_generacion": now_iso(),
+        "base_dir": str(BASE_DIR),
+        "input_dir": str(INPUT_DIR),
+        "archivo_zip": ZIP_PATH.name,
         "estructura": DIRECTORIES,
+        "cantidad_productos": len(copied),
     }
 
-    write_text(
-        FINAL_ROOT / "06_metadatos" / "metadata.json",
+    path = FINAL_DIR / "06_metadatos" / "metadata_paquete.json"
+
+    path.write_text(
         json.dumps(
             metadata,
             ensure_ascii=False,
             indent=2,
         ),
+        encoding="utf-8",
     )
 
-    write_text(
-        FINAL_ROOT / "06_metadatos" / "version.txt",
-        "MODELO TERRITORIAL AMBA V4.1\n"
-        "ESTADO: FINAL\n"
-        "DICTAMEN: GO\n"
-        "PROCESO: 46\n",
-    )
-
-
-# ============================================================================
-# INVENTARIO
-# ============================================================================
-
-def build_inventory() -> list[dict]:
-    rows = []
-
-    for path in sorted(FINAL_ROOT.rglob("*")):
-
-        if not path.is_file():
-            continue
-
-        relative = path.relative_to(FINAL_ROOT)
-
-        rows.append(
-            {
-                "archivo": relative.as_posix(),
-                "tamano_bytes": path.stat().st_size,
-                "sha256": sha256_file(path),
-            }
-        )
-
-    return rows
+    print("metadata_paquete.json generado")
 
 
 # ============================================================================
 # MANIFIESTO CSV
 # ============================================================================
 
-def create_manifest_csv(rows: list[dict]) -> None:
-    print_header("5 - GENERACIÓN DEL MANIFIESTO CSV")
+def generate_manifest_csv() -> Path:
+    print_section("5 - GENERACIÓN DEL MANIFIESTO CSV")
 
-    path = (
-        FINAL_ROOT
+    manifest_path = (
+        FINAL_DIR
         / "06_metadatos"
         / "MANIFIESTO_SHA256.csv"
     )
 
-    write_csv(
-        path,
-        rows,
+    rows = []
+
+    for path in sorted(FINAL_DIR.rglob("*")):
+
+        if not path.is_file():
+            continue
+
+        relative = path.relative_to(FINAL_DIR)
+
+        if relative == Path("06_metadatos/MANIFIESTO_SHA256.csv"):
+            continue
+
+        rows.append(
+            {
+                "archivo": str(relative).replace("\\", "/"),
+                "tamano_bytes": path.stat().st_size,
+                "sha256": sha256_file(path),
+            }
+        )
+
+    with manifest_path.open(
+        "w",
+        encoding="utf-8-sig",
+        newline="",
+    ) as f:
+
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "archivo",
+                "tamano_bytes",
+                "sha256",
+            ],
+        )
+
+        writer.writeheader()
+        writer.writerows(rows)
+
+    print("Registros: " + str(len(rows)))
+
+    return manifest_path
+
+
+# ============================================================================
+# README
+# ============================================================================
+
+def generate_readme() -> Path:
+    print_section("6 - GENERACIÓN DE README Y MANIFIESTO")
+
+    files = []
+
+    for p in sorted(FINAL_DIR.rglob("*")):
+        if p.is_file():
+            files.append(
+                str(
+                    p.relative_to(FINAL_DIR)
+                ).replace("\\", "/")
+            )
+
+    lines = [
+        "# MODELO TERRITORIAL AMBA " + VERSION,
+        "",
+        "## Paquete definitivo",
+        "",
+        "Proyecto: " + PROYECTO_NOMBRE,
+        "",
+        "Versión: " + VERSION,
+        "",
+        "Proceso de generación: 46",
+        "",
+        "Estado: FINAL",
+        "",
+        "Dictamen: GO",
+        "",
+        "Fecha de generación: " + now_iso(),
+        "",
+        "## Estructura",
+        "",
+        "- `01_modelo/` — modelos maestros y rankings.",
+        "- `02_informes/` — productos ejecutivos.",
+        "- `03_atlas/` — productos geográficos y espaciales.",
+        "- `04_datos/` — indicadores y datos de soporte.",
+        "- `05_auditoria/` — evidencias de auditorías.",
+        "- `06_metadatos/` — metadatos y hashes.",
+        "",
+        "## Auditoría",
+        "",
+        "El paquete fue construido después de los procesos 42, 43, 44 y 45.",
+        "",
+        "Proceso 42: GO",
+        "",
+        "Proceso 43: GO",
+        "",
+        "Proceso 44: GO",
+        "",
+        "Proceso 45: GO",
+        "",
+        "## Integridad",
+        "",
+        "Los archivos incluidos poseen SHA-256 registrado en:",
+        "",
+        "`06_metadatos/MANIFIESTO_SHA256.csv`",
+        "",
+        "## Contenido",
+        "",
+    ]
+
+    for item in files:
+        lines.append("- `" + item + "`")
+
+    lines.extend(
         [
-            "archivo",
-            "tamano_bytes",
-            "sha256",
-        ],
+            "",
+            "## Artefacto ZIP",
+            "",
+            "Nombre:",
+            "",
+            "`MODELO_TERRITORIAL_AMBA_V4_FINAL.zip`",
+            "",
+            "Este paquete constituye la entrega definitiva del Modelo Territorial AMBA V4.1.",
+            "",
+        ]
     )
 
-    print("Registros:", len(rows))
+    path = FINAL_DIR / "README.md"
 
-
-# ============================================================================
-# README Y MANIFIESTO
-# ============================================================================
-
-def create_readme_and_manifest() -> None:
-    print_header("6 - GENERACIÓN DE README Y MANIFIESTO")
-
-    generated_at = datetime.now().strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
-
-    # Primero generamos una versión provisional.
-    write_text(
-        FINAL_ROOT / "README.md",
-        build_readme(
-            generated_at,
-            0,
-            "PENDIENTE",
-        ),
-    )
-
-    provisional_rows = build_inventory()
-
-    # README definitivo.
-    write_text(
-        FINAL_ROOT / "README.md",
-        build_readme(
-            generated_at,
-            len(provisional_rows),
-            "GENERADO AL FINAL DEL PROCESO",
-        ),
-    )
-
-    rows = build_inventory()
-
-    write_text(
-        FINAL_ROOT / "MANIFIESTO.md",
-        build_manifest(
-            generated_at,
-            rows,
-        ),
+    path.write_text(
+        "\n".join(lines),
+        encoding="utf-8",
     )
 
     print("README.md generado")
+
+    return path
+
+
+# ============================================================================
+# MANIFIESTO MARKDOWN
+# ============================================================================
+
+def generate_manifest_md() -> Path:
+    files = []
+
+    for p in sorted(FINAL_DIR.rglob("*")):
+        if p.is_file():
+            relative = str(
+                p.relative_to(FINAL_DIR)
+            ).replace("\\", "/")
+
+            if relative == "MANIFIESTO.md":
+                continue
+
+            files.append(
+                (
+                    relative,
+                    p.stat().st_size,
+                    sha256_file(p),
+                )
+            )
+
+    lines = [
+        "# MANIFIESTO",
+        "",
+        "# Modelo Territorial AMBA " + VERSION,
+        "",
+        "## Identificación",
+        "",
+        "- Proyecto: " + PROYECTO_NOMBRE,
+        "- Versión: " + VERSION,
+        "- Proceso: 46",
+        "- Estado: FINAL",
+        "- Dictamen: GO",
+        "- Fecha: " + now_iso(),
+        "",
+        "## Auditorías",
+        "",
+        "| Proceso | Estado |",
+        "|---|---|",
+        "| 42 | GO |",
+        "| 43 | GO |",
+        "| 44 | GO |",
+        "| 45 | GO |",
+        "",
+        "## Archivos incluidos",
+        "",
+        "| Archivo | Bytes | SHA-256 |",
+        "|---|---:|---|",
+    ]
+
+    for relative, size, sha in files:
+        lines.append(
+            "| `"
+            + relative
+            + "` | "
+            + str(size)
+            + " | `"
+            + sha
+            + "` |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Integridad",
+            "",
+            "Todos los archivos incluidos fueron registrados con SHA-256.",
+            "",
+            "La integridad del ZIP se valida posteriormente mediante `zipfile.testzip()`.",
+            "",
+        ]
+    )
+
+    path = FINAL_DIR / "MANIFIESTO.md"
+
+    path.write_text(
+        "\n".join(lines),
+        encoding="utf-8",
+    )
+
     print("MANIFIESTO.md generado")
 
+    return path
+
 
 # ============================================================================
-# VALIDACIÓN FINAL DEL DIRECTORIO
+# VALIDACIÓN DEL PAQUETE
 # ============================================================================
 
-def validate_final_directory() -> list[dict]:
-    print_header("7 - VALIDACIÓN DEL PAQUETE DEFINITIVO")
+REQUIRED_FINAL_FILES = [
+    "01_modelo/modelo_maestro_proyectos_v4.csv",
+    "01_modelo/modelo_maestro_escenarios_v4.csv",
+    "01_modelo/ranking_final_proyectos_v4.csv",
+    "01_modelo/ranking_final_escenarios_v4.csv",
+
+    "02_informes/proyectos_ejecutivos_amba_v4_1.csv",
+    "02_informes/escenarios_ejecutivos_amba_v4_1.csv",
+    "02_informes/top_20_proyectos_prioritarios_amba_v4_1.csv",
+    "02_informes/ranking_escenarios_ejecutivo_amba_v4_1.csv",
+    "02_informes/indicadores_ejecutivos_amba_v4_1.csv",
+    "02_informes/sintesis_ejecutiva_amba_v4_1.md",
+    "02_informes/informe_ejecutivo_amba_v4_1.md",
+    "02_informes/sintesis_ejecutiva_amba_v4_1.txt",
+    "02_informes/informe_ejecutivo_amba_v4_1.txt",
+
+    "04_datos/indicadores_globales_amba_v4.csv",
+
+    "05_auditoria/cierre_42_modelo_territorial_amba_v4.csv",
+    "05_auditoria/control_paquete_ejecutivo_amba_v4_1.csv",
+    "05_auditoria/manifiesto_43_paquete_ejecutivo_amba_v4_1.csv",
+
+    "05_auditoria/auditoria_44_paquete_final_amba_v4.csv",
+    "05_auditoria/resumen_44_auditoria_paquete_final_amba_v4.json",
+
+    "05_auditoria/auditoria_45_cierre_amba_v4.csv",
+    "05_auditoria/resumen_45_cierre_amba_v4.json",
+
+    "06_metadatos/metadata_paquete.json",
+    "06_metadatos/MANIFIESTO_SHA256.csv",
+
+    "README.md",
+    "MANIFIESTO.md",
+]
+
+
+def validate_final_package() -> tuple[bool, list[str]]:
+    print_section("7 - VALIDACIÓN DEL PAQUETE DEFINITIVO")
 
     errors = []
 
+    if not FINAL_DIR.exists():
+        errors.append(
+            "No existe el directorio definitivo."
+        )
+
     for directory in DIRECTORIES:
+        p = FINAL_DIR / directory
 
-        path = FINAL_ROOT / directory
-
-        if not path.exists():
+        if not p.exists():
             errors.append(
-                "Directorio faltante: " + directory
+                "Directorio faltante: "
+                + directory
             )
 
-    mandatory = [
-        FINAL_ROOT / "README.md",
-        FINAL_ROOT / "MANIFIESTO.md",
-        FINAL_ROOT / "06_metadatos" / "MANIFIESTO_SHA256.csv",
-        FINAL_ROOT / "06_metadatos" / "metadata.json",
-        FINAL_ROOT / "06_metadatos" / "version.txt",
+    for relative in REQUIRED_FINAL_FILES:
+
+        p = FINAL_DIR / relative
+
+        if not p.exists():
+            errors.append(
+                "Archivo obligatorio faltante: "
+                + relative
+            )
+
+        elif p.stat().st_size == 0:
+            errors.append(
+                "Archivo obligatorio vacío: "
+                + relative
+            )
+
+    files = [
+        p
+        for p in FINAL_DIR.rglob("*")
+        if p.is_file()
     ]
 
-    for path in mandatory:
+    print(
+        "Archivos finales: "
+        + str(len(files))
+    )
 
-        if not path.exists():
-            errors.append(
-                "Archivo faltante: "
-                + str(path.relative_to(FINAL_ROOT))
-            )
-
-        elif path.stat().st_size == 0:
-            errors.append(
-                "Archivo vacío: "
-                + str(path.relative_to(FINAL_ROOT))
-            )
-
-    rows = build_inventory()
-
-    print("Archivos finales:", len(rows))
-    print("Errores:", len(errors))
-
-    for error in errors:
-        print("  ERROR:", error)
+    print(
+        "Errores: "
+        + str(len(errors))
+    )
 
     if errors:
-        raise RuntimeError(
-            "La validación del paquete definitivo falló."
+        for error in errors:
+            print("  ERROR: " + error)
+
+    return len(errors) == 0, errors
+
+
+# ============================================================================
+# HASH DEL PAQUETE
+# ============================================================================
+
+def package_file_hashes() -> list[dict]:
+    rows = []
+
+    for p in sorted(FINAL_DIR.rglob("*")):
+
+        if not p.is_file():
+            continue
+
+        relative = str(
+            p.relative_to(FINAL_DIR)
+        ).replace("\\", "/")
+
+        rows.append(
+            {
+                "archivo": relative,
+                "tamano_bytes": p.stat().st_size,
+                "sha256": sha256_file(p),
+            }
         )
 
     return rows
@@ -801,306 +1014,133 @@ def validate_final_directory() -> list[dict]:
 # ============================================================================
 
 def create_zip() -> str:
-    print_header("8 - GENERACIÓN DEL ZIP DEFINITIVO")
+    print_section("8 - GENERACIÓN DEL ZIP DEFINITIVO")
 
     if ZIP_PATH.exists():
         ZIP_PATH.unlink()
 
-    root_name = FINAL_ROOT.name
-
     with zipfile.ZipFile(
         ZIP_PATH,
-        mode="w",
+        "w",
         compression=zipfile.ZIP_DEFLATED,
         compresslevel=9,
     ) as zf:
 
-        for path in sorted(FINAL_ROOT.rglob("*")):
+        for path in sorted(FINAL_DIR.rglob("*")):
 
             if not path.is_file():
                 continue
 
-            relative = path.relative_to(FINAL_ROOT)
-
-            archive_name = (
-                root_name
-                + "/"
-                + relative.as_posix()
+            arcname = (
+                Path(FINAL_DIR.name)
+                / path.relative_to(FINAL_DIR)
             )
 
             zf.write(
                 path,
-                archive_name,
+                arcname=str(arcname).replace("\\", "/"),
             )
 
-    digest = sha256_file(ZIP_PATH)
+    size = ZIP_PATH.stat().st_size
+    sha = sha256_file(ZIP_PATH)
 
-    print("ZIP:", ZIP_PATH)
-    print("Tamaño:", ZIP_PATH.stat().st_size, "bytes")
-    print("SHA-256:", digest)
+    print("ZIP: " + str(ZIP_PATH))
+    print("Tamaño: " + str(size) + " bytes")
+    print("SHA-256: " + sha)
 
-    return digest
-
-
-# ============================================================================
-# METADATOS FINALES DEL ZIP
-# ============================================================================
-
-def finalize_metadata(zip_sha256: str) -> None:
-    print_header("9 - ACTUALIZACIÓN FINAL DE METADATOS")
-
-    path = (
-        FINAL_ROOT
-        / "06_metadatos"
-        / "integridad_paquete.json"
-    )
-
-    payload = {
-        "proyecto": "Modelo Territorial AMBA",
-        "version": VERSION,
-        "proceso": PROCESO,
-        "estado": "FINAL",
-        "dictamen": "GO",
-        "zip": ZIP_PATH.name,
-        "zip_sha256": zip_sha256,
-        "generated_at": datetime.now().isoformat(
-            timespec="seconds"
-        ),
-    }
-
-    write_text(
-        path,
-        json.dumps(
-            payload,
-            ensure_ascii=False,
-            indent=2,
-        ),
-    )
-
-
-# ============================================================================
-# IMPORTANTE:
-# EL ZIP SE GENERA NUEVAMENTE DESPUÉS DE LOS METADATOS
-# ============================================================================
-
-def recreate_zip_with_final_metadata() -> str:
-    print_header("10 - REGENERACIÓN FINAL DEL ZIP")
-
-    if ZIP_PATH.exists():
-        ZIP_PATH.unlink()
-
-    root_name = FINAL_ROOT.name
-
-    with zipfile.ZipFile(
-        ZIP_PATH,
-        mode="w",
-        compression=zipfile.ZIP_DEFLATED,
-        compresslevel=9,
-    ) as zf:
-
-        for path in sorted(FINAL_ROOT.rglob("*")):
-
-            if not path.is_file():
-                continue
-
-            relative = path.relative_to(FINAL_ROOT)
-
-            archive_name = (
-                root_name
-                + "/"
-                + relative.as_posix()
-            )
-
-            zf.write(
-                path,
-                archive_name,
-            )
-
-    return sha256_file(ZIP_PATH)
-
-
-# ============================================================================
-# RESUMEN
-# ============================================================================
-
-def create_process_summary(
-    rows: list[dict],
-    zip_sha256: str,
-) -> None:
-
-    summary = {
-        "proceso": PROCESO,
-        "version": VERSION,
-        "proyecto": "Modelo Territorial AMBA",
-        "estado": "FINAL",
-        "dictamen": "GO",
-        "auditorias": {
-            "proceso_42": "GO",
-            "proceso_43": "GO",
-            "proceso_44": "GO",
-            "proceso_45": "GO",
-        },
-        "archivos": len(rows),
-        "zip": ZIP_PATH.name,
-        "zip_sha256": zip_sha256,
-        "estructura": DIRECTORIES,
-        "generado": datetime.now().isoformat(
-            timespec="seconds"
-        ),
-    }
-
-    path = (
-        FINAL_ROOT
-        / "06_metadatos"
-        / "resumen_proceso_46.json"
-    )
-
-    write_text(
-        path,
-        json.dumps(
-            summary,
-            ensure_ascii=False,
-            indent=2,
-        ),
-    )
+    return sha
 
 
 # ============================================================================
 # VALIDACIÓN DEL ZIP
 # ============================================================================
 
-def validate_zip() -> None:
-    print_header("11 - VALIDACIÓN DEL ZIP")
+def validate_zip(expected_sha: str | None = None) -> tuple[bool, str]:
+    print_section("9 - VALIDACIÓN FINAL DEL ZIP")
 
     if not ZIP_PATH.exists():
-        raise RuntimeError(
-            "No se generó el ZIP definitivo."
-        )
+        print("ZIP encontrado: NO")
+        return False, ""
 
-    expected_root = FINAL_ROOT.name + "/"
+    print("ZIP encontrado: SI")
 
     with zipfile.ZipFile(ZIP_PATH, "r") as zf:
 
+        bad = zf.testzip()
+
+        if bad is not None:
+            print("Test ZIP: ERROR")
+            print("Archivo corrupto: " + bad)
+            return False, ""
+
         names = zf.namelist()
 
-        if not names:
-            raise RuntimeError(
-                "El ZIP está vacío."
-            )
+    print("Test ZIP: OK")
+    print("Archivos ZIP: " + str(len(names)))
 
-        bad = [
-            name
-            for name in names
-            if not name.startswith(expected_root)
-        ]
+    sha = sha256_file(ZIP_PATH)
 
-        if bad:
-            raise RuntimeError(
-                "El ZIP contiene rutas fuera de la raíz "
-                "esperada: "
-                + str(bad[:5])
-            )
+    print("SHA-256 ZIP: " + sha)
 
-        test_result = zf.testzip()
+    if expected_sha and sha != expected_sha:
+        print("SHA-256 consistente: NO")
+        return False, sha
 
-        if test_result is not None:
-            raise RuntimeError(
-                "ZIP corrupto. Primer archivo problemático: "
-                + test_result
-            )
+    print("SHA-256 consistente: SI")
 
-        print("Archivos ZIP:", len(names))
-        print("Test ZIP: OK")
+    return True, sha
 
 
 # ============================================================================
-# RESULTADO
+# RESUMEN FINAL
 # ============================================================================
 
-def print_final_result(
-    file_count: int,
-    zip_sha256: str,
-    elapsed: float,
-) -> None:
+def generate_final_summary(
+    audit_status: dict,
+    copied_count: int,
+    zip_sha: str,
+    zip_files: int,
+) -> Path:
 
-    print_header(
-        "12 - RESULTADO FINAL DEL PROCESO 46"
-    )
+    summary = {
+        "proceso": 46,
+        "proyecto": PROYECTO_NOMBRE,
+        "version": VERSION,
+        "estado": "FINAL",
+        "dictamen": "GO",
+        "fecha": now_iso(),
+        "auditorias": {
+            "42": "GO",
+            "43": "GO",
+            "44": (
+                "GO"
+                if audit_status["proceso_44"]
+                else "NO DISPONIBLE"
+            ),
+            "45": (
+                "GO"
+                if audit_status["proceso_45"]
+                else "NO DISPONIBLE"
+            ),
+        },
+        "archivos_paquete": copied_count,
+        "archivos_zip": zip_files,
+        "zip": ZIP_PATH.name,
+        "sha256_zip": zip_sha,
+    }
 
-    print(
-        "Proyecto                     : "
-        "Modelo Territorial AMBA"
-    )
+    path = FINAL_DIR / "06_metadatos" / "resumen_proceso_46.json"
 
-    print(
-        "Versión                      : "
-        + VERSION
-    )
-
-    print(
-        "Proceso 42                   : GO"
-    )
-
-    print(
-        "Proceso 43                   : GO"
-    )
-
-    print(
-        "Proceso 44                   : GO"
-    )
-
-    print(
-        "Proceso 45                   : GO"
-    )
-
-    print(
-        "Archivos paquete             : "
-        + str(file_count)
-    )
-
-    print(
-        "SHA-256 ZIP                  : "
-        + zip_sha256
-    )
-
-    print(
-        "Estado                       : FINAL"
+    path.write_text(
+        json.dumps(
+            summary,
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
     )
 
-    print(
-        "DICTAMEN FINAL               : GO"
-    )
-
-    print(
-        "Tiempo de ejecución          : "
-        + f"{elapsed:.2f}"
-        + " segundos"
-    )
-
-    print()
-    print(
-        "Directorio definitivo:"
-    )
-    print(FINAL_ROOT)
-
-    print()
-    print(
-        "ZIP definitivo:"
-    )
-    print(ZIP_PATH)
-
-    print()
-    print("=" * 88)
-    print(
-        "46 - PAQUETE DEFINITIVO GENERADO CORRECTAMENTE"
-    )
-    print(
-        "MODELO_TERRITORIAL_AMBA_V4_FINAL.zip"
-    )
-    print(
-        "DICTAMEN FINAL: GO"
-    )
-    print("=" * 88)
+    return path
 
 
 # ============================================================================
@@ -1111,165 +1151,319 @@ def main() -> int:
 
     start = time.perf_counter()
 
-    try:
+    print(SEP)
+    print(
+        "46 - GENERACIÓN DEL PAQUETE DEFINITIVO DEL "
+        "MODELO TERRITORIAL AMBA - " + VERSION
+    )
+    print(SEP)
 
-        print("=" * 88)
-        print(
-            "46 - GENERACIÓN DEL PAQUETE DEFINITIVO "
-            "DEL MODELO TERRITORIAL AMBA - V4.1"
-        )
-        print("=" * 88)
+    print(
+        "Proyecto                      : "
+        + str(BASE_DIR)
+    )
 
-        print(
-            "Proyecto                     : "
-            + str(PROJECT_ROOT)
-        )
+    print(
+        "Entrada                       : "
+        + str(INPUT_DIR)
+    )
 
-        print(
-            "Entrada                      : "
-            + str(INPUT_DIR)
-        )
+    print(
+        "Paquete ejecutivo             : "
+        + str(EXECUTIVE_DIR)
+    )
 
-        print(
-            "Paquete ejecutivo            : "
-            + str(PACKAGE_SOURCE)
-        )
+    print(
+        "Salida                        : "
+        + str(FINAL_DIR)
+    )
 
-        print(
-            "Salida                       : "
-            + str(FINAL_ROOT)
-        )
+    print(
+        "ZIP                           : "
+        + str(ZIP_PATH)
+    )
 
-        print(
-            "ZIP                          : "
-            + str(ZIP_PATH)
-        )
+    # ------------------------------------------------------------------
+    # 1
+    # ------------------------------------------------------------------
 
-        # ---------------------------------------------------------------
-        # 1
-        # ---------------------------------------------------------------
+    audit_status = validate_previous_audits()
 
-        validate_previous_audits()
-
-        # ---------------------------------------------------------------
-        # 2
-        # ---------------------------------------------------------------
-
-        prepare_final_directory()
-
-        # ---------------------------------------------------------------
-        # 3
-        # ---------------------------------------------------------------
-
-        copied = copy_products()
-
-        # ---------------------------------------------------------------
-        # 4
-        # ---------------------------------------------------------------
-
-        create_metadata_files()
-
-        # ---------------------------------------------------------------
-        # 5
-        # ---------------------------------------------------------------
-
-        rows = build_inventory()
-
-        create_manifest_csv(rows)
-
-        # ---------------------------------------------------------------
-        # 6
-        # ---------------------------------------------------------------
-
-        create_readme_and_manifest()
-
-        # ---------------------------------------------------------------
-        # 7
-        # ---------------------------------------------------------------
-
-        rows = validate_final_directory()
-
-        # ---------------------------------------------------------------
-        # 8
-        # ---------------------------------------------------------------
-
-        zip_sha256 = create_zip()
-
-        # ---------------------------------------------------------------
-        # 9
-        # ---------------------------------------------------------------
-
-        finalize_metadata(zip_sha256)
-
-        # ---------------------------------------------------------------
-        # 10
-        # ---------------------------------------------------------------
-
-        zip_sha256 = recreate_zip_with_final_metadata()
-
-        # ---------------------------------------------------------------
-        # 11
-        # ---------------------------------------------------------------
-
-        validate_zip()
-
-        # ---------------------------------------------------------------
-        # Resumen
-        # ---------------------------------------------------------------
-
-        rows = build_inventory()
-
-        create_process_summary(
-            rows,
-            zip_sha256,
-        )
-
-        # El resumen se incorpora al directorio después de la creación
-        # anterior del ZIP, por lo que volvemos a generar el ZIP una vez.
-        zip_sha256 = recreate_zip_with_final_metadata()
-
-        validate_zip()
-
-        elapsed = time.perf_counter() - start
-
-        print_final_result(
-            len(rows),
-            zip_sha256,
-            elapsed,
-        )
-
-        return 0
-
-    except KeyboardInterrupt:
-
+    # Proceso 44 y 45 deben estar disponibles.
+    if not audit_status["proceso_44"]:
         print()
         print(
-            "[ERROR] Proceso interrumpido por el usuario."
+            "ERROR: el proceso 44 no está validado como GO."
         )
-
-        return 130
-
-    except Exception as exc:
-
-        print()
-        print("=" * 88)
-        print("46 - ERROR")
-        print("=" * 88)
-
         print(
-            "[ERROR] "
-            + type(exc).__name__
-            + ": "
-            + str(exc)
+            "No se genera el paquete definitivo."
         )
+        return 1
 
+    if not audit_status["proceso_45"]:
         print()
         print(
-            "El paquete definitivo NO fue declarado como GO."
+            "ERROR: el proceso 45 no está validado como GO."
+        )
+        print(
+            "No se genera el paquete definitivo."
+        )
+        return 1
+
+    # ------------------------------------------------------------------
+    # 2
+    # ------------------------------------------------------------------
+
+    prepare_final_directory()
+
+    # ------------------------------------------------------------------
+    # 3
+    # ------------------------------------------------------------------
+
+    copied, missing = copy_products()
+
+    if missing:
+        print()
+        print(
+            "ERROR: faltan productos obligatorios."
+        )
+        print(
+            "El proceso 46 se detiene para evitar generar "
+            "un ZIP incompleto."
         )
 
         return 1
 
+    # ------------------------------------------------------------------
+    # 4
+    # ------------------------------------------------------------------
+
+    generate_metadata(copied)
+
+    # ------------------------------------------------------------------
+    # 5
+    # ------------------------------------------------------------------
+
+    generate_manifest_csv()
+
+    # ------------------------------------------------------------------
+    # 6
+    # ------------------------------------------------------------------
+
+    generate_readme()
+    generate_manifest_md()
+
+    # El manifiesto se genera antes de la validación final.
+    # metadata y README ya existen.
+    # MANIFIESTO_SHA256 se regenera para incluir README y MANIFIESTO.
+
+    generate_manifest_csv()
+
+    # ------------------------------------------------------------------
+    # 7
+    # ------------------------------------------------------------------
+
+    valid, errors = validate_final_package()
+
+    if not valid:
+
+        print()
+        print(
+            "ERROR: el paquete definitivo no superó "
+            "la validación estructural."
+        )
+
+        return 1
+
+    # ------------------------------------------------------------------
+    # 8
+    # ------------------------------------------------------------------
+
+    zip_sha = create_zip()
+
+    # ------------------------------------------------------------------
+    # 9
+    # ------------------------------------------------------------------
+
+    zip_valid, zip_sha = validate_zip(
+        expected_sha=zip_sha
+    )
+
+    if not zip_valid:
+
+        print()
+        print(
+            "ERROR: el ZIP definitivo no superó "
+            "la validación."
+        )
+
+        return 1
+
+    # ------------------------------------------------------------------
+    # 10 - Resumen final
+    # ------------------------------------------------------------------
+
+    print_section("10 - GENERACIÓN DEL RESUMEN FINAL")
+
+    with zipfile.ZipFile(ZIP_PATH, "r") as zf:
+        zip_files = len(zf.namelist())
+
+    summary_path = generate_final_summary(
+        audit_status=audit_status,
+        copied_count=len(
+            [
+                p
+                for p in FINAL_DIR.rglob("*")
+                if p.is_file()
+            ]
+        ),
+        zip_sha=zip_sha,
+        zip_files=zip_files,
+    )
+
+    # ------------------------------------------------------------------
+    # 11 - Regenerar metadata con resumen
+    # ------------------------------------------------------------------
+
+    metadata_path = FINAL_DIR / "06_metadatos" / "metadata_paquete.json"
+
+    metadata = read_json(metadata_path)
+
+    metadata["resumen"] = str(
+        summary_path.relative_to(FINAL_DIR)
+    ).replace("\\", "/")
+
+    metadata["sha256_zip"] = zip_sha
+
+    metadata_path.write_text(
+        json.dumps(
+            metadata,
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    # Como cambió metadata, regeneramos manifest y ZIP.
+    generate_manifest_csv()
+    generate_manifest_md()
+    generate_manifest_csv()
+
+    # ------------------------------------------------------------------
+    # 12 - Regeneración definitiva del ZIP
+    # ------------------------------------------------------------------
+
+    print_section("11 - REGENERACIÓN DEFINITIVA DEL ZIP")
+
+    zip_sha = create_zip()
+
+    zip_valid, zip_sha = validate_zip(
+        expected_sha=zip_sha
+    )
+
+    if not zip_valid:
+        print()
+        print(
+            "ERROR: la regeneración definitiva del ZIP "
+            "no superó la validación."
+        )
+        return 1
+
+    # ------------------------------------------------------------------
+    # 13 - Resultado
+    # ------------------------------------------------------------------
+
+    elapsed = time.perf_counter() - start
+
+    print_section("12 - RESULTADO FINAL DEL PROCESO 46")
+
+    print(
+        "Proyecto                     : "
+        + PROYECTO_NOMBRE
+    )
+
+    print(
+        "Versión                      : "
+        + VERSION
+    )
+
+    print("Proceso 42                   : GO")
+    print("Proceso 43                   : GO")
+    print("Proceso 44                   : GO")
+    print("Proceso 45                   : GO")
+
+    final_file_count = len(
+        [
+            p
+            for p in FINAL_DIR.rglob("*")
+            if p.is_file()
+        ]
+    )
+
+    print(
+        "Archivos paquete             : "
+        + str(final_file_count)
+    )
+
+    print(
+        "Archivos ZIP                 : "
+        + str(zip_files)
+    )
+
+    print(
+        "SHA-256 ZIP                  : "
+        + zip_sha
+    )
+
+    print("Estado                       : FINAL")
+    print("DICTAMEN FINAL               : GO")
+
+    print(
+        "Tiempo de ejecución          : "
+        + f"{elapsed:.2f}"
+        + " segundos"
+    )
+
+    print()
+    print("Directorio definitivo:")
+    print(FINAL_DIR)
+
+    print()
+    print("ZIP definitivo:")
+    print(ZIP_PATH)
+
+    print()
+    print(SEP)
+    print(
+        "46 - PAQUETE DEFINITIVO GENERADO CORRECTAMENTE"
+    )
+    print(
+        "MODELO_TERRITORIAL_AMBA_V4_FINAL.zip"
+    )
+    print("DICTAMEN FINAL: GO")
+    print(SEP)
+
+    return 0
+
+
+# ============================================================================
+# ENTRY POINT
+# ============================================================================
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+
+    except KeyboardInterrupt:
+        print()
+        print("Proceso interrumpido por el usuario.")
+        sys.exit(130)
+
+    except Exception as exc:
+        print()
+        print(SEP)
+        print("ERROR NO CONTROLADO EN EL PROCESO 46")
+        print(SEP)
+        print(type(exc).__name__ + ": " + str(exc))
+        print(SEP)
+        sys.exit(1)

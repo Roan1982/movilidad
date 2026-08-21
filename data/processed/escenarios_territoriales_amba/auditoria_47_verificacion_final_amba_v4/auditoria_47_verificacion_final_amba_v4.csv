@@ -1,0 +1,21 @@
+﻿control,descripcion,resultado,critico,importante,detalle
+01,Existencia del ZIP definitivo,OK,SI,NO,C:\Users\Roan\Documents\GitHub\movilidad\data\processed\escenarios_territoriales_amba\MODELO_TERRITORIAL_AMBA_V4_FINAL.zip
+02,Integridad física del ZIP,OK,SI,NO,ZIP testeado con zipfile.testzip()
+03,Inventario independiente del ZIP,OK,SI,NO,Archivos=40; duplicados=0
+04,Estructura definitiva,ERROR,SI,NO,directorios_faltantes=6; raiz_faltantes=0; fuera_estructura=40
+05,Archivos físicos no vacíos,OK,SI,NO,vacíos=0
+06,Productos obligatorios,OK,SI,NO,requeridos=17; encontrados=17; faltantes=0
+07,SHA-256 del ZIP definitivo,OK,SI,NO,a059736db56c4eafcf95fb1cf8e2cdfd4bd97a568538517dc6b6e194dfa706fb
+08,SHA-256 de archivos internos,OK,SI,NO,archivos=40; errores=0
+09,MANIFIESTO.md,OK,SI,NO,caracteres=5590; conceptos_faltantes=0
+10,README.md,ERROR,SI,NO,faltantes=1
+11_42,Evidencia proceso 42,OK,SI,NO,encontrados=1; esperados=1
+11_43,Evidencia proceso 43,OK,SI,NO,encontrados=2; esperados=2
+11_44,Evidencia proceso 44,OK,SI,NO,encontrados=2; esperados=2
+11_45,Evidencia proceso 45,OK,SI,NO,encontrados=2; esperados=2
+12,Resultado independiente proceso 45,OK,SI,NO,MODELO_TERRITORIAL_AMBA_V4_FINAL/05_auditoria/auditoria_45_cierre_amba_v4.csv:sin_GO_explicito | MODELO_TERRITORIAL_AMBA_V4_FINAL/05_auditoria/resumen_45_cierre_amba_v4.json:sin_GO_explicito | MODELO_TERRITORIAL_AMBA_V4_FINAL/05_auditoria/resumen_45_cierre_amba_v4.json:GO | MODELO_TERRITORIAL_AMBA_V4_FINAL/05_auditoria/resumen_45_cierre_amba_v4.json:GO | MODELO_TERRITORIAL_AMBA_V4_FINAL/05_auditoria/resumen_45_cierre_amba_v4.json:GO | MODELO_TERRITORIAL_AMBA_V4_FINAL/05_auditoria/resumen_45_cierre_amba_v4.json:GO
+13,Correspondencia directorio definitivo versus ZIP,ERROR,SI,NO,directorio=40; zip=40; solo_directorio=40; solo_zip=40
+14,Equivalencia SHA-256 directorio versus ZIP,OK,SI,NO,diferencias=0
+15,Manifiesto CSV,OK,SI,NO,"registros=10; campos=estado,producto,ruta_relativa,sha256,tamano_mb,tipo"
+16,Metadata del paquete,ERROR,SI,NO,version_ok=True; estado_ok=False
+17,Consistencia básica del modelo,OK,SI,NO,proyectos=144; escenarios=7; dup_proyectos=0; dup_escenarios=0

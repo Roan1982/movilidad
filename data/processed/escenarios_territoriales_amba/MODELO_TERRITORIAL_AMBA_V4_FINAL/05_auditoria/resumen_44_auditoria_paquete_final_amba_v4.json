@@ -1,0 +1,167 @@
+{
+  "proceso": 44,
+  "version": "V4.1-FINAL-AUDIT",
+  "proyecto": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
+  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
+  "paquete": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1",
+  "proceso_42": {
+    "dictamen": "GO",
+    "score": 100.0,
+    "ok": true
+  },
+  "proceso_43": {
+    "dictamen": "GO",
+    "score": 100.0,
+    "ok": true
+  },
+  "auditoria": {
+    "controles": 23,
+    "controles_ok": 23,
+    "controles_fallidos": 0,
+    "fallas_criticas": 0,
+    "fallas_importantes": 0,
+    "score": 100.0,
+    "estado": "OK",
+    "dictamen": "GO"
+  },
+  "controles": [
+    {
+      "control": "Cierre proceso 42",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Dictamen=GO Score=100.0 OK=13 ERROR=0 DESCONOCIDOS=0"
+    },
+    {
+      "control": "Paquete proceso 43",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Dictamen=GO Score=100.0 OK=13 ERROR=0"
+    },
+    {
+      "control": "Estructura modelo maestro",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Proyectos=144 Escenarios=7 IDs únicos y sin nulos"
+    },
+    {
+      "control": "Asignación proyecto-escenario",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Nulos=0 Multiescenario=0 Escenarios extra=0"
+    },
+    {
+      "control": "Ranking proyectos completo",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Campo=ranking_final_proyecto_v4 Registros=144"
+    },
+    {
+      "control": "Ranking proyectos ordenado",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Secuencia 1..144"
+    },
+    {
+      "control": "Ranking escenarios completo",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Campo=ranking_integral_v4 Registros=7"
+    },
+    {
+      "control": "Ranking escenarios ordenado",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Secuencia 1..7"
+    },
+    {
+      "control": "Tabla ejecutiva proyectos",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Registros=144 Esperados=144 ID=proyecto_id"
+    },
+    {
+      "control": "Tabla ejecutiva escenarios",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Registros=7 Esperados=7 ID=escenario_id"
+    },
+    {
+      "control": "Top proyectos",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Registros=20 Esperados=20 ID=proyecto_id"
+    },
+    {
+      "control": "Ranking ejecutivo escenarios",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Registros=7 Esperados=7 ID=escenario_id"
+    },
+    {
+      "control": "Indicadores ejecutivos",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Registros=35 Esperados=35"
+    },
+    {
+      "control": "Cruce maestro-proyectos ejecutivos",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Todos los IDs coinciden."
+    },
+    {
+      "control": "Cruce maestro-escenarios ejecutivos",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Todos los IDs coinciden."
+    },
+    {
+      "control": "Síntesis ejecutiva",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Caracteres=1047"
+    },
+    {
+      "control": "Informe ejecutivo",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Caracteres=3781"
+    },
+    {
+      "control": "Manifiesto paquete 43",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Archivos no encontrados=0 Referencias_lógicas=1"
+    },
+    {
+      "control": "Integridad SHA-256 paquete",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Archivos validados=9 Errores=0"
+    },
+    {
+      "control": "Inventario productos obligatorios",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Productos=15 Faltantes=0"
+    },
+    {
+      "control": "Completitud paquete final",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Todos los directorios y archivos obligatorios existen."
+    },
+    {
+      "control": "Indicadores globales",
+      "resultado": "OK",
+      "critico": "SI",
+      "detalle": "Indicadores=27 Campo indicador=indicador Campo valor=valor"
+    },
+    {
+      "control": "Coherencia numérica",
+      "resultado": "OK",
+      "critico": "NO",
+      "detalle": "Campos evaluados=12 Anomalías=0"
+    }
+  ]
+}
