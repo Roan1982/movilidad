@@ -1,0 +1,29 @@
+{
+  "proceso": 27,
+  "version": "V7.2",
+  "input": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\cartera_proyectos_amba\\cartera_proyectos_amba.parquet",
+  "output": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
+  "parametros": {
+    "k_min": 6,
+    "k_max": 12,
+    "min_proyectos": 8,
+    "peso_espacial": 0.55,
+    "peso_territorial": 0.45,
+    "peso_necesidad": 0.4,
+    "peso_estrategica": 0.6,
+    "random_state": 42
+  },
+  "indicadores": {
+    "demanda": "indice_demanda_estructural",
+    "deficit": "deficit_infraestructura",
+    "conectividad": "indice_conectividad_estructural",
+    "intermodalidad": "indice_intermodalidad_estructural",
+    "integracion": "indice_integracion_territorial",
+    "centralidad": "indice_centralidad_estructural",
+    "impacto": "impacto_potencial",
+    "urgencia": "urgencia_intervencion",
+    "score_cartera": "score_cartera"
+  },
+  "proyectos": 144,
+  "escenarios": 7
+}
