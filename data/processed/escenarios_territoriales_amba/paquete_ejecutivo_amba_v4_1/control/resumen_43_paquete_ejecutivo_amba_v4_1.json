@@ -1,0 +1,46 @@
+{
+  "proceso": 43,
+  "version": "V4.1-FINAL",
+  "modelo": {
+    "proyectos": 144,
+    "escenarios": 7,
+    "proyectos_unicos": 144,
+    "proyectos_multiescenario": 0,
+    "cobertura_asignacion_pct": 100.0,
+    "cv_tamano_escenarios": 0.0241
+  },
+  "fecha_ejecucion": "2026-08-21T16:52:05.560395",
+  "proyecto_root": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
+  "input_dir": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
+  "output_dir": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1",
+  "proceso_42": {
+    "dictamen": "GO",
+    "score": 100.0,
+    "controles": 13,
+    "controles_ok": 13,
+    "errores": 0,
+    "desconocidos": 0,
+    "go": true
+  },
+  "paquete": {
+    "controles_total": 13,
+    "controles_ok": 13,
+    "controles_fallidos": 0,
+    "fallas_criticas": 0,
+    "score": 100.0,
+    "auditoria": "OK",
+    "dictamen": "GO"
+  },
+  "archivos": {
+    "proyectos_ejecutivos": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\tablas\\proyectos_ejecutivos_amba_v4_1.csv",
+    "escenarios_ejecutivos": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\tablas\\escenarios_ejecutivos_amba_v4_1.csv",
+    "top_proyectos": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\tablas\\top_20_proyectos_prioritarios_amba_v4_1.csv",
+    "ranking_escenarios": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\tablas\\ranking_escenarios_ejecutivo_amba_v4_1.csv",
+    "indicadores": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\tablas\\indicadores_ejecutivos_amba_v4_1.csv",
+    "sintesis": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\documentos\\sintesis_ejecutiva_amba_v4_1.md",
+    "informe": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\documentos\\informe_ejecutivo_amba_v4_1.md",
+    "control": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\control\\control_paquete_ejecutivo_amba_v4_1.csv",
+    "resumen": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\control\\resumen_43_paquete_ejecutivo_amba_v4_1.json",
+    "manifiesto": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba\\paquete_ejecutivo_amba_v4_1\\control\\manifiesto_43_paquete_ejecutivo_amba_v4_1.csv"
+  }
+}

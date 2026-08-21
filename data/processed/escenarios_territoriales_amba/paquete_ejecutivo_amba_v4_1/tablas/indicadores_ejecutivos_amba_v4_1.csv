@@ -1,0 +1,36 @@
+﻿indicador,valor,unidad,fuente
+Proyectos territoriales,144,proyectos,modelo_maestro_proyectos_v4
+Escenarios territoriales,7,escenarios,modelo_maestro_escenarios_v4
+Proyectos únicos,144,proyectos,modelo_maestro_proyectos_v4
+CV distribución proyectos/escenario,0.0241,coeficiente,modelo_maestro_proyectos_v4
+Cierre proceso 42,GO,dictamen,proceso_42
+Score cierre proceso 42,100.0,puntos,proceso_42
+Controles proceso 42,13,controles,proceso_42
+Controles OK proceso 42,13,controles,proceso_42
+Original - proyectos_totales,144.0,proyectos,indicadores_globales_amba_v4
+Original - proyectos_unicos,144.0,proyectos,indicadores_globales_amba_v4
+Original - escenarios_totales,7.0,escenarios,indicadores_globales_amba_v4
+Original - cobertura_geometrica,100.0,porcentaje,indicadores_globales_amba_v4
+Original - proyectos_multiescenario,0.0,proyectos,indicadores_globales_amba_v4
+Original - promedio_proyectos_escenario,20.571428571428573,proyectos,indicadores_globales_amba_v4
+Original - cv_tamano_escenarios,0.0240562612162344,coeficiente,indicadores_globales_amba_v4
+Original - indice_demanda_estructural_media_amba,50.34722222222222,score,indicadores_globales_amba_v4
+Original - indice_demanda_estructural_max_amba,100.0,score,indicadores_globales_amba_v4
+Original - deficit_infraestructura_media_amba,68.83751736111111,score,indicadores_globales_amba_v4
+Original - deficit_infraestructura_max_amba,100.0,score,indicadores_globales_amba_v4
+Original - indice_conectividad_estructural_media_amba,57.37846805555556,score,indicadores_globales_amba_v4
+Original - indice_conectividad_estructural_max_amba,87.1528,score,indicadores_globales_amba_v4
+Original - indice_intermodalidad_estructural_media_amba,39.151210416666665,score,indicadores_globales_amba_v4
+Original - indice_intermodalidad_estructural_max_amba,98.1771,score,indicadores_globales_amba_v4
+Original - indice_integracion_territorial_media_amba,50.347222916666674,score,indicadores_globales_amba_v4
+Original - indice_integracion_territorial_max_amba,79.9769,score,indicadores_globales_amba_v4
+Original - indice_centralidad_estructural_media_amba,44.366666666666674,score,indicadores_globales_amba_v4
+Original - indice_centralidad_estructural_max_amba,93.74,score,indicadores_globales_amba_v4
+Original - impacto_potencial_media_amba,51.37580857638889,score,indicadores_globales_amba_v4
+Original - impacto_potencial_max_amba,86.80549333333333,score,indicadores_globales_amba_v4
+Original - urgencia_intervencion_media_amba,58.71942729166668,score,indicadores_globales_amba_v4
+Original - urgencia_intervencion_max_amba,85.073795,score,indicadores_globales_amba_v4
+Original - score_prioridad_territorial_media_amba,54.91608370486111,score,indicadores_globales_amba_v4
+Original - score_prioridad_territorial_max_amba,74.08132433333333,score,indicadores_globales_amba_v4
+Original - score_cartera_media_amba,54.95554397361111,score,indicadores_globales_amba_v4
+Original - score_cartera_max_amba,72.79725111666666,score,indicadores_globales_amba_v4

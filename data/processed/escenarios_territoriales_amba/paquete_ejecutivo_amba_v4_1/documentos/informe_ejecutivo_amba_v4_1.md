@@ -1,0 +1,88 @@
+# Informe Ejecutivo Territorial AMBA V4.1
+
+## 1. Estado de cierre
+
+- Proceso 42: **GO**
+- Score: **100.0 / 100**
+- Controles: **13/13 OK**
+
+## 2. Estructura territorial
+
+- Proyectos: **144**
+- Escenarios: **7**
+- Proyectos por escenario: mínimo 20, máximo 21, media 20.57, CV 0.0241
+
+## 3. Ranking de escenarios
+
+1. **AMBA-E001** — 20 proyectos
+2. **AMBA-E003** — 20 proyectos
+3. **AMBA-E002** — 21 proyectos
+4. **AMBA-E004** — 21 proyectos
+5. **AMBA-E005** — 21 proyectos
+6. **AMBA-E006** — 20 proyectos
+7. **AMBA-E007** — 21 proyectos
+
+## 4. Top 20 de proyectos
+
+1. **AMBA-P005** — escenario AMBA-E001
+2. **AMBA-P008** — escenario AMBA-E001
+3. **AMBA-P012** — escenario AMBA-E001
+4. **AMBA-P013** — escenario AMBA-E001
+5. **AMBA-P016** — escenario AMBA-E001
+6. **AMBA-P019** — escenario AMBA-E001
+7. **AMBA-P021** — escenario AMBA-E001
+8. **AMBA-P023** — escenario AMBA-E001
+9. **AMBA-P024** — escenario AMBA-E001
+10. **AMBA-P036** — escenario AMBA-E001
+11. **AMBA-P054** — escenario AMBA-E001
+12. **AMBA-P055** — escenario AMBA-E001
+13. **AMBA-P058** — escenario AMBA-E001
+14. **AMBA-P059** — escenario AMBA-E001
+15. **AMBA-P077** — escenario AMBA-E001
+16. **AMBA-P090** — escenario AMBA-E001
+17. **AMBA-P097** — escenario AMBA-E001
+18. **AMBA-P116** — escenario AMBA-E001
+19. **AMBA-P142** — escenario AMBA-E001
+20. **AMBA-P143** — escenario AMBA-E001
+
+## 5. Indicadores
+
+- Proyectos territoriales: **144** proyectos
+- Escenarios territoriales: **7** escenarios
+- Proyectos únicos: **144** proyectos
+- CV distribución proyectos/escenario: **0.0241** coeficiente
+- Cierre proceso 42: **GO** dictamen
+- Score cierre proceso 42: **100.0** puntos
+- Controles proceso 42: **13** controles
+- Controles OK proceso 42: **13** controles
+- Original - proyectos_totales: **144.0** proyectos
+- Original - proyectos_unicos: **144.0** proyectos
+- Original - escenarios_totales: **7.0** escenarios
+- Original - cobertura_geometrica: **100.0** porcentaje
+- Original - proyectos_multiescenario: **0.0** proyectos
+- Original - promedio_proyectos_escenario: **20.571428571428573** proyectos
+- Original - cv_tamano_escenarios: **0.0240562612162344** coeficiente
+- Original - indice_demanda_estructural_media_amba: **50.34722222222222** score
+- Original - indice_demanda_estructural_max_amba: **100.0** score
+- Original - deficit_infraestructura_media_amba: **68.83751736111111** score
+- Original - deficit_infraestructura_max_amba: **100.0** score
+- Original - indice_conectividad_estructural_media_amba: **57.37846805555556** score
+- Original - indice_conectividad_estructural_max_amba: **87.1528** score
+- Original - indice_intermodalidad_estructural_media_amba: **39.151210416666665** score
+- Original - indice_intermodalidad_estructural_max_amba: **98.1771** score
+- Original - indice_integracion_territorial_media_amba: **50.347222916666674** score
+- Original - indice_integracion_territorial_max_amba: **79.9769** score
+- Original - indice_centralidad_estructural_media_amba: **44.366666666666674** score
+- Original - indice_centralidad_estructural_max_amba: **93.74** score
+- Original - impacto_potencial_media_amba: **51.37580857638889** score
+- Original - impacto_potencial_max_amba: **86.80549333333333** score
+- Original - urgencia_intervencion_media_amba: **58.71942729166668** score
+- Original - urgencia_intervencion_max_amba: **85.073795** score
+- Original - score_prioridad_territorial_media_amba: **54.91608370486111** score
+- Original - score_prioridad_territorial_max_amba: **74.08132433333333** score
+- Original - score_cartera_media_amba: **54.95554397361111** score
+- Original - score_cartera_max_amba: **72.79725111666666** score
+
+## 6. Dictamen
+
+El modelo territorial AMBA V4.1 presenta un cierre técnico aprobado y se encuentra estructurado para su utilización ejecutiva.
