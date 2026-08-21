@@ -1,42 +1,51 @@
 # -*- coding: utf-8 -*-
+
 """
 22 - VALIDACIÓN DE INFRAESTRUCTURA CONTRA CENTRALIDADES AMBA
 
+Versión: V2
+
 Objetivo
 --------
-Validar y caracterizar la infraestructura intermodal construida en el
-script 21 contra las 144 centralidades de movilidad SUBE.
+Validar espacialmente las instalaciones de transporte y los
+intercambiadores construidos en el proceso 21 contra las
+144 centralidades de movilidad SUBE.
 
-El script NO modifica los archivos generados por el proceso 21.
+El proceso calcula:
 
-Entradas principales
---------------------
+- instalaciones a 250 m
+- instalaciones a 500 m
+- instalaciones a 1.000 m
+- intercambiadores a 250 m
+- intercambiadores a 500 m
+- intercambiadores a 1.000 m
+- diversidad modal
+- presencia ferroviaria
+- presencia de subte
+- presencia de colectivo/autobús
+- presencia fluvial
+- presencia de tranvía
+- densidad de infraestructura
+- indicadores normalizados
+- soporte físico preliminar
+- ranking de soporte físico
+- categoría de soporte físico
+
+IMPORTANTE
+----------
+Este script NO modifica los archivos generados por el proceso 21.
+
+Entradas
+--------
 data/processed/infraestructura_intermodal_amba/
+
     instalaciones_transporte_amba.parquet
     intercambiadores_intermodales_amba.parquet
     centralidades_intermodalidad_amba.parquet
 
-Salidas principales
--------------------
+Salida
+------
 data/processed/validacion_infraestructura_centralidades_amba/
-    validacion_infraestructura_centralidades_amba.gpkg
-    validacion_infraestructura_centralidades_amba.parquet
-    validacion_infraestructura_centralidades_amba.csv
-    validacion_infraestructura_centralidades_amba_resumen.json
-
-Además genera:
-    01_mapa_validacion_centralidades.png
-    02_mapa_infraestructura_500m.png
-    03_mapa_intercambiadores_500m.png
-    04_distribucion_infraestructura_500m.png
-    05_distribucion_intercambiadores_500m.png
-    06_diversidad_modal.png
-
-CRS geográfico:
-    EPSG:4326
-
-CRS métrico AMBA:
-    EPSG:22185
 """
 
 from __future__ import annotations
@@ -52,16 +61,15 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from shapely.geometry import Point
 
-warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore")
 
 
 # =============================================================================
 # CONFIGURACIÓN
 # =============================================================================
 
-SCRIPT_VERSION = "V1"
+VERSION = "V2"
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
@@ -88,12 +96,19 @@ RADIOS = {
     "1000m": 1000,
 }
 
-ARCHIVO_INSTALACIONES = INPUT_DIR / "instalaciones_transporte_amba.parquet"
-ARCHIVO_INTERCAMBIADORES = (
-    INPUT_DIR / "intercambiadores_intermodales_amba.parquet"
+ARCHIVO_INSTALACIONES = (
+    INPUT_DIR
+    / "instalaciones_transporte_amba.parquet"
 )
+
+ARCHIVO_INTERCAMBIADORES = (
+    INPUT_DIR
+    / "intercambiadores_intermodales_amba.parquet"
+)
+
 ARCHIVO_CENTRALIDADES = (
-    INPUT_DIR / "centralidades_intermodalidad_amba.parquet"
+    INPUT_DIR
+    / "centralidades_intermodalidad_amba.parquet"
 )
 
 SALIDA_GPKG = (
@@ -121,52 +136,59 @@ SALIDA_JSON = (
 # UTILIDADES
 # =============================================================================
 
-def imprimir_titulo(texto: str) -> None:
+def titulo(texto: str) -> None:
     print()
     print("=" * 78)
     print(texto)
     print("=" * 78)
 
 
-def imprimir_subtitulo(texto: str) -> None:
+def subtitulo(texto: str) -> None:
     print()
     print("-" * 78)
     print(texto)
     print("-" * 78)
 
 
-def normalizar_nombre_columna(nombre: str) -> str:
-    return (
-        str(nombre)
-        .strip()
-        .lower()
-        .replace(" ", "_")
-        .replace("-", "_")
-        .replace("/", "_")
-    )
+def normalizar_columnas(
+    gdf: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
 
-
-def normalizar_columnas(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     gdf = gdf.copy()
-    gdf.columns = [
-        normalizar_nombre_columna(c)
-        for c in gdf.columns
-    ]
+
+    nuevas = []
+
+    for columna in gdf.columns:
+
+        nombre = str(columna).strip().lower()
+
+        nombre = (
+            nombre
+            .replace(" ", "_")
+            .replace("-", "_")
+            .replace("/", "_")
+        )
+
+        nuevas.append(nombre)
+
+    gdf.columns = nuevas
+
     return gdf
 
 
-def encontrar_columna(
+def buscar_columna(
     df: pd.DataFrame,
     candidatos: list[str],
     obligatoria: bool = False,
 ) -> str | None:
-    columnas = set(df.columns)
 
     for candidato in candidatos:
-        if candidato in columnas:
+
+        if candidato in df.columns:
             return candidato
 
     if obligatoria:
+
         raise ValueError(
             "No se encontró ninguna de las columnas requeridas: "
             + ", ".join(candidatos)
@@ -176,160 +198,95 @@ def encontrar_columna(
 
 
 def convertir_numerico(
-    df: pd.DataFrame,
-    columnas: list[str],
-) -> pd.DataFrame:
-    df = df.copy()
-
-    for columna in columnas:
-        if columna in df.columns:
-            df[columna] = pd.to_numeric(
-                df[columna],
-                errors="coerce",
-            )
-
-    return df
-
-
-def serie_numerica(
-    df: pd.DataFrame,
-    columna: str,
+    serie: pd.Series,
 ) -> pd.Series:
-    if columna not in df.columns:
-        return pd.Series(
-            np.zeros(len(df)),
-            index=df.index,
-            dtype=float,
-        )
 
     return pd.to_numeric(
-        df[columna],
+        serie,
         errors="coerce",
     ).fillna(0)
 
 
-def validar_geometrias(
-    gdf: gpd.GeoDataFrame,
-    nombre: str,
-) -> None:
-    imprimir_subtitulo(f"VALIDACIÓN GEOMÉTRICA - {nombre}")
-
-    n = len(gdf)
-
-    geometria_nula = int(gdf.geometry.isna().sum())
-    geometria_vacia = int(gdf.geometry.is_empty.sum())
-    geometria_invalida = int((~gdf.geometry.is_valid).sum())
-
-    print(f"Registros: {n:,}")
-    print(f"Geometrías nulas: {geometria_nula:,}")
-    print(f"Geometrías vacías: {geometria_vacia:,}")
-    print(f"Geometrías inválidas: {geometria_invalida:,}")
-
-    if geometria_nula > 0:
-        raise ValueError(
-            f"{nombre}: existen geometrías nulas."
-        )
-
-    if geometria_vacia > 0:
-        raise ValueError(
-            f"{nombre}: existen geometrías vacías."
-        )
-
-    if geometria_invalida > 0:
-        raise ValueError(
-            f"{nombre}: existen geometrías inválidas."
-        )
-
-
-def percentil_normalizado(
+def normalizar_minmax(
     serie: pd.Series,
 ) -> pd.Series:
-    """
-    Normalización robusta por rango.
 
-    0 = mínimo
-    1 = máximo
+    valores = convertir_numerico(serie)
 
-    Si todos los valores son iguales:
-        devuelve 0.0
-    """
+    minimo = valores.min()
+    maximo = valores.max()
 
-    s = pd.to_numeric(
-        serie,
-        errors="coerce",
-    ).fillna(0.0)
+    if maximo == minimo:
 
-    minimo = float(s.min())
-    maximo = float(s.max())
-
-    if math.isclose(minimo, maximo):
         return pd.Series(
-            np.zeros(len(s)),
-            index=s.index,
-            dtype=float,
+            0.0,
+            index=serie.index,
         )
 
-    return (s - minimo) / (maximo - minimo)
+    return (
+        (valores - minimo)
+        / (maximo - minimo)
+    )
 
 
-def log_normalizado(
+def normalizar_log(
     serie: pd.Series,
 ) -> pd.Series:
-    """
-    Normalización logarítmica.
 
-    Reduce el impacto de valores extremadamente altos,
-    particularmente útil para densidades de instalaciones.
-    """
+    valores = convertir_numerico(serie)
 
-    s = pd.to_numeric(
-        serie,
-        errors="coerce",
-    ).fillna(0.0)
+    transformados = np.log1p(
+        valores
+    )
 
-    transformada = np.log1p(s)
+    minimo = transformados.min()
+    maximo = transformados.max()
 
-    minimo = float(transformada.min())
-    maximo = float(transformada.max())
+    if maximo == minimo:
 
-    if math.isclose(minimo, maximo):
         return pd.Series(
-            np.zeros(len(s)),
-            index=s.index,
-            dtype=float,
+            0.0,
+            index=serie.index,
         )
 
-    return (transformada - minimo) / (maximo - minimo)
+    return (
+        (transformados - minimo)
+        / (maximo - minimo)
+    )
 
 
-def safe_json_value(value: Any) -> Any:
-    if isinstance(value, (np.integer,)):
-        return int(value)
+def valor_json(
+    valor: Any,
+) -> Any:
 
-    if isinstance(value, (np.floating,)):
-        if np.isnan(value):
+    if isinstance(valor, np.integer):
+        return int(valor)
+
+    if isinstance(valor, np.floating):
+
+        if np.isnan(valor):
             return None
-        return float(value)
 
-    if isinstance(value, np.bool_):
-        return bool(value)
+        return float(valor)
 
-    if pd.isna(value):
+    if isinstance(valor, np.bool_):
+        return bool(valor)
+
+    if pd.isna(valor):
         return None
 
-    return value
+    return valor
 
 
 # =============================================================================
 # CARGA
 # =============================================================================
 
-def cargar_archivos() -> tuple[
-    gpd.GeoDataFrame,
-    gpd.GeoDataFrame,
-    gpd.GeoDataFrame,
-]:
-    imprimir_titulo("1. CARGANDO DATOS DEL PROCESO 21")
+def cargar_datos():
+
+    titulo(
+        "1. CARGANDO DATOS DEL PROCESO 21"
+    )
 
     archivos = [
         ARCHIVO_INSTALACIONES,
@@ -338,11 +295,15 @@ def cargar_archivos() -> tuple[
     ]
 
     for archivo in archivos:
-        print(f"Archivo: {archivo}")
+
+        print(
+            f"Archivo: {archivo}"
+        )
 
         if not archivo.exists():
+
             raise FileNotFoundError(
-                f"No existe el archivo requerido:\n{archivo}"
+                f"No existe el archivo:\n{archivo}"
             )
 
     instalaciones = gpd.read_parquet(
@@ -357,37 +318,64 @@ def cargar_archivos() -> tuple[
         ARCHIVO_CENTRALIDADES
     )
 
-    instalaciones = normalizar_columnas(instalaciones)
-    intercambiadores = normalizar_columnas(intercambiadores)
-    centralidades = normalizar_columnas(centralidades)
+    instalaciones = normalizar_columnas(
+        instalaciones
+    )
+
+    intercambiadores = normalizar_columnas(
+        intercambiadores
+    )
+
+    centralidades = normalizar_columnas(
+        centralidades
+    )
 
     if instalaciones.crs is None:
+
         instalaciones = instalaciones.set_crs(
-            CRS_GEOGRAFICO,
-            allow_override=True,
+            CRS_GEOGRAFICO
         )
 
     if intercambiadores.crs is None:
+
         intercambiadores = intercambiadores.set_crs(
-            CRS_GEOGRAFICO,
-            allow_override=True,
+            CRS_GEOGRAFICO
         )
 
     if centralidades.crs is None:
+
         centralidades = centralidades.set_crs(
-            CRS_GEOGRAFICO,
-            allow_override=True,
+            CRS_GEOGRAFICO
         )
 
     print()
-    print(f"Instalaciones: {len(instalaciones):,}")
-    print(f"Intercambiadores: {len(intercambiadores):,}")
-    print(f"Centralidades: {len(centralidades):,}")
+    print(
+        f"Instalaciones: {len(instalaciones):,}"
+    )
+
+    print(
+        f"Intercambiadores: {len(intercambiadores):,}"
+    )
+
+    print(
+        f"Centralidades: {len(centralidades):,}"
+    )
 
     print()
-    print(f"CRS instalaciones: {instalaciones.crs}")
-    print(f"CRS intercambiadores: {intercambiadores.crs}")
-    print(f"CRS centralidades: {centralidades.crs}")
+    print(
+        f"CRS instalaciones: "
+        f"{instalaciones.crs.to_string()}"
+    )
+
+    print(
+        f"CRS intercambiadores: "
+        f"{intercambiadores.crs.to_string()}"
+    )
+
+    print(
+        f"CRS centralidades: "
+        f"{centralidades.crs.to_string()}"
+    )
 
     return (
         instalaciones,
@@ -397,15 +385,71 @@ def cargar_archivos() -> tuple[
 
 
 # =============================================================================
-# VALIDACIÓN ESTRUCTURAL
+# VALIDACIÓN
 # =============================================================================
 
-def validar_entradas(
-    instalaciones: gpd.GeoDataFrame,
-    intercambiadores: gpd.GeoDataFrame,
-    centralidades: gpd.GeoDataFrame,
+def validar_geometrias(
+    gdf: gpd.GeoDataFrame,
+    nombre: str,
 ) -> None:
-    imprimir_titulo("2. VALIDANDO DATOS DE ENTRADA")
+
+    subtitulo(
+        f"VALIDACIÓN GEOMÉTRICA - {nombre}"
+    )
+
+    nulas = int(
+        gdf.geometry.isna().sum()
+    )
+
+    vacias = int(
+        gdf.geometry.is_empty.sum()
+    )
+
+    invalidas = int(
+        (~gdf.geometry.is_valid).sum()
+    )
+
+    print(
+        f"Registros: {len(gdf):,}"
+    )
+
+    print(
+        f"Geometrías nulas: {nulas:,}"
+    )
+
+    print(
+        f"Geometrías vacías: {vacias:,}"
+    )
+
+    print(
+        f"Geometrías inválidas: {invalidas:,}"
+    )
+
+    if nulas:
+        raise ValueError(
+            f"{nombre}: geometrías nulas."
+        )
+
+    if vacias:
+        raise ValueError(
+            f"{nombre}: geometrías vacías."
+        )
+
+    if invalidas:
+        raise ValueError(
+            f"{nombre}: geometrías inválidas."
+        )
+
+
+def validar_entradas(
+    instalaciones,
+    intercambiadores,
+    centralidades,
+) -> None:
+
+    titulo(
+        "2. VALIDANDO DATOS DE ENTRADA"
+    )
 
     validar_geometrias(
         instalaciones,
@@ -422,7 +466,7 @@ def validar_entradas(
         "CENTRALIDADES",
     )
 
-    nodo_id = encontrar_columna(
+    nodo_id = buscar_columna(
         centralidades,
         [
             "nodo_id",
@@ -433,35 +477,50 @@ def validar_entradas(
     )
 
     duplicados = int(
-        centralidades[nodo_id].duplicated().sum()
+        centralidades[nodo_id]
+        .duplicated()
+        .sum()
     )
 
     print()
-    print(f"Columna identificadora: {nodo_id}")
-    print(f"nodo_id duplicados: {duplicados}")
+    print(
+        f"Columna identificadora: {nodo_id}"
+    )
 
-    if duplicados > 0:
+    print(
+        f"nodo_id duplicados: {duplicados}"
+    )
+
+    if duplicados:
+
         raise ValueError(
-            "Las centralidades contienen nodo_id duplicados."
+            "Las centralidades contienen "
+            "identificadores duplicados."
         )
 
     if len(centralidades) != 144:
+
+        print()
         print(
-            "ADVERTENCIA: se esperaban 144 centralidades."
+            "ADVERTENCIA: se esperaban "
+            "144 centralidades."
         )
+
         print(
-            f"Cantidad encontrada: {len(centralidades)}"
+            f"Cantidad encontrada: "
+            f"{len(centralidades)}"
         )
 
 
 # =============================================================================
-# NORMALIZACIÓN DE MODOS
+# MODOS
 # =============================================================================
 
 def detectar_columna_modo(
     gdf: gpd.GeoDataFrame,
 ) -> str | None:
-    return encontrar_columna(
+
+    return buscar_columna(
         gdf,
         [
             "modo",
@@ -476,11 +535,14 @@ def detectar_columna_modo(
 def extraer_modos(
     valor: Any,
 ) -> set[str]:
+
     if valor is None:
         return set()
 
-    if isinstance(valor, float) and np.isnan(valor):
-        return set()
+    if isinstance(valor, float):
+
+        if np.isnan(valor):
+            return set()
 
     texto = str(valor).upper().strip()
 
@@ -489,159 +551,206 @@ def extraer_modos(
 
     texto = (
         texto
-        .replace(" ", "")
         .replace(",", "|")
         .replace(";", "|")
         .replace("/", "|")
+        .replace(" ", "")
     )
 
-    partes = [
-        p.strip()
-        for p in texto.split("|")
-        if p.strip()
-    ]
+    resultado = set()
 
-    resultado: set[str] = set()
+    for parte in texto.split("|"):
 
-    for parte in partes:
-        if "AUTOBUS" in parte or "BUS" in parte:
-            resultado.add("AUTOBUS")
+        if not parte:
+            continue
+
+        if (
+            "AUTOBUS" in parte
+            or "BUS" in parte
+        ):
+            resultado.add(
+                "AUTOBUS"
+            )
 
         if (
             "FERROCARRIL" in parte
             or "FERROVIARIO" in parte
             or "TREN" in parte
         ):
-            resultado.add("FERROCARRIL")
+            resultado.add(
+                "FERROCARRIL"
+            )
 
-        if "SUBTE" in parte or "METRO" in parte:
-            resultado.add("SUBTE")
+        if (
+            "SUBTE" in parte
+            or "METRO" in parte
+        ):
+            resultado.add(
+                "SUBTE"
+            )
 
         if "FLUVIAL" in parte:
-            resultado.add("FLUVIAL")
 
-        if "TRANVIA" in parte or "TRAM" in parte:
-            resultado.add("TRANVIA")
+            resultado.add(
+                "FLUVIAL"
+            )
+
+        if (
+            "TRANVIA" in parte
+            or "TRAM" in parte
+        ):
+            resultado.add(
+                "TRANVIA"
+            )
 
     return resultado
 
 
 def preparar_modos(
-    gdf: gpd.GeoDataFrame,
-) -> gpd.GeoDataFrame:
-    gdf = gdf.copy()
-
-    columna_modo = detectar_columna_modo(gdf)
-
-    if columna_modo is None:
-        gdf["_modos_normalizados"] = [
-            set()
-            for _ in range(len(gdf))
-        ]
-    else:
-        gdf["_modos_normalizados"] = [
-            extraer_modos(valor)
-            for valor in gdf[columna_modo]
-        ]
-
-    return gdf
-
-
-# =============================================================================
-# CONTEO ESPACIAL
-# =============================================================================
-
-def contar_instalaciones_por_radio(
-    centralidades: gpd.GeoDataFrame,
     instalaciones: gpd.GeoDataFrame,
-    radio: int,
-) -> np.ndarray:
-    """
-    Cuenta instalaciones dentro del radio indicado.
+) -> gpd.GeoDataFrame:
 
-    Se utiliza sjoin para evitar construir una matriz
-    completa centralidad x instalación.
-    """
+    instalaciones = instalaciones.copy()
 
-    centrales_m = centralidades.to_crs(CRS_METRICO)
-    instalaciones_m = instalaciones.to_crs(CRS_METRICO)
-
-    buffer = centrales_m[
-        ["_indice_centralidad", "geometry"]
-    ].copy()
-
-    buffer["geometry"] = buffer.geometry.buffer(
-        radio
+    columna = detectar_columna_modo(
+        instalaciones
     )
 
-    joined = gpd.sjoin(
-        instalaciones_m[
-            ["geometry"]
-        ],
-        buffer,
-        how="inner",
-        predicate="within",
-    )
+    if columna is None:
 
-    conteos = (
-        joined.groupby(
-            "_indice_centralidad"
+        print(
+            "ADVERTENCIA: no se encontró "
+            "columna de modo."
         )
-        .size()
-    )
 
-    resultado = np.zeros(
-        len(centralidades),
-        dtype=int,
-    )
+        instalaciones[
+            "_modos_normalizados"
+        ] = [
+            set()
+            for _ in range(
+                len(instalaciones)
+            )
+        ]
 
-    for indice, cantidad in conteos.items():
-        resultado[int(indice)] = int(cantidad)
+    else:
 
-    return resultado
+        print(
+            f"Columna de modo utilizada: "
+            f"{columna}"
+        )
+
+        instalaciones[
+            "_modos_normalizados"
+        ] = [
+            extraer_modos(valor)
+            for valor in instalaciones[
+                columna
+            ]
+        ]
+
+    return instalaciones
 
 
-def contar_intercambiadores_por_radio(
+# =============================================================================
+# PREPARACIÓN ESPACIAL
+# =============================================================================
+
+def preparar_centralidades_metricas(
     centralidades: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+
+    centrales = centralidades.to_crs(
+        CRS_METRICO
+    ).copy()
+
+    centrales[
+        "indice_centralidad_22"
+    ] = np.arange(
+        len(centrales),
+        dtype=int,
+    )
+
+    return centrales
+
+
+def preparar_instalaciones_metricas(
+    instalaciones: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+
+    return instalaciones.to_crs(
+        CRS_METRICO
+    ).copy()
+
+
+def preparar_intercambiadores_metricos(
     intercambiadores: gpd.GeoDataFrame,
+) -> gpd.GeoDataFrame:
+
+    return intercambiadores.to_crs(
+        CRS_METRICO
+    ).copy()
+
+
+# =============================================================================
+# CONTEOS ESPACIALES
+# =============================================================================
+
+def contar_elementos(
+    centralidades_m: gpd.GeoDataFrame,
+    elementos_m: gpd.GeoDataFrame,
     radio: int,
 ) -> np.ndarray:
-    centrales_m = centralidades.to_crs(CRS_METRICO)
-    intercambiadores_m = intercambiadores.to_crs(
-        CRS_METRICO
-    )
 
-    buffer = centrales_m[
-        ["_indice_centralidad", "geometry"]
+    """
+    Cuenta elementos dentro del buffer de cada centralidad.
+
+    Se evita itertuples() y el acceso por atributos dinámicos.
+    """
+
+    buffers = centralidades_m[
+        [
+            "indice_centralidad_22",
+            "geometry",
+        ]
     ].copy()
 
-    buffer["geometry"] = buffer.geometry.buffer(
-        radio
+    buffers["geometry"] = (
+        buffers.geometry.buffer(
+            radio
+        )
     )
 
+    elementos = elementos_m[
+        ["geometry"]
+    ].copy()
+
     joined = gpd.sjoin(
-        intercambiadores_m[
-            ["geometry"]
-        ],
-        buffer,
+        elementos,
+        buffers,
         how="inner",
         predicate="within",
     )
 
-    conteos = (
-        joined.groupby(
-            "_indice_centralidad"
-        )
-        .size()
+    resultado = np.zeros(
+        len(centralidades_m),
+        dtype=np.int64,
     )
 
-    resultado = np.zeros(
-        len(centralidades),
-        dtype=int,
+    if joined.empty:
+        return resultado
+
+    conteos = (
+        joined[
+            "indice_centralidad_22"
+        ]
+        .value_counts()
     )
 
     for indice, cantidad in conteos.items():
-        resultado[int(indice)] = int(cantidad)
+
+        resultado[
+            int(indice)
+        ] = int(cantidad)
 
     return resultado
 
@@ -650,25 +759,26 @@ def contar_intercambiadores_por_radio(
 # MODOS POR RADIO
 # =============================================================================
 
-def modos_por_radio(
-    centralidades: gpd.GeoDataFrame,
-    instalaciones: gpd.GeoDataFrame,
+def calcular_modos_por_radio(
+    centralidades_m: gpd.GeoDataFrame,
+    instalaciones_m: gpd.GeoDataFrame,
     radio: int,
 ) -> list[set[str]]:
-    centrales_m = centralidades.to_crs(CRS_METRICO)
-    instalaciones_m = instalaciones.to_crs(
-        CRS_METRICO
-    )
 
-    buffer = centrales_m[
-        ["_indice_centralidad", "geometry"]
+    buffers = centralidades_m[
+        [
+            "indice_centralidad_22",
+            "geometry",
+        ]
     ].copy()
 
-    buffer["geometry"] = buffer.geometry.buffer(
-        radio
+    buffers["geometry"] = (
+        buffers.geometry.buffer(
+            radio
+        )
     )
 
-    instalaciones_tmp = instalaciones_m[
+    elementos = instalaciones_m[
         [
             "geometry",
             "_modos_normalizados",
@@ -676,136 +786,38 @@ def modos_por_radio(
     ].copy()
 
     joined = gpd.sjoin(
-        instalaciones_tmp,
-        buffer,
+        elementos,
+        buffers,
         how="inner",
         predicate="within",
     )
 
     resultado = [
         set()
-        for _ in range(len(centralidades))
+        for _ in range(
+            len(centralidades_m)
+        )
     ]
 
-    for fila in joined.itertuples():
-        indice = int(
-            getattr(
-                fila,
-                "_indice_centralidad",
-            )
-        )
+    if joined.empty:
+        return resultado
 
-        modos = getattr(
-            fila,
-            "_modos_normalizados",
-        )
+    for indice, modos in zip(
+        joined[
+            "indice_centralidad_22"
+        ],
+        joined[
+            "_modos_normalizados"
+        ],
+    ):
+
+        indice = int(indice)
 
         if isinstance(modos, set):
-            resultado[indice].update(modos)
 
-    return resultado
-
-
-def calcular_indicadores_modalidad(
-    resultado: pd.DataFrame,
-    centralidades: gpd.GeoDataFrame,
-    instalaciones: gpd.GeoDataFrame,
-) -> pd.DataFrame:
-    imprimir_titulo(
-        "3. CALCULANDO DIVERSIDAD MODAL"
-    )
-
-    for radio_nombre, radio in RADIOS.items():
-        print(
-            f"Calculando modos dentro de {radio_nombre}..."
-        )
-
-        conjuntos = modos_por_radio(
-            centralidades,
-            instalaciones,
-            radio,
-        )
-
-        resultado[
-            f"modos_{radio_nombre}"
-        ] = [
-            "|".join(sorted(modos))
-            for modos in conjuntos
-        ]
-
-        resultado[
-            f"cantidad_modos_{radio_nombre}"
-        ] = [
-            len(modos)
-            for modos in conjuntos
-        ]
-
-        resultado[
-            f"ferrocarril_{radio_nombre}"
-        ] = [
-            int("FERROCARRIL" in modos)
-            for modos in conjuntos
-        ]
-
-        resultado[
-            f"subte_{radio_nombre}"
-        ] = [
-            int("SUBTE" in modos)
-            for modos in conjuntos
-        ]
-
-        resultado[
-            f"autobus_{radio_nombre}"
-        ] = [
-            int("AUTOBUS" in modos)
-            for modos in conjuntos
-        ]
-
-        resultado[
-            f"fluvial_{radio_nombre}"
-        ] = [
-            int("FLUVIAL" in modos)
-            for modos in conjuntos
-        ]
-
-        resultado[
-            f"tranvia_{radio_nombre}"
-        ] = [
-            int("TRANVIA" in modos)
-            for modos in conjuntos
-        ]
-
-    return resultado
-
-
-# =============================================================================
-# INTERCAMBIADORES
-# =============================================================================
-
-def calcular_intercambiadores(
-    resultado: pd.DataFrame,
-    centralidades: gpd.GeoDataFrame,
-    intercambiadores: gpd.GeoDataFrame,
-) -> pd.DataFrame:
-    imprimir_titulo(
-        "4. VALIDANDO INTERCAMBIADORES"
-    )
-
-    for radio_nombre, radio in RADIOS.items():
-        print(
-            f"Calculando intercambiadores dentro de "
-            f"{radio_nombre}..."
-        )
-
-        conteos = contar_intercambiadores_por_radio(
-            centralidades,
-            intercambiadores,
-            radio,
-        )
-
-        resultado[
-            f"intercambiadores_{radio_nombre}"
-        ] = conteos
+            resultado[
+                indice
+            ].update(modos)
 
     return resultado
 
@@ -816,40 +828,151 @@ def calcular_intercambiadores(
 
 def calcular_instalaciones(
     resultado: pd.DataFrame,
-    centralidades: gpd.GeoDataFrame,
-    instalaciones: gpd.GeoDataFrame,
+    centralidades_m: gpd.GeoDataFrame,
+    instalaciones_m: gpd.GeoDataFrame,
 ) -> pd.DataFrame:
-    imprimir_titulo(
-        "5. VALIDANDO INSTALACIONES"
+
+    titulo(
+        "3. VALIDANDO INSTALACIONES"
     )
 
-    for radio_nombre, radio in RADIOS.items():
-        print(
-            f"Calculando instalaciones dentro de "
-            f"{radio_nombre}..."
-        )
+    for nombre_radio, radio in RADIOS.items():
 
-        conteos = contar_instalaciones_por_radio(
-            centralidades,
-            instalaciones,
-            radio,
+        print(
+            f"Calculando instalaciones "
+            f"dentro de {nombre_radio}..."
         )
 
         resultado[
-            f"instalaciones_{radio_nombre}"
-        ] = conteos
+            f"instalaciones_{nombre_radio}"
+        ] = contar_elementos(
+            centralidades_m,
+            instalaciones_m,
+            radio,
+        )
 
     return resultado
 
 
 # =============================================================================
-# DENSIDAD Y ESTRUCTURA
+# INTERCAMBIADORES
 # =============================================================================
 
-def calcular_indicadores_estructurales(
+def calcular_intercambiadores(
+    resultado: pd.DataFrame,
+    centralidades_m: gpd.GeoDataFrame,
+    intercambiadores_m: gpd.GeoDataFrame,
+) -> pd.DataFrame:
+
+    titulo(
+        "4. VALIDANDO INTERCAMBIADORES"
+    )
+
+    for nombre_radio, radio in RADIOS.items():
+
+        print(
+            f"Calculando intercambiadores "
+            f"dentro de {nombre_radio}..."
+        )
+
+        resultado[
+            f"intercambiadores_{nombre_radio}"
+        ] = contar_elementos(
+            centralidades_m,
+            intercambiadores_m,
+            radio,
+        )
+
+    return resultado
+
+
+# =============================================================================
+# DIVERSIDAD MODAL
+# =============================================================================
+
+def calcular_modalidad(
+    resultado: pd.DataFrame,
+    centralidades_m: gpd.GeoDataFrame,
+    instalaciones_m: gpd.GeoDataFrame,
+) -> pd.DataFrame:
+
+    titulo(
+        "5. CALCULANDO DIVERSIDAD MODAL"
+    )
+
+    for nombre_radio, radio in RADIOS.items():
+
+        print(
+            f"Calculando modos dentro de "
+            f"{nombre_radio}..."
+        )
+
+        conjuntos = calcular_modos_por_radio(
+            centralidades_m,
+            instalaciones_m,
+            radio,
+        )
+
+        resultado[
+            f"modos_{nombre_radio}"
+        ] = [
+            "|".join(
+                sorted(modos)
+            )
+            for modos in conjuntos
+        ]
+
+        resultado[
+            f"cantidad_modos_{nombre_radio}"
+        ] = [
+            len(modos)
+            for modos in conjuntos
+        ]
+
+        for modo, nombre_columna in [
+            (
+                "FERROCARRIL",
+                "ferrocarril",
+            ),
+            (
+                "SUBTE",
+                "subte",
+            ),
+            (
+                "AUTOBUS",
+                "autobus",
+            ),
+            (
+                "FLUVIAL",
+                "fluvial",
+            ),
+            (
+                "TRANVIA",
+                "tranvia",
+            ),
+        ]:
+
+            resultado[
+                f"{nombre_columna}_{nombre_radio}"
+            ] = [
+                int(
+                    modo in modos
+                )
+                for modos in conjuntos
+            ]
+
+    return resultado
+
+
+# =============================================================================
+# INDICADORES ESTRUCTURALES
+# =============================================================================
+
+def calcular_indicadores(
     resultado: pd.DataFrame,
 ) -> pd.DataFrame:
-    imprimir_titulo(
+
+    titulo(
         "6. CALCULANDO INDICADORES ESTRUCTURALES"
     )
 
@@ -857,136 +980,127 @@ def calcular_indicadores_estructurales(
     # DENSIDAD
     # -------------------------------------------------------------------------
 
-    # Área de un círculo:
-    # A = pi * r²
-    #
-    # La densidad se expresa en instalaciones/km².
+    for nombre_radio, radio in RADIOS.items():
 
-    for radio_nombre, radio in RADIOS.items():
         area_km2 = (
             math.pi
-            * (radio / 1000.0) ** 2
+            * (
+                radio / 1000
+            ) ** 2
         )
 
         columna = (
-            f"instalaciones_{radio_nombre}"
+            f"instalaciones_{nombre_radio}"
         )
 
         resultado[
-            f"densidad_instalaciones_{radio_nombre}"
+            f"densidad_instalaciones_{nombre_radio}"
         ] = (
-            serie_numerica(
-                resultado,
-                columna,
+            convertir_numerico(
+                resultado[columna]
             )
             / area_km2
         )
 
     # -------------------------------------------------------------------------
-    # DENSIDAD LOGARÍTMICA
+    # NORMALIZACIONES
     # -------------------------------------------------------------------------
 
     resultado[
+        "instalaciones_500m_normalizadas"
+    ] = normalizar_minmax(
+        resultado[
+            "instalaciones_500m"
+        ]
+    )
+
+    resultado[
         "densidad_instalaciones_500m_normalizada"
-    ] = log_normalizado(
+    ] = normalizar_log(
         resultado[
             "densidad_instalaciones_500m"
         ]
     )
 
     resultado[
-        "instalaciones_500m_normalizadas"
-    ] = percentil_normalizado(
-        resultado[
-            "instalaciones_500m"
-        ]
-    )
-
-    # -------------------------------------------------------------------------
-    # DIVERSIDAD MODAL
-    # -------------------------------------------------------------------------
-
-    resultado[
-        "diversidad_modal_500m_normalizada"
-    ] = (
-        serie_numerica(
-            resultado,
-            "cantidad_modos_500m",
-        )
-        / 5.0
-    ).clip(
-        lower=0,
-        upper=1,
-    )
-
-    # -------------------------------------------------------------------------
-    # PRESENCIA DE MODOS ESTRUCTURANTES
-    # -------------------------------------------------------------------------
-
-    resultado[
-        "modo_ferroviario_estructurante"
-    ] = (
-        serie_numerica(
-            resultado,
-            "ferrocarril_500m",
-        )
-        > 0
-    ).astype(int)
-
-    resultado[
-        "modo_subterraneo_estructurante"
-    ] = (
-        serie_numerica(
-            resultado,
-            "subte_500m",
-        )
-        > 0
-    ).astype(int)
-
-    resultado[
-        "modo_fluvial_estructurante"
-    ] = (
-        serie_numerica(
-            resultado,
-            "fluvial_500m",
-        )
-        > 0
-    ).astype(int)
-
-    # -------------------------------------------------------------------------
-    # INTERCAMBIADORES
-    # -------------------------------------------------------------------------
-
-    resultado[
         "intercambiadores_500m_normalizados"
-    ] = log_normalizado(
+    ] = normalizar_log(
         resultado[
             "intercambiadores_500m"
         ]
     )
 
+    resultado[
+        "diversidad_modal_500m_normalizada"
+    ] = (
+        convertir_numerico(
+            resultado[
+                "cantidad_modos_500m"
+            ]
+        )
+        / 5.0
+    ).clip(
+        0,
+        1,
+    )
+
     # -------------------------------------------------------------------------
-    # CONECTIVIDAD MULTIMODAL
+    # MODOS ESTRUCTURANTES
+    # -------------------------------------------------------------------------
+
+    resultado[
+        "modo_ferroviario_estructurante"
+    ] = (
+        convertir_numerico(
+            resultado[
+                "ferrocarril_500m"
+            ]
+        ) > 0
+    ).astype(int)
+
+    resultado[
+        "modo_subterraneo_estructurante"
+    ] = (
+        convertir_numerico(
+            resultado[
+                "subte_500m"
+            ]
+        ) > 0
+    ).astype(int)
+
+    resultado[
+        "modo_fluvial_estructurante"
+    ] = (
+        convertir_numerico(
+            resultado[
+                "fluvial_500m"
+            ]
+        ) > 0
+    ).astype(int)
+
+    # -------------------------------------------------------------------------
+    # CONECTIVIDAD MODAL
     # -------------------------------------------------------------------------
 
     resultado[
         "conectividad_modal_500m"
     ] = (
-        serie_numerica(
-            resultado,
-            "cantidad_modos_500m",
-        )
-        + serie_numerica(
-            resultado,
-            "intercambiadores_500m",
-        ).clip(upper=10)
-        / 10.0
+        resultado[
+            "diversidad_modal_500m_normalizada"
+        ]
+        * 0.7
+        +
+        resultado[
+            "intercambiadores_500m_normalizados"
+        ]
+        * 0.3
     )
 
     # -------------------------------------------------------------------------
-    # INDICADOR PRELIMINAR DE SOPORTE FÍSICO
+    # SOPORTE FÍSICO PRELIMINAR
     #
-    # NO ES EL ÍNDICE FINAL DE CENTRALIDAD.
+    # Se utiliza densidad logarítmica para evitar que una
+    # concentración extrema de objetos OSM domine el índice.
     # -------------------------------------------------------------------------
 
     resultado[
@@ -996,15 +1110,18 @@ def calcular_indicadores_estructurales(
         * resultado[
             "densidad_instalaciones_500m_normalizada"
         ]
-        + 0.25
+        +
+        0.25
         * resultado[
             "diversidad_modal_500m_normalizada"
         ]
-        + 0.25
+        +
+        0.25
         * resultado[
             "intercambiadores_500m_normalizados"
         ]
-        + 0.15
+        +
+        0.15
         * resultado[
             "instalaciones_500m_normalizadas"
         ]
@@ -1029,6 +1146,7 @@ def calcular_indicadores_estructurales(
 def clasificar_soporte(
     valor: float,
 ) -> str:
+
     if valor >= 80:
         return "SOPORTE_FISICO_MUY_ALTO"
 
@@ -1047,6 +1165,7 @@ def clasificar_soporte(
 def clasificar_resultado(
     resultado: pd.DataFrame,
 ) -> pd.DataFrame:
+
     resultado[
         "categoria_soporte_fisico"
     ] = resultado[
@@ -1072,26 +1191,19 @@ def clasificar_resultado(
 
 
 # =============================================================================
-# INTEGRACIÓN CON RESULTADOS DEL 21
+# INTEGRACIÓN CON EL 21
 # =============================================================================
 
-def integrar_resultados_21(
+def integrar_21(
     resultado: pd.DataFrame,
-    centralidades_original: gpd.GeoDataFrame,
+    centralidades: gpd.GeoDataFrame,
 ) -> pd.DataFrame:
-    """
-    Conserva indicadores calculados en el proceso 21 cuando existen.
 
-    No depende de nombres exactos más allá de nodo_id.
-    """
-
-    imprimir_titulo(
-        "7. INTEGRANDO INDICADORES DEL PROCESO 21"
+    titulo(
+        "7. INTEGRANDO RESULTADOS DEL PROCESO 21"
     )
 
-    centralidades = centralidades_original.copy()
-
-    nodo_id = encontrar_columna(
+    nodo_id = buscar_columna(
         centralidades,
         [
             "nodo_id",
@@ -1103,47 +1215,65 @@ def integrar_resultados_21(
 
     resultado = resultado.copy()
 
-    resultado["_nodo_id_merge"] = resultado[
+    resultado[
+        "_merge_nodo_id"
+    ] = resultado[
         "nodo_id"
     ].astype(str)
 
-    centralidades["_nodo_id_merge"] = centralidades[
+    centrales = centralidades.copy()
+
+    centrales[
+        "_merge_nodo_id"
+    ] = centrales[
         nodo_id
     ].astype(str)
 
-    columnas_21 = [
-        columna
-        for columna in centralidades.columns
+    candidatos = []
+
+    for columna in centrales.columns:
+
+        if columna in [
+            "geometry",
+            "_merge_nodo_id",
+            nodo_id,
+        ]:
+            continue
+
+        nombre = columna.lower()
+
         if (
-            columna != "geometry"
-            and columna != "_nodo_id_merge"
-            and (
-                "intermodal" in columna.lower()
-                or "score_" in columna.lower()
-                or "ranking_" in columna.lower()
-                or "categoria_" in columna.lower()
+            "intermodal" in nombre
+            or "score_" in nombre
+            or "ranking_" in nombre
+            or "categoria_intermodalidad" in nombre
+        ):
+
+            candidatos.append(
+                columna
             )
-        )
-    ]
 
-    if columnas_21:
+    if candidatos:
+
         print(
-            "Indicadores encontrados del proceso 21:"
+            "Indicadores del proceso 21 encontrados:"
         )
 
-        for columna in columnas_21:
-            print(f"  {columna}")
+        for columna in candidatos:
+            print(
+                f"  {columna}"
+            )
 
-        subset = centralidades[
+        subset = centrales[
             [
-                "_nodo_id_merge",
-                *columnas_21,
+                "_merge_nodo_id",
+                *candidatos,
             ]
         ].copy()
 
         resultado = resultado.merge(
             subset,
-            on="_nodo_id_merge",
+            on="_merge_nodo_id",
             how="left",
             suffixes=(
                 "",
@@ -1152,13 +1282,16 @@ def integrar_resultados_21(
         )
 
     else:
+
         print(
-            "No se encontraron columnas de indicadores "
-            "del proceso 21."
+            "No se encontraron indicadores "
+            "adicionales del proceso 21."
         )
 
     resultado = resultado.drop(
-        columns=["_nodo_id_merge"],
+        columns=[
+            "_merge_nodo_id"
+        ],
         errors="ignore",
     )
 
@@ -1174,29 +1307,33 @@ def construir_resumen(
     instalaciones: gpd.GeoDataFrame,
     intercambiadores: gpd.GeoDataFrame,
     centralidades: gpd.GeoDataFrame,
-) -> dict[str, Any]:
-    resumen: dict[str, Any] = {
-        "script": "22_validar_infraestructura_centralidades_amba.py",
-        "version": SCRIPT_VERSION,
+) -> dict:
+
+    resumen = {
+        "script": (
+            "22_validar_infraestructura_"
+            "centralidades_amba.py"
+        ),
+        "version": VERSION,
         "crs_geografico": CRS_GEOGRAFICO,
         "crs_metrico": CRS_METRICO,
-        "cantidad_instalaciones": int(
+        "instalaciones": int(
             len(instalaciones)
         ),
-        "cantidad_intercambiadores": int(
+        "intercambiadores": int(
             len(intercambiadores)
         ),
-        "cantidad_centralidades": int(
+        "centralidades": int(
             len(centralidades)
         ),
-        "radios_metros": RADIOS,
+        "radios": RADIOS,
     }
 
     # -------------------------------------------------------------------------
     # SOPORTE FÍSICO
     # -------------------------------------------------------------------------
 
-    categoria = (
+    categorias = (
         resultado[
             "categoria_soporte_fisico"
         ]
@@ -1208,51 +1345,55 @@ def construir_resumen(
         "centralidades_por_categoria_soporte_fisico"
     ] = {
         str(k): int(v)
-        for k, v in categoria.items()
+        for k, v in categorias.items()
     }
 
     # -------------------------------------------------------------------------
     # MODOS
     # -------------------------------------------------------------------------
 
-    resumen[
-        "centralidades_por_cantidad_de_modos_500m"
-    ] = {
-        str(int(k)): int(v)
-        for k, v in resultado[
+    cantidad_modos = (
+        resultado[
             "cantidad_modos_500m"
         ]
         .value_counts()
         .sort_index()
-        .items()
+        .to_dict()
+    )
+
+    resumen[
+        "centralidades_por_cantidad_modos_500m"
+    ] = {
+        str(int(k)): int(v)
+        for k, v in cantidad_modos.items()
     }
 
     # -------------------------------------------------------------------------
     # INSTALACIONES
     # -------------------------------------------------------------------------
 
+    instalaciones_500 = (
+        convertir_numerico(
+            resultado[
+                "instalaciones_500m"
+            ]
+        )
+    )
+
     resumen[
         "instalaciones_500m"
     ] = {
         "min": int(
-            resultado[
-                "instalaciones_500m"
-            ].min()
+            instalaciones_500.min()
         ),
         "max": int(
-            resultado[
-                "instalaciones_500m"
-            ].max()
+            instalaciones_500.max()
         ),
         "media": float(
-            resultado[
-                "instalaciones_500m"
-            ].mean()
+            instalaciones_500.mean()
         ),
         "mediana": float(
-            resultado[
-                "instalaciones_500m"
-            ].median()
+            instalaciones_500.median()
         ),
     }
 
@@ -1260,28 +1401,28 @@ def construir_resumen(
     # INTERCAMBIADORES
     # -------------------------------------------------------------------------
 
+    intercambiadores_500 = (
+        convertir_numerico(
+            resultado[
+                "intercambiadores_500m"
+            ]
+        )
+    )
+
     resumen[
         "intercambiadores_500m"
     ] = {
         "min": int(
-            resultado[
-                "intercambiadores_500m"
-            ].min()
+            intercambiadores_500.min()
         ),
         "max": int(
-            resultado[
-                "intercambiadores_500m"
-            ].max()
+            intercambiadores_500.max()
         ),
         "media": float(
-            resultado[
-                "intercambiadores_500m"
-            ].mean()
+            intercambiadores_500.mean()
         ),
         "mediana": float(
-            resultado[
-                "intercambiadores_500m"
-            ].median()
+            intercambiadores_500.median()
         ),
     }
 
@@ -1289,32 +1430,43 @@ def construir_resumen(
     # TOP 20
     # -------------------------------------------------------------------------
 
+    columnas_top = [
+        "nodo_id",
+        "soporte_fisico_preliminar",
+        "ranking_soporte_fisico",
+        "instalaciones_250m",
+        "instalaciones_500m",
+        "instalaciones_1000m",
+        "cantidad_modos_500m",
+        "modos_500m",
+        "intercambiadores_500m",
+        "categoria_soporte_fisico",
+    ]
+
+    columnas_top = [
+        c
+        for c in columnas_top
+        if c in resultado.columns
+    ]
+
     top = (
         resultado[
-            [
-                "nodo_id",
-                "soporte_fisico_preliminar",
-                "instalaciones_250m",
-                "instalaciones_500m",
-                "instalaciones_1000m",
-                "cantidad_modos_500m",
-                "intercambiadores_500m",
-                "modos_500m",
-            ]
+            columnas_top
         ]
         .sort_values(
-            "soporte_fisico_preliminar",
-            ascending=False,
+            "ranking_soporte_fisico"
         )
         .head(20)
     )
 
-    resumen["top_20_soporte_fisico"] = [
+    resumen[
+        "top_20_soporte_fisico"
+    ] = [
         {
-            str(k): safe_json_value(v)
-            for k, v in fila.items()
+            str(k): valor_json(v)
+            for k, v in registro.items()
         }
-        for fila in top.to_dict(
+        for registro in top.to_dict(
             orient="records"
         )
     ]
@@ -1326,12 +1478,13 @@ def construir_resumen(
 # GUARDADO
 # =============================================================================
 
-def guardar_resultados(
+def guardar(
     resultado_gdf: gpd.GeoDataFrame,
-    resumen: dict[str, Any],
+    resumen: dict,
 ) -> None:
-    imprimir_titulo(
-        "8. GUARDANDO RESULTADOS"
+
+    titulo(
+        "8. GUARDANDO ARCHIVOS"
     )
 
     OUTPUT_DIR.mkdir(
@@ -1356,14 +1509,12 @@ def guardar_resultados(
     # CSV
     # -------------------------------------------------------------------------
 
-    resultado_csv = resultado_gdf.copy()
+    csv = resultado_gdf.drop(
+        columns=["geometry"],
+        errors="ignore",
+    )
 
-    if "geometry" in resultado_csv.columns:
-        resultado_csv = resultado_csv.drop(
-            columns=["geometry"]
-        )
-
-    resultado_csv.to_csv(
+    csv.to_csv(
         SALIDA_CSV,
         index=False,
         encoding="utf-8-sig",
@@ -1399,6 +1550,7 @@ def guardar_resultados(
         "w",
         encoding="utf-8",
     ) as archivo:
+
         json.dump(
             resumen,
             archivo,
@@ -1415,176 +1567,99 @@ def guardar_resultados(
 # MAPAS
 # =============================================================================
 
-def generar_mapa_validacion(
-    resultado_gdf: gpd.GeoDataFrame,
+def generar_mapa(
+    gdf: gpd.GeoDataFrame,
+    columna: str,
+    titulo_mapa: str,
+    archivo: str,
 ) -> None:
-    print(
-        "Mapa: 01_mapa_validacion_centralidades.png"
-    )
 
-    fig, ax = plt.subplots(
+    figura, ax = plt.subplots(
         figsize=(12, 12)
     )
 
-    base = resultado_gdf.to_crs(
+    mapa = gdf.to_crs(
         CRS_GEOGRAFICO
     )
 
-    base.plot(
+    mapa.plot(
         ax=ax,
-        column="soporte_fisico_preliminar",
+        column=columna,
         legend=True,
         markersize=45,
         alpha=0.85,
     )
 
     ax.set_title(
-        "AMBA - Validación de infraestructura física "
-        "en centralidades SUBE"
+        titulo_mapa
     )
 
     ax.set_axis_off()
 
-    fig.tight_layout()
+    figura.tight_layout()
 
-    fig.savefig(
-        OUTPUT_DIR
-        / "01_mapa_validacion_centralidades.png",
+    figura.savefig(
+        OUTPUT_DIR / archivo,
         dpi=200,
         bbox_inches="tight",
     )
 
-    plt.close(fig)
-
-
-def generar_mapa_infraestructura(
-    resultado_gdf: gpd.GeoDataFrame,
-) -> None:
-    print(
-        "Mapa: 02_mapa_infraestructura_500m.png"
-    )
-
-    fig, ax = plt.subplots(
-        figsize=(12, 12)
-    )
-
-    base = resultado_gdf.to_crs(
-        CRS_GEOGRAFICO
-    )
-
-    base.plot(
-        ax=ax,
-        column="instalaciones_500m",
-        legend=True,
-        markersize=45,
-        alpha=0.85,
-    )
-
-    ax.set_title(
-        "AMBA - Instalaciones de transporte "
-        "dentro de 500 m de centralidades"
-    )
-
-    ax.set_axis_off()
-
-    fig.tight_layout()
-
-    fig.savefig(
-        OUTPUT_DIR
-        / "02_mapa_infraestructura_500m.png",
-        dpi=200,
-        bbox_inches="tight",
-    )
-
-    plt.close(fig)
-
-
-def generar_mapa_intercambiadores(
-    resultado_gdf: gpd.GeoDataFrame,
-) -> None:
-    print(
-        "Mapa: 03_mapa_intercambiadores_500m.png"
-    )
-
-    fig, ax = plt.subplots(
-        figsize=(12, 12)
-    )
-
-    base = resultado_gdf.to_crs(
-        CRS_GEOGRAFICO
-    )
-
-    base.plot(
-        ax=ax,
-        column="intercambiadores_500m",
-        legend=True,
-        markersize=45,
-        alpha=0.85,
-    )
-
-    ax.set_title(
-        "AMBA - Intercambiadores intermodales "
-        "dentro de 500 m"
-    )
-
-    ax.set_axis_off()
-
-    fig.tight_layout()
-
-    fig.savefig(
-        OUTPUT_DIR
-        / "03_mapa_intercambiadores_500m.png",
-        dpi=200,
-        bbox_inches="tight",
-    )
-
-    plt.close(fig)
+    plt.close(figura)
 
 
 # =============================================================================
 # GRÁFICOS
 # =============================================================================
 
-def generar_grafico_distribucion(
+def generar_histograma(
     resultado: pd.DataFrame,
     columna: str,
-    titulo: str,
-    nombre_archivo: str,
+    titulo_grafico: str,
     xlabel: str,
+    archivo: str,
 ) -> None:
-    fig, ax = plt.subplots(
+
+    figura, ax = plt.subplots(
         figsize=(11, 7)
     )
 
-    serie = pd.to_numeric(
-        resultado[columna],
-        errors="coerce",
-    ).fillna(0)
+    valores = convertir_numerico(
+        resultado[columna]
+    )
 
     ax.hist(
-        serie,
+        valores,
         bins=20,
     )
 
-    ax.set_title(titulo)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel("Cantidad de centralidades")
+    ax.set_title(
+        titulo_grafico
+    )
 
-    fig.tight_layout()
+    ax.set_xlabel(
+        xlabel
+    )
 
-    fig.savefig(
-        OUTPUT_DIR / nombre_archivo,
+    ax.set_ylabel(
+        "Cantidad de centralidades"
+    )
+
+    figura.tight_layout()
+
+    figura.savefig(
+        OUTPUT_DIR / archivo,
         dpi=200,
         bbox_inches="tight",
     )
 
-    plt.close(fig)
+    plt.close(figura)
 
 
 def generar_grafico_modal(
     resultado: pd.DataFrame,
 ) -> None:
-    fig, ax = plt.subplots(
+
+    figura, ax = plt.subplots(
         figsize=(10, 7)
     )
 
@@ -1603,7 +1678,7 @@ def generar_grafico_modal(
 
     ax.set_title(
         "Cantidad de modos de transporte "
-        "por centralidad - radio 500 m"
+        "por centralidad - 500 m"
     )
 
     ax.set_xlabel(
@@ -1614,53 +1689,101 @@ def generar_grafico_modal(
         "Cantidad de centralidades"
     )
 
-    fig.tight_layout()
+    figura.tight_layout()
 
-    fig.savefig(
+    figura.savefig(
         OUTPUT_DIR
         / "06_diversidad_modal.png",
         dpi=200,
         bbox_inches="tight",
     )
 
-    plt.close(fig)
+    plt.close(figura)
 
 
-def generar_graficos(
+def generar_visualizaciones(
+    resultado_gdf: gpd.GeoDataFrame,
     resultado: pd.DataFrame,
 ) -> None:
-    imprimir_titulo(
+
+    titulo(
         "9. GENERANDO MAPAS Y GRÁFICOS"
     )
 
-    generar_mapa_validacion(
-        resultado
+    print(
+        "Mapa: 01_mapa_validacion_centralidades.png"
     )
 
-    generar_mapa_infraestructura(
-        resultado
+    generar_mapa(
+        resultado_gdf,
+        "soporte_fisico_preliminar",
+        (
+            "AMBA - Soporte físico preliminar "
+            "de las centralidades SUBE"
+        ),
+        "01_mapa_validacion_centralidades.png",
     )
 
-    generar_mapa_intercambiadores(
-        resultado
+    print(
+        "Mapa: 02_mapa_infraestructura_500m.png"
     )
 
-    generar_grafico_distribucion(
+    generar_mapa(
+        resultado_gdf,
+        "instalaciones_500m",
+        (
+            "AMBA - Instalaciones de transporte "
+            "dentro de 500 m"
+        ),
+        "02_mapa_infraestructura_500m.png",
+    )
+
+    print(
+        "Mapa: 03_mapa_intercambiadores_500m.png"
+    )
+
+    generar_mapa(
+        resultado_gdf,
+        "intercambiadores_500m",
+        (
+            "AMBA - Intercambiadores intermodales "
+            "dentro de 500 m"
+        ),
+        "03_mapa_intercambiadores_500m.png",
+    )
+
+    print(
+        "Gráfico: 04_distribucion_infraestructura_500m.png"
+    )
+
+    generar_histograma(
         resultado,
         "instalaciones_500m",
-        "Distribución de instalaciones de transporte "
-        "dentro de 500 m",
-        "04_distribucion_infraestructura_500m.png",
+        (
+            "Distribución de instalaciones de "
+            "transporte dentro de 500 m"
+        ),
         "Instalaciones dentro de 500 m",
+        "04_distribucion_infraestructura_500m.png",
     )
 
-    generar_grafico_distribucion(
+    print(
+        "Gráfico: 05_distribucion_intercambiadores_500m.png"
+    )
+
+    generar_histograma(
         resultado,
         "intercambiadores_500m",
-        "Distribución de intercambiadores "
-        "dentro de 500 m",
-        "05_distribucion_intercambiadores_500m.png",
+        (
+            "Distribución de intercambiadores "
+            "dentro de 500 m"
+        ),
         "Intercambiadores dentro de 500 m",
+        "05_distribucion_intercambiadores_500m.png",
+    )
+
+    print(
+        "Gráfico: 06_diversidad_modal.png"
     )
 
     generar_grafico_modal(
@@ -1675,7 +1798,8 @@ def generar_graficos(
 def imprimir_top20(
     resultado: pd.DataFrame,
 ) -> None:
-    imprimir_titulo(
+
+    titulo(
         "TOP 20 CENTRALIDADES POR SOPORTE FÍSICO"
     )
 
@@ -1720,9 +1844,10 @@ def imprimir_top20(
 # =============================================================================
 
 def main() -> int:
-    imprimir_titulo(
-        f"22 - VALIDACIÓN DE INFRAESTRUCTURA "
-        f"CONTRA CENTRALIDADES AMBA - {SCRIPT_VERSION}"
+
+    titulo(
+        "22 - VALIDACIÓN DE INFRAESTRUCTURA "
+        f"CONTRA CENTRALIDADES AMBA - {VERSION}"
     )
 
     print(
@@ -1750,19 +1875,20 @@ def main() -> int:
     )
 
     try:
-        # ---------------------------------------------------------------------
-        # 1
-        # ---------------------------------------------------------------------
+
+        # =====================================================================
+        # 1. CARGA
+        # =====================================================================
 
         (
             instalaciones,
             intercambiadores,
             centralidades,
-        ) = cargar_archivos()
+        ) = cargar_datos()
 
-        # ---------------------------------------------------------------------
-        # 2
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # 2. VALIDACIÓN
+        # =====================================================================
 
         validar_entradas(
             instalaciones,
@@ -1770,19 +1896,37 @@ def main() -> int:
             centralidades,
         )
 
-        # ---------------------------------------------------------------------
-        # 3
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # 3. MODOS
+        # =====================================================================
 
         instalaciones = preparar_modos(
             instalaciones
         )
 
-        # ---------------------------------------------------------------------
-        # PREPARAR CENTRALIDADES
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # 4. CRS MÉTRICO
+        # =====================================================================
 
-        nodo_id = encontrar_columna(
+        centrales_m = preparar_centralidades_metricas(
+            centralidades
+        )
+
+        instalaciones_m = preparar_instalaciones_metricas(
+            instalaciones
+        )
+
+        intercambiadores_m = (
+            preparar_intercambiadores_metricos(
+                intercambiadores
+            )
+        )
+
+        # =====================================================================
+        # 5. DATAFRAME BASE
+        # =====================================================================
+
+        nodo_id = buscar_columna(
             centralidades,
             [
                 "nodo_id",
@@ -1792,18 +1936,6 @@ def main() -> int:
             obligatoria=True,
         )
 
-        centralidades = centralidades.copy()
-
-        centralidades[
-            "_indice_centralidad"
-        ] = np.arange(
-            len(centralidades)
-        )
-
-        # ---------------------------------------------------------------------
-        # DATAFRAME BASE
-        # ---------------------------------------------------------------------
-
         resultado = pd.DataFrame(
             {
                 "nodo_id": centralidades[
@@ -1812,11 +1944,11 @@ def main() -> int:
             }
         )
 
-        # ---------------------------------------------------------------------
-        # IDENTIFICADORES EXTRA
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # IDENTIFICADORES COMPLEMENTARIOS
+        # =====================================================================
 
-        for columna in [
+        columnas_extra = [
             "h3",
             "h3_index",
             "localidad",
@@ -1824,73 +1956,76 @@ def main() -> int:
             "partido",
             "nombre",
             "nombre_nodo",
-            "categoria",
-        ]:
-            if columna in centralidades.columns:
-                resultado[columna] = (
-                    centralidades[
-                        columna
-                    ].values
-                )
+        ]
 
-        # ---------------------------------------------------------------------
-        # 4
-        # ---------------------------------------------------------------------
+        for columna in columnas_extra:
+
+            if columna in centralidades.columns:
+
+                resultado[
+                    columna
+                ] = centralidades[
+                    columna
+                ].values
+
+        # =====================================================================
+        # 6. INSTALACIONES
+        # =====================================================================
 
         resultado = calcular_instalaciones(
             resultado,
-            centralidades,
-            instalaciones,
+            centrales_m,
+            instalaciones_m,
         )
 
-        # ---------------------------------------------------------------------
-        # 5
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # 7. INTERCAMBIADORES
+        # =====================================================================
 
         resultado = calcular_intercambiadores(
             resultado,
-            centralidades,
-            intercambiadores,
+            centrales_m,
+            intercambiadores_m,
         )
 
-        # ---------------------------------------------------------------------
-        # 6
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # 8. MODALIDAD
+        # =====================================================================
 
-        resultado = calcular_indicadores_modalidad(
+        resultado = calcular_modalidad(
             resultado,
-            centralidades,
-            instalaciones,
+            centrales_m,
+            instalaciones_m,
         )
 
-        # ---------------------------------------------------------------------
-        # 7
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # 9. INDICADORES
+        # =====================================================================
 
-        resultado = calcular_indicadores_estructurales(
+        resultado = calcular_indicadores(
             resultado
         )
 
-        # ---------------------------------------------------------------------
-        # 8
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # 10. CLASIFICACIÓN
+        # =====================================================================
 
         resultado = clasificar_resultado(
             resultado
         )
 
-        # ---------------------------------------------------------------------
-        # 9
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # 11. INTEGRACIÓN CON EL 21
+        # =====================================================================
 
-        resultado = integrar_resultados_21(
+        resultado = integrar_21(
             resultado,
             centralidades,
         )
 
-        # ---------------------------------------------------------------------
+        # =====================================================================
         # GEOMETRÍA
-        # ---------------------------------------------------------------------
+        # =====================================================================
 
         resultado_gdf = gpd.GeoDataFrame(
             resultado,
@@ -1898,19 +2033,19 @@ def main() -> int:
             crs=centralidades.crs,
         )
 
-        # ---------------------------------------------------------------------
+        # =====================================================================
         # TOP
-        # ---------------------------------------------------------------------
+        # =====================================================================
 
         imprimir_top20(
             resultado
         )
 
-        # ---------------------------------------------------------------------
+        # =====================================================================
         # RESUMEN
-        # ---------------------------------------------------------------------
+        # =====================================================================
 
-        imprimir_titulo(
+        titulo(
             "10. CONSTRUYENDO RESUMEN JSON"
         )
 
@@ -1921,28 +2056,29 @@ def main() -> int:
             centralidades,
         )
 
-        # ---------------------------------------------------------------------
-        # GUARDAR
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # GUARDADO
+        # =====================================================================
 
-        guardar_resultados(
+        guardar(
             resultado_gdf,
             resumen,
         )
 
-        # ---------------------------------------------------------------------
-        # MAPAS / GRÁFICOS
-        # ---------------------------------------------------------------------
+        # =====================================================================
+        # VISUALIZACIONES
+        # =====================================================================
 
-        generar_graficos(
-            resultado
+        generar_visualizaciones(
+            resultado_gdf,
+            resultado,
         )
 
-        # ---------------------------------------------------------------------
+        # =====================================================================
         # FINAL
-        # ---------------------------------------------------------------------
+        # =====================================================================
 
-        imprimir_titulo(
+        titulo(
             "22 - PROCESO FINALIZADO"
         )
 
@@ -1969,7 +2105,9 @@ def main() -> int:
         for archivo in sorted(
             OUTPUT_DIR.iterdir()
         ):
+
             if archivo.is_file():
+
                 print(
                     f"  {archivo.name}"
                 )
@@ -1980,16 +2118,17 @@ def main() -> int:
         )
 
         print(
-            "Construir el índice de centralidad estructural "
-            "integrando demanda SUBE, infraestructura, "
-            "intermodalidad, conectividad y jerarquía "
-            "territorial."
+            "Construir el índice de centralidad "
+            "estructural integrando demanda SUBE, "
+            "infraestructura, intermodalidad, "
+            "conectividad y jerarquía territorial."
         )
 
         return 0
 
     except Exception as exc:
-        imprimir_titulo(
+
+        titulo(
             "22 - ERROR"
         )
 

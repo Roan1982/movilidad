@@ -1,0 +1,282 @@
+{
+  "script": "22_validar_infraestructura_centralidades_amba.py",
+  "version": "V2",
+  "crs_geografico": "EPSG:4326",
+  "crs_metrico": "EPSG:22185",
+  "instalaciones": 18398,
+  "intercambiadores": 1094,
+  "centralidades": 144,
+  "radios": {
+    "250m": 250,
+    "500m": 500,
+    "1000m": 1000
+  },
+  "centralidades_por_categoria_soporte_fisico": {
+    "SOPORTE_FISICO_BAJO": 95,
+    "SOPORTE_FISICO_MUY_BAJO": 33,
+    "SOPORTE_FISICO_MEDIO": 15,
+    "SOPORTE_FISICO_MUY_ALTO": 1
+  },
+  "centralidades_por_cantidad_modos_500m": {
+    "0": 2,
+    "1": 28,
+    "2": 99,
+    "3": 13,
+    "4": 1,
+    "5": 1
+  },
+  "instalaciones_500m": {
+    "min": 0,
+    "max": 3872,
+    "media": 70.91666666666667,
+    "mediana": 29.5
+  },
+  "intercambiadores_500m": {
+    "min": 0,
+    "max": 245,
+    "media": 3.9652777777777777,
+    "mediana": 2.0
+  },
+  "top_20_soporte_fisico": [
+    {
+      "nodo_id": 1,
+      "soporte_fisico_preliminar": 100.0,
+      "ranking_soporte_fisico": 1,
+      "instalaciones_250m": 3439,
+      "instalaciones_500m": 3872,
+      "instalaciones_1000m": 4337,
+      "cantidad_modos_500m": 5,
+      "modos_500m": "AUTOBUS|FERROCARRIL|FLUVIAL|SUBTE|TRANVIA",
+      "intercambiadores_500m": 245,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MUY_ALTO"
+    },
+    {
+      "nodo_id": 6,
+      "soporte_fisico_preliminar": 49.59,
+      "ranking_soporte_fisico": 2,
+      "instalaciones_250m": 145,
+      "instalaciones_500m": 223,
+      "instalaciones_1000m": 408,
+      "cantidad_modos_500m": 3,
+      "modos_500m": "AUTOBUS|FERROCARRIL|FLUVIAL",
+      "intercambiadores_500m": 9,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 76,
+      "soporte_fisico_preliminar": 47.21,
+      "ranking_soporte_fisico": 3,
+      "instalaciones_250m": 65,
+      "instalaciones_500m": 90,
+      "instalaciones_1000m": 160,
+      "cantidad_modos_500m": 4,
+      "modos_500m": "AUTOBUS|FERROCARRIL|FLUVIAL|TRANVIA",
+      "intercambiadores_500m": 4,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 49,
+      "soporte_fisico_preliminar": 46.53,
+      "ranking_soporte_fisico": 4,
+      "instalaciones_250m": 114,
+      "instalaciones_500m": 166,
+      "instalaciones_1000m": 269,
+      "cantidad_modos_500m": 3,
+      "modos_500m": "AUTOBUS|FERROCARRIL|TRANVIA",
+      "intercambiadores_500m": 6,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 63,
+      "soporte_fisico_preliminar": 45.29,
+      "ranking_soporte_fisico": 5,
+      "instalaciones_250m": 220,
+      "instalaciones_500m": 281,
+      "instalaciones_1000m": 302,
+      "cantidad_modos_500m": 3,
+      "modos_500m": "AUTOBUS|FERROCARRIL|FLUVIAL",
+      "intercambiadores_500m": 2,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 32,
+      "soporte_fisico_preliminar": 45.12,
+      "ranking_soporte_fisico": 6,
+      "instalaciones_250m": 54,
+      "instalaciones_500m": 107,
+      "instalaciones_1000m": 209,
+      "cantidad_modos_500m": 3,
+      "modos_500m": "AUTOBUS|FERROCARRIL|TRANVIA",
+      "intercambiadores_500m": 7,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 61,
+      "soporte_fisico_preliminar": 45.05,
+      "ranking_soporte_fisico": 7,
+      "instalaciones_250m": 53,
+      "instalaciones_500m": 84,
+      "instalaciones_1000m": 170,
+      "cantidad_modos_500m": 3,
+      "modos_500m": "AUTOBUS|FERROCARRIL|FLUVIAL",
+      "intercambiadores_500m": 9,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 129,
+      "soporte_fisico_preliminar": 44.98,
+      "ranking_soporte_fisico": 8,
+      "instalaciones_250m": 57,
+      "instalaciones_500m": 92,
+      "instalaciones_1000m": 188,
+      "cantidad_modos_500m": 3,
+      "modos_500m": "AUTOBUS|FERROCARRIL|SUBTE",
+      "intercambiadores_500m": 8,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 22,
+      "soporte_fisico_preliminar": 44.1,
+      "ranking_soporte_fisico": 9,
+      "instalaciones_250m": 128,
+      "instalaciones_500m": 185,
+      "instalaciones_1000m": 293,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 10,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 99,
+      "soporte_fisico_preliminar": 42.87,
+      "ranking_soporte_fisico": 10,
+      "instalaciones_250m": 287,
+      "instalaciones_500m": 357,
+      "instalaciones_1000m": 376,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 3,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 67,
+      "soporte_fisico_preliminar": 42.4,
+      "ranking_soporte_fisico": 11,
+      "instalaciones_250m": 74,
+      "instalaciones_500m": 118,
+      "instalaciones_1000m": 211,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 11,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 54,
+      "soporte_fisico_preliminar": 42.39,
+      "ranking_soporte_fisico": 12,
+      "instalaciones_250m": 91,
+      "instalaciones_500m": 141,
+      "instalaciones_1000m": 277,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 9,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 95,
+      "soporte_fisico_preliminar": 41.56,
+      "ranking_soporte_fisico": 13,
+      "instalaciones_250m": 54,
+      "instalaciones_500m": 98,
+      "instalaciones_1000m": 213,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 11,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 94,
+      "soporte_fisico_preliminar": 41.44,
+      "ranking_soporte_fisico": 14,
+      "instalaciones_250m": 31,
+      "instalaciones_500m": 46,
+      "instalaciones_1000m": 106,
+      "cantidad_modos_500m": 3,
+      "modos_500m": "AUTOBUS|FERROCARRIL|TRANVIA",
+      "intercambiadores_500m": 7,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 3,
+      "soporte_fisico_preliminar": 40.78,
+      "ranking_soporte_fisico": 15,
+      "instalaciones_250m": 110,
+      "instalaciones_500m": 124,
+      "instalaciones_1000m": 147,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 7,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 72,
+      "soporte_fisico_preliminar": 40.37,
+      "ranking_soporte_fisico": 16,
+      "instalaciones_250m": 97,
+      "instalaciones_500m": 179,
+      "instalaciones_1000m": 351,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 4,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_MEDIO"
+    },
+    {
+      "nodo_id": 55,
+      "soporte_fisico_preliminar": 39.21,
+      "ranking_soporte_fisico": 17,
+      "instalaciones_250m": 69,
+      "instalaciones_500m": 117,
+      "instalaciones_1000m": 251,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 5,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_BAJO"
+    },
+    {
+      "nodo_id": 136,
+      "soporte_fisico_preliminar": 38.9,
+      "ranking_soporte_fisico": 18,
+      "instalaciones_250m": 71,
+      "instalaciones_500m": 131,
+      "instalaciones_1000m": 264,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 4,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_BAJO"
+    },
+    {
+      "nodo_id": 2,
+      "soporte_fisico_preliminar": 38.5,
+      "ranking_soporte_fisico": 19,
+      "instalaciones_250m": 79,
+      "instalaciones_500m": 120,
+      "instalaciones_1000m": 174,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 4,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_BAJO"
+    },
+    {
+      "nodo_id": 44,
+      "soporte_fisico_preliminar": 38.09,
+      "ranking_soporte_fisico": 20,
+      "instalaciones_250m": 66,
+      "instalaciones_500m": 91,
+      "instalaciones_1000m": 150,
+      "cantidad_modos_500m": 2,
+      "modos_500m": "AUTOBUS|FERROCARRIL",
+      "intercambiadores_500m": 5,
+      "categoria_soporte_fisico": "SOPORTE_FISICO_BAJO"
+    }
+  ]
+}
