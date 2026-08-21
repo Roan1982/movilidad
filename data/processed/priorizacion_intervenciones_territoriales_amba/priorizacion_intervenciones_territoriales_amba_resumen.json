@@ -1,0 +1,193 @@
+{
+  "proceso": 25,
+  "version": "V1",
+  "descripcion": "Priorización de intervenciones territoriales de centralidades del AMBA.",
+  "fecha_proceso": "2026-08-21T09:16:51.254464",
+  "centralidades_analizadas": 144,
+  "pesos": {
+    "demanda": 0.25,
+    "deficit_infraestructura": 0.2,
+    "deficit_intermodalidad": 0.15,
+    "deficit_conectividad": 0.1,
+    "deficit_integracion": 0.05,
+    "centralidad": 0.15,
+    "impacto": 0.1
+  },
+  "rangos": {
+    "score_prioridad_territorial": {
+      "min": 32.697481333333336,
+      "max": 74.08132433333333
+    },
+    "impacto_potencial": {
+      "min": 16.555433888888892,
+      "max": 86.80549333333333
+    },
+    "urgencia_intervencion": {
+      "min": 8.73699,
+      "max": 85.073795
+    }
+  },
+  "prioridades": {
+    "PRIORIDAD_MEDIA": 74,
+    "PRIORIDAD_ALTA": 54,
+    "PRIORIDAD_BAJA": 16
+  },
+  "intervenciones": {
+    "MEJORAR_INTEGRACION_TERRITORIAL": 55,
+    "AMPLIAR_INFRAESTRUCTURA": 29,
+    "MEJORAR_CONECTIVIDAD": 29,
+    "INTERVENCION_INTEGRAL": 14,
+    "MEJORAR_INTERMODALIDAD": 12,
+    "MONITOREAR": 4,
+    "CONSOLIDAR_CENTRALIDAD": 1
+  },
+  "diagnosticos": {
+    "INTERVENCION_SELECTIVA": 52,
+    "BAJO_DESEMPEÑO_ESTRUCTURAL": 43,
+    "ALTA_DEMANDA_BAJO_SOPORTE": 26,
+    "CENTRALIDAD_CONECTIVA": 21,
+    "CENTRALIDAD_CONSOLIDADA": 2
+  },
+  "top_20_prioridades": [
+    {
+      "nodo_id": 7,
+      "ranking": 1,
+      "score": 74.08132433333333,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 17,
+      "ranking": 2,
+      "score": 73.89418833333333,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 2,
+      "ranking": 3,
+      "score": 72.72296716666668,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 4,
+      "ranking": 4,
+      "score": 72.48680433333334,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 8,
+      "ranking": 5,
+      "score": 72.2099565,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 20,
+      "ranking": 6,
+      "score": 72.08562783333333,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 3,
+      "ranking": 7,
+      "score": 72.03441600000001,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 11,
+      "ranking": 8,
+      "score": 71.98516866666667,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 5,
+      "ranking": 9,
+      "score": 71.46829650000001,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 18,
+      "ranking": 10,
+      "score": 71.32076450000001,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "AMPLIAR_INFRAESTRUCTURA"
+    },
+    {
+      "nodo_id": 16,
+      "ranking": 11,
+      "score": 71.12863433333334,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 23,
+      "ranking": 12,
+      "score": 70.75147633333333,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "AMPLIAR_INFRAESTRUCTURA"
+    },
+    {
+      "nodo_id": 12,
+      "ranking": 13,
+      "score": 70.59367033333334,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 15,
+      "ranking": 14,
+      "score": 70.5321645,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 10,
+      "ranking": 15,
+      "score": 70.16834800000001,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 30,
+      "ranking": 16,
+      "score": 69.91186466666666,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "AMPLIAR_INFRAESTRUCTURA"
+    },
+    {
+      "nodo_id": 14,
+      "ranking": 17,
+      "score": 69.60028166666666,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "INTERVENCION_INTEGRAL"
+    },
+    {
+      "nodo_id": 39,
+      "ranking": 18,
+      "score": 69.00201516666667,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "AMPLIAR_INFRAESTRUCTURA"
+    },
+    {
+      "nodo_id": 9,
+      "ranking": 19,
+      "score": 68.83067316666667,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "AMPLIAR_INFRAESTRUCTURA"
+    },
+    {
+      "nodo_id": 19,
+      "ranking": 20,
+      "score": 68.70250066666667,
+      "prioridad": "PRIORIDAD_ALTA",
+      "intervencion": "AMPLIAR_INFRAESTRUCTURA"
+    }
+  ]
+}
