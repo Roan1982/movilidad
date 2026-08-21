@@ -1,0 +1,22 @@
+{
+  "proceso": "42",
+  "version": "V4.1",
+  "fecha": "2026-08-21T16:36:35",
+  "proyecto": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad",
+  "entrada": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
+  "salida": "C:\\Users\\Roan\\Documents\\GitHub\\movilidad\\data\\processed\\escenarios_territoriales_amba",
+  "proyectos": 144,
+  "escenarios": 7,
+  "controles": 13,
+  "controles_ok": 13,
+  "controles_fallidos": 0,
+  "fallas_criticas": 0,
+  "score_cierre": 100.0,
+  "dictamen_proceso_41": "GO",
+  "auditoria": "OK",
+  "dictamen_final": "GO",
+  "tiempo_segundos": 1.71,
+  "productos_criticos": 13,
+  "productos_faltantes": [],
+  "hashes_generados": 10
+}

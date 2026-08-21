@@ -1,0 +1,14 @@
+﻿control,resultado,critico,detalle
+Inventario completo de productos críticos,OK,SI,Todos los productos requeridos están presentes.
+Proceso 41 finalizado con dictamen GO,OK,SI,Dictamen detectado: GO
+Estructura del modelo maestro,OK,SI,Columnas estructurales requeridas presentes.
+Integridad de identificadores,OK,SI,144 proyectos / 7 escenarios sin duplicados ni nulos.
+Asignación proyecto -> escenario,OK,SI,144 proyectos asignados a un único escenario.
+Distribución territorial completa,OK,SI,7 escenarios con proyectos asignados.
+Ranking final de escenarios,OK,SI,Ranking completo 1..N.
+Ranking final de proyectos,OK,SI,Ranking completo 1..N.
+Modelo geográfico maestro,OK,SI,Cobertura geométrica: 100.00%.
+Escenarios geográficos completos,OK,SI,Las 7 unidades territoriales están presentes y son geométricamente válidas.
+Trazabilidad proceso 39,OK,SI,Auditoría 39 sin fallas.
+Trazabilidad proceso 40,OK,SI,Auditoría 40 sin fallas.
+Indicadores globales disponibles,OK,SI,27 indicadores disponibles.
