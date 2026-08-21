@@ -1,0 +1,51 @@
+{
+  "proceso": 24,
+  "nombre": "Clasificación de tipología de centralidades AMBA",
+  "version": "V1",
+  "fecha_ejecucion": "2026-08-21T09:13:23.517854",
+  "centralidades_analizadas": 144,
+  "crs": "EPSG:4326",
+  "crs_metrico": "EPSG:22185",
+  "tipologias": {
+    "CENTRALIDAD_LOCAL": 103,
+    "CENTRALIDAD_DEMANDA": 23,
+    "CENTRALIDAD_DEFICITARIA": 10,
+    "CENTRALIDAD_CONECTIVA": 5,
+    "CENTRALIDAD_ESTRATEGICA": 2,
+    "CENTRALIDAD_METROPOLITANA": 1
+  },
+  "prioridades": {
+    "PRIORIDAD_BAJA": 76,
+    "PRIORIDAD_MEDIA": 31,
+    "PRIORIDAD_ALTA": 23,
+    "PRIORIDAD_CRITICA": 14
+  },
+  "dimensiones_dominantes": {
+    "CONECTIVIDAD": 72,
+    "DEMANDA": 56,
+    "INTEGRACION_TERRITORIAL": 16
+  },
+  "diagnosticos": {
+    "PERFIL_EQUILIBRADO": 103,
+    "ALTA_DEMANDA_BAJO_SOPORTE": 26,
+    "FUERTE_CONECTIVIDAD": 14,
+    "ALTA_DEMANDA_ALTO_SOPORTE": 1
+  },
+  "perfiles_intervencion": {
+    "MANTENER_Y_OPTIMIZAR": 108,
+    "AMPLIAR_INFRAESTRUCTURA": 21,
+    "MEJORAR_INTERMODALIDAD": 14,
+    "MEJORAR_CONECTIVIDAD": 1
+  },
+  "perfiles_multidimensionales": {
+    "CONECTIVIDAD": 70,
+    "DEMANDA": 43,
+    "TERRITORIAL": 16,
+    "DEMANDA|TERRITORIAL": 9,
+    "CONECTIVIDAD|DEMANDA": 2,
+    "DEMANDA|TERRITORIAL|CONECTIVIDAD": 1,
+    "DEMANDA|CONECTIVIDAD|TERRITORIAL": 1,
+    "DEMANDA|CONECTIVIDAD": 1,
+    "DEMANDA|INFRAESTRUCTURA|INTERMODALIDAD": 1
+  }
+}
