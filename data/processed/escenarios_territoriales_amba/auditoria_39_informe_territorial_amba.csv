@@ -1,0 +1,7 @@
+﻿proceso,version,control,resultado,valor,observacion
+39,V4,proyectos_unicos,True,144.0,Todos los registros corresponden a proyectos únicos.
+39,V4,proyectos_sin_nulos,True,0.0,No existen identificadores de proyecto nulos.
+39,V4,proyectos_sin_duplicados,True,0.0,No existen proyectos duplicados.
+39,V4,cobertura_geometrica,False,0.0,La cobertura geométrica debe ser completa.
+39,V4,ranking_escenarios,True,7.0,Existe un registro de ranking por escenario.
+39,V4,ranking_proyectos,True,144.0,Existe un registro de ranking por proyecto.

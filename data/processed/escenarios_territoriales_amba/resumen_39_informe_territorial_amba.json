@@ -1,0 +1,18 @@
+{
+  "proceso": "39",
+  "version": "V4",
+  "fecha_generacion": "2026-08-21T16:07:10.527912",
+  "dictamen": "OBSERVADO",
+  "proyectos": 144,
+  "proyectos_unicos": 144,
+  "escenarios": 7,
+  "cobertura_geometrica": 0.0,
+  "geometrias_validas": 0,
+  "proyectos_duplicados": 0,
+  "proyectos_nulos": 0,
+  "escenario_prioritario": "AMBA-E001",
+  "escenario_menor_prioridad": "AMBA-E007",
+  "cv_escenarios": 0.024056261216234404,
+  "controles_ok": 5,
+  "controles_total": 6
+}
