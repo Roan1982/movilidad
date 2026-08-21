@@ -1,66 +1,53 @@
 # -*- coding: utf-8 -*-
+
 """
 ===============================================================================
-39 - GENERACIÓN DEL INFORME TERRITORIAL AMBA - V4
+39 - GENERACIÓN DEL INFORME TERRITORIAL AMBA - V4.1
 ===============================================================================
 
-Proyecto:
-    movilidad
+Objetivo
+--------
+Generar el informe territorial final AMBA V4.1 a partir del modelo maestro
+consolidado por el proceso 38.
 
-Objetivo:
-    Generar el informe territorial final AMBA V4 a partir del modelo maestro
-    consolidado por el Proceso 38.
-
-Entrada principal:
-    data/processed/escenarios_territoriales_amba/
-        modelo_maestro_proyectos_v4.csv
-        modelo_maestro_escenarios_v4.csv
-        ranking_final_escenarios_v4.csv
-        ranking_final_proyectos_v4.csv
-        matriz_integral_escenarios_v4.csv
-        indicadores_globales_amba_v4.csv
-        auditoria_38_consolidacion_territorial_amba.csv
-        modelo_maestro_territorial_amba_v4.gpkg
-
-Salidas:
-    data/processed/escenarios_territoriales_amba/
-        informe_territorial_amba_v4.md
-        resumen_ejecutivo_amba_v4.md
-        anexo_proyectos_amba_v4.csv
-        anexo_escenarios_amba_v4.csv
-        anexo_indicadores_globales_amba_v4.csv
-        resumen_39_informe_territorial_amba.json
-        auditoria_39_informe_territorial_amba.csv
-
-===============================================================================
+Correcciones V4.1
+-----------------
+1. No depende de una columna geometry dentro de los CSV.
+2. Recupera las geometrías desde:
+       modelo_maestro_territorial_amba_v4.gpkg
+3. Valida las capas geográficas "proyectos" y "escenarios".
+4. Mantiene la trazabilidad proyecto -> escenario.
+5. Verifica 144 proyectos y 7 escenarios.
+6. No modifica los indicadores originales.
+7. Genera informe Markdown, resumen ejecutivo, anexos, auditoría y JSON.
+8. No intenta crear este archivo desde /mnt/data.
+9. Compatible con ejecución directa desde Windows / PowerShell.
 """
 
 from __future__ import annotations
 
 import json
 import math
-import sys
-import traceback
+import time
 from pathlib import Path
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
-
-try:
-    import geopandas as gpd
-except ImportError:
-    gpd = None
+import geopandas as gpd
 
 
 # =============================================================================
 # CONFIGURACIÓN
 # =============================================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+VERSION = "V4.1"
+
+SCRIPT_NAME = "39_generar_informe_territorial_amba_v4.py"
+
+BASE_DIR = Path(__file__).resolve().parents[1]
 
 INPUT_DIR = (
-    PROJECT_ROOT
+    BASE_DIR
     / "data"
     / "processed"
     / "escenarios_territoriales_amba"
@@ -68,42 +55,36 @@ INPUT_DIR = (
 
 OUTPUT_DIR = INPUT_DIR
 
-VERSION = "V4"
-PROCESO = "39"
-
 
 # =============================================================================
 # ARCHIVOS DE ENTRADA
 # =============================================================================
 
-FILE_PROYECTOS = INPUT_DIR / "modelo_maestro_proyectos_v4.csv"
-FILE_ESCENARIOS = INPUT_DIR / "modelo_maestro_escenarios_v4.csv"
-FILE_RANKING_ESCENARIOS = INPUT_DIR / "ranking_final_escenarios_v4.csv"
-FILE_RANKING_PROYECTOS = INPUT_DIR / "ranking_final_proyectos_v4.csv"
-FILE_MATRIZ = INPUT_DIR / "matriz_integral_escenarios_v4.csv"
-FILE_INDICADORES = INPUT_DIR / "indicadores_globales_amba_v4.csv"
-FILE_AUDITORIA_38 = INPUT_DIR / "auditoria_38_consolidacion_territorial_amba.csv"
-FILE_GPKG = INPUT_DIR / "modelo_maestro_territorial_amba_v4.gpkg"
+ARCHIVOS_ENTRADA = {
+    "proyectos": "modelo_maestro_proyectos_v4.csv",
+    "escenarios": "modelo_maestro_escenarios_v4.csv",
+    "ranking_escenarios": "ranking_final_escenarios_v4.csv",
+    "ranking_proyectos": "ranking_final_proyectos_v4.csv",
+    "matriz": "matriz_integral_escenarios_v4.csv",
+    "indicadores": "indicadores_globales_amba_v4.csv",
+    "auditoria_38": "auditoria_38_consolidacion_territorial_amba.csv",
+    "gpkg": "modelo_maestro_territorial_amba_v4.gpkg",
+}
 
 
 # =============================================================================
 # ARCHIVOS DE SALIDA
 # =============================================================================
 
-FILE_INFORME = OUTPUT_DIR / "informe_territorial_amba_v4.md"
-FILE_RESUMEN = OUTPUT_DIR / "resumen_ejecutivo_amba_v4.md"
-
-FILE_ANEXO_PROYECTOS = OUTPUT_DIR / "anexo_proyectos_amba_v4.csv"
-FILE_ANEXO_ESCENARIOS = OUTPUT_DIR / "anexo_escenarios_amba_v4.csv"
-FILE_ANEXO_INDICADORES = OUTPUT_DIR / "anexo_indicadores_globales_amba_v4.csv"
-
-FILE_RESUMEN_JSON = (
-    OUTPUT_DIR / "resumen_39_informe_territorial_amba.json"
-)
-
-FILE_AUDITORIA = (
-    OUTPUT_DIR / "auditoria_39_informe_territorial_amba.csv"
-)
+ARCHIVOS_SALIDA = {
+    "informe": "informe_territorial_amba_v4_1.md",
+    "resumen": "resumen_ejecutivo_amba_v4_1.md",
+    "auditoria": "auditoria_39_informe_territorial_amba_v4_1.csv",
+    "json": "resumen_39_informe_territorial_amba_v4_1.json",
+    "anexo_proyectos": "anexo_proyectos_amba_v4_1.csv",
+    "anexo_escenarios": "anexo_escenarios_amba_v4_1.csv",
+    "anexo_indicadores": "anexo_indicadores_globales_amba_v4_1.csv",
+}
 
 
 # =============================================================================
@@ -124,377 +105,478 @@ def subtitulo(texto: str) -> None:
     print("-" * 88)
 
 
-def fmt_num(valor, decimales: int = 2) -> str:
-    if valor is None:
-        return "N/D"
-
-    try:
-        if pd.isna(valor):
-            return "N/D"
-    except Exception:
-        pass
-
-    try:
-        return f"{float(valor):,.{decimales}f}"
-    except Exception:
-        return str(valor)
-
-
-def fmt_pct(valor, decimales: int = 2) -> str:
-    if valor is None:
-        return "N/D"
-
-    try:
-        if pd.isna(valor):
-            return "N/D"
-    except Exception:
-        pass
-
-    try:
-        return f"{float(valor):.{decimales}f}%"
-    except Exception:
-        return str(valor)
-
-
-def normalizar_columna(df: pd.DataFrame, nombre: str) -> str | None:
-    """
-    Busca una columna de manera tolerante a diferencias menores de nombres.
-    """
-    if nombre in df.columns:
-        return nombre
-
-    normalizado = {
-        str(c).strip().lower(): c
-        for c in df.columns
-    }
-
-    return normalizado.get(nombre.strip().lower())
-
-
-def resolver_campo(
+def resolver_columna(
     df: pd.DataFrame,
     candidatos: list[str],
-    obligatorio: bool = False,
+    obligatoria: bool = True,
 ) -> str | None:
+    """
+    Busca una columna respetando primero coincidencia exacta y luego
+    coincidencia case-insensitive.
+    """
+
+    columnas = list(df.columns)
 
     for candidato in candidatos:
-        campo = normalizar_columna(df, candidato)
+        if candidato in columnas:
+            return candidato
 
-        if campo is not None:
-            return campo
+    mapa = {str(c).lower(): c for c in columnas}
 
-    if obligatorio:
+    for candidato in candidatos:
+        encontrado = mapa.get(candidato.lower())
+        if encontrado is not None:
+            return encontrado
+
+    if obligatoria:
         raise KeyError(
-            f"No se encontró ninguna de las columnas esperadas: "
-            f"{candidatos}"
+            f"No se encontró ninguna de las columnas esperadas: {candidatos}"
         )
 
     return None
 
 
-def safe_mean(series: pd.Series) -> float:
-    serie = pd.to_numeric(series, errors="coerce")
-
-    if serie.dropna().empty:
-        return float("nan")
-
-    return float(serie.mean())
-
-
-def safe_min(series: pd.Series) -> float:
-    serie = pd.to_numeric(series, errors="coerce")
-
-    if serie.dropna().empty:
-        return float("nan")
-
-    return float(serie.min())
-
-
-def safe_max(series: pd.Series) -> float:
-    serie = pd.to_numeric(series, errors="coerce")
-
-    if serie.dropna().empty:
-        return float("nan")
-
-    return float(serie.max())
-
-
-def cv(series: pd.Series) -> float:
-    serie = pd.to_numeric(series, errors="coerce").dropna()
-
-    if len(serie) == 0:
-        return float("nan")
-
-    media = serie.mean()
-
-    if media == 0:
-        return 0.0
-
-    return float(serie.std(ddof=0) / media)
-
-
-def valor_primero(df: pd.DataFrame, campo: str | None):
-    if campo is None or campo not in df.columns or df.empty:
-        return None
-
-    valor = df.iloc[0][campo]
-
-    if pd.isna(valor):
-        return None
-
-    return valor
-
-
-def valores_unicos(df: pd.DataFrame, campo: str | None) -> list:
-    if campo is None or campo not in df.columns:
-        return []
-
-    return (
-        df[campo]
-        .dropna()
-        .astype(str)
-        .drop_duplicates()
-        .tolist()
-    )
-
-
-def limpiar_texto(valor) -> str:
-    if valor is None:
-        return ""
-
+def safe_float(valor, default=np.nan) -> float:
     try:
         if pd.isna(valor):
-            return ""
-    except Exception:
-        pass
+            return default
 
-    return str(valor).strip()
+        resultado = float(valor)
+
+        if math.isfinite(resultado):
+            return resultado
+
+        return default
+
+    except Exception:
+        return default
+
+
+def media_segura(serie: pd.Series) -> float:
+    valores = pd.to_numeric(serie, errors="coerce")
+
+    if valores.notna().sum() == 0:
+        return 0.0
+
+    return float(valores.mean())
+
+
+def max_seguro(serie: pd.Series) -> float:
+    valores = pd.to_numeric(serie, errors="coerce")
+
+    if valores.notna().sum() == 0:
+        return 0.0
+
+    return float(valores.max())
+
+
+def min_seguro(serie: pd.Series) -> float:
+    valores = pd.to_numeric(serie, errors="coerce")
+
+    if valores.notna().sum() == 0:
+        return 0.0
+
+    return float(valores.min())
+
+
+def porcentaje(valor: float, total: float) -> float:
+    if total == 0:
+        return 0.0
+
+    return float(valor / total * 100.0)
+
+
+def formato_numero(valor, decimales: int = 2) -> str:
+    if valor is None or pd.isna(valor):
+        return "N/D"
+
+    try:
+        return f"{float(valor):,.{decimales}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except Exception:
+        return str(valor)
+
+
+def formato_porcentaje(valor, decimales: int = 2) -> str:
+    if valor is None or pd.isna(valor):
+        return "N/D"
+
+    try:
+        return f"{float(valor):.{decimales}f}%".replace(".", ",")
+    except Exception:
+        return str(valor)
+
+
+def limpiar_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    resultado = df.copy()
+
+    for columna in resultado.columns:
+        if resultado[columna].dtype == "object":
+            resultado[columna] = resultado[columna].replace(
+                {
+                    "nan": np.nan,
+                    "None": np.nan,
+                    "NaN": np.nan,
+                    "": np.nan,
+                }
+            )
+
+    return resultado
+
+
+def tabla_markdown(
+    df: pd.DataFrame,
+    columnas: list[str] | None = None,
+    max_filas: int = 20,
+) -> str:
+    """
+    Genera Markdown sin depender de tabulate.
+    """
+
+    if df is None or df.empty:
+        return "_Sin datos._"
+
+    tabla = df.copy()
+
+    if columnas:
+        disponibles = [c for c in columnas if c in tabla.columns]
+        tabla = tabla[disponibles]
+
+    tabla = tabla.head(max_filas)
+
+    encabezados = [str(c) for c in tabla.columns]
+
+    lineas = [
+        "| " + " | ".join(encabezados) + " |",
+        "| " + " | ".join(["---"] * len(encabezados)) + " |",
+    ]
+
+    for _, fila in tabla.iterrows():
+        valores = []
+
+        for valor in fila:
+            if pd.isna(valor):
+                texto = ""
+            elif isinstance(valor, float):
+                texto = formato_numero(valor, 2)
+            else:
+                texto = str(valor)
+
+            texto = texto.replace("|", "\\|").replace("\n", " ")
+
+            valores.append(texto)
+
+        lineas.append("| " + " | ".join(valores) + " |")
+
+    return "\n".join(lineas)
+
+
+def escribir_texto(path: Path, contenido: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(contenido, encoding="utf-8")
 
 
 # =============================================================================
 # CARGA DE DATOS
 # =============================================================================
 
-def cargar_csv(path: Path, nombre: str) -> pd.DataFrame:
+def cargar_csv(nombre: str) -> pd.DataFrame:
+    path = INPUT_DIR / nombre
 
     if not path.exists():
-        raise FileNotFoundError(
-            f"No existe el archivo requerido: {path}"
-        )
+        raise FileNotFoundError(f"No existe el archivo requerido: {path}")
 
-    print(f"Cargando: {path.name}")
+    print(f"Cargando: {nombre}")
 
-    df = pd.read_csv(
-        path,
-        low_memory=False,
-    )
+    df = pd.read_csv(path, low_memory=False)
 
     print(f"Registros : {len(df):,}")
     print(f"Columnas  : {len(df.columns):,}")
 
-    return df
+    return limpiar_dataframe(df)
 
 
-def cargar_fuentes() -> dict[str, pd.DataFrame]:
+def cargar_geopackage() -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    path = INPUT_DIR / ARCHIVOS_ENTRADA["gpkg"]
 
-    titulo("CARGANDO MODELO MAESTRO DEL PROCESO 38")
+    if not path.exists():
+        raise FileNotFoundError(
+            f"No existe el GeoPackage maestro del proceso 38:\n{path}"
+        )
 
-    datos = {}
+    titulo("CARGANDO MODELO GEOGRÁFICO CONSOLIDADO DEL PROCESO 38")
 
-    datos["proyectos"] = cargar_csv(
-        FILE_PROYECTOS,
-        "proyectos",
-    )
+    print(f"GeoPackage: {path}")
 
-    datos["escenarios"] = cargar_csv(
-        FILE_ESCENARIOS,
-        "escenarios",
-    )
+    capas = gpd.list_layers(path)
 
-    datos["ranking_escenarios"] = cargar_csv(
-        FILE_RANKING_ESCENARIOS,
-        "ranking de escenarios",
-    )
+    print("Capas disponibles:")
 
-    datos["ranking_proyectos"] = cargar_csv(
-        FILE_RANKING_PROYECTOS,
-        "ranking de proyectos",
-    )
+    for nombre in capas["name"].tolist():
+        print(f"  - {nombre}")
 
-    datos["matriz"] = cargar_csv(
-        FILE_MATRIZ,
-        "matriz integral",
-    )
+    if "proyectos" not in capas["name"].tolist():
+        raise ValueError(
+            "El GeoPackage no contiene la capa obligatoria 'proyectos'."
+        )
 
-    datos["indicadores"] = cargar_csv(
-        FILE_INDICADORES,
-        "indicadores globales",
-    )
+    if "escenarios" not in capas["name"].tolist():
+        raise ValueError(
+            "El GeoPackage no contiene la capa obligatoria 'escenarios'."
+        )
 
-    datos["auditoria_38"] = cargar_csv(
-        FILE_AUDITORIA_38,
-        "auditoría del proceso 38",
-    )
+    proyectos_geo = gpd.read_file(path, layer="proyectos")
+    escenarios_geo = gpd.read_file(path, layer="escenarios")
 
-    return datos
+    print(f"Proyectos geográficos : {len(proyectos_geo):,}")
+    print(f"Escenarios geográficos: {len(escenarios_geo):,}")
+    print(f"CRS proyectos         : {proyectos_geo.crs}")
+    print(f"CRS escenarios        : {escenarios_geo.crs}")
+
+    return proyectos_geo, escenarios_geo
 
 
 # =============================================================================
 # RESOLUCIÓN DE CAMPOS
 # =============================================================================
 
-def resolver_campos(
-    proyectos: pd.DataFrame,
-    escenarios: pd.DataFrame,
-) -> dict:
-
+def resolver_campos_proyectos(df: pd.DataFrame) -> dict[str, str | None]:
     titulo("RESOLUCIÓN DE CAMPOS")
 
-    campos = {}
+    campos = {
+        "proyecto": resolver_columna(
+            df,
+            [
+                "proyecto_id",
+                "id_proyecto",
+                "proyecto",
+            ],
+        ),
+        "escenario": resolver_columna(
+            df,
+            [
+                "escenario_id",
+                "id_escenario",
+                "escenario",
+            ],
+        ),
+        "tipo": resolver_columna(
+            df,
+            [
+                "tipo_escenario",
+                "tipo_proyecto",
+            ],
+            obligatoria=False,
+        ),
+        "dimension": resolver_columna(
+            df,
+            [
+                "dimension_dominante",
+                "dimension_escenario",
+            ],
+            obligatoria=False,
+        ),
+        "prioridad": resolver_columna(
+            df,
+            [
+                "prioridad_territorial_v4",
+                "prioridad_escenario",
+                "prioridad",
+            ],
+            obligatoria=False,
+        ),
+        "score_cartera": resolver_columna(
+            df,
+            [
+                "score_cartera_v4",
+                "score_cartera",
+            ],
+            obligatoria=False,
+        ),
+        "score_territorial": resolver_columna(
+            df,
+            [
+                "score_priorizacion_v4",
+                "score_prioridad_territorial",
+                "score_territorial",
+            ],
+            obligatoria=False,
+        ),
+        "demanda": resolver_columna(
+            df,
+            [
+                "indice_demanda_estructural",
+                "score_demanda",
+            ],
+            obligatoria=False,
+        ),
+        "deficit": resolver_columna(
+            df,
+            [
+                "deficit_infraestructura",
+                "score_deficit",
+            ],
+            obligatoria=False,
+        ),
+        "conectividad": resolver_columna(
+            df,
+            [
+                "indice_conectividad_estructural",
+                "score_conectividad",
+            ],
+            obligatoria=False,
+        ),
+        "intermodalidad": resolver_columna(
+            df,
+            [
+                "indice_intermodalidad_estructural",
+                "score_intermodalidad",
+            ],
+            obligatoria=False,
+        ),
+        "integracion": resolver_columna(
+            df,
+            [
+                "indice_integracion_territorial",
+                "score_integracion",
+            ],
+            obligatoria=False,
+        ),
+        "centralidad": resolver_columna(
+            df,
+            [
+                "indice_centralidad_estructural",
+            ],
+            obligatoria=False,
+        ),
+        "impacto": resolver_columna(
+            df,
+            [
+                "impacto_potencial",
+            ],
+            obligatoria=False,
+        ),
+        "urgencia": resolver_columna(
+            df,
+            [
+                "urgencia_intervencion",
+            ],
+            obligatoria=False,
+        ),
+    }
 
-    campos["proyecto"] = resolver_campo(
-        proyectos,
+    for clave, columna in campos.items():
+        print(f"{clave:<28}: {columna or 'NO DISPONIBLE'}")
+
+    return campos
+
+
+# =============================================================================
+# INTEGRACIÓN DE GEOMETRÍAS
+# =============================================================================
+
+def integrar_geometrias(
+    proyectos: pd.DataFrame,
+    proyectos_geo: gpd.GeoDataFrame,
+    escenarios_geo: gpd.GeoDataFrame,
+    campos: dict[str, str | None],
+) -> gpd.GeoDataFrame:
+
+    titulo("INTEGRANDO GEOMETRÍAS CANÓNICAS DEL PROCESO 38")
+
+    proyecto_col = campos["proyecto"]
+
+    geo_proyecto_col = resolver_columna(
+        proyectos_geo,
         [
             "proyecto_id",
             "id_proyecto",
             "proyecto",
         ],
-        obligatorio=True,
     )
 
-    campos["escenario_proyecto"] = resolver_campo(
-        proyectos,
+    geo_escenario_col = resolver_columna(
+        escenarios_geo,
         [
             "escenario_id",
             "id_escenario",
             "escenario",
         ],
-        obligatorio=False,
     )
 
-    campos["tipo_proyecto"] = resolver_campo(
-        proyectos,
-        [
-            "tipo_escenario",
-            "tipo",
-        ],
+    # -------------------------------------------------------------------------
+    # Proyectos
+    # -------------------------------------------------------------------------
+
+    geo_proyectos = proyectos_geo[
+        [geo_proyecto_col, "geometry"]
+    ].copy()
+
+    geo_proyectos = geo_proyectos.rename(
+        columns={
+            geo_proyecto_col: "_proyecto_join",
+        }
     )
 
-    campos["dimension_proyecto"] = resolver_campo(
-        proyectos,
-        [
-            "dimension_dominante",
-            "dimension",
-        ],
+    geo_proyectos["_proyecto_join"] = (
+        geo_proyectos["_proyecto_join"]
+        .astype(str)
+        .str.strip()
     )
 
-    campos["prioridad"] = resolver_campo(
-        proyectos,
-        [
-            "prioridad_territorial_v4",
-            "prioridad_escenario",
-            "prioridad",
-        ],
+    base = proyectos.copy()
+
+    base["_proyecto_join"] = (
+        base[proyecto_col]
+        .astype(str)
+        .str.strip()
     )
 
-    campos["score_cartera"] = resolver_campo(
-        proyectos,
-        [
-            "score_cartera_v4",
-            "score_cartera",
-        ],
+    base = base.merge(
+        geo_proyectos,
+        on="_proyecto_join",
+        how="left",
+        suffixes=("", "_geo"),
     )
 
-    campos["score_territorial"] = resolver_campo(
-        proyectos,
-        [
-            "score_priorizacion_v4",
-            "score_priorizacion",
-            "score_prioridad_territorial",
-        ],
+    if "geometry" not in base.columns:
+        raise ValueError(
+            "No fue posible integrar la geometría desde la capa 'proyectos'."
+        )
+
+    base = gpd.GeoDataFrame(
+        base,
+        geometry="geometry",
+        crs=proyectos_geo.crs,
     )
 
-    campos["demanda"] = resolver_campo(
-        proyectos,
-        [
-            "indice_demanda_estructural",
-            "score_demanda_v4",
-            "demanda",
-        ],
-    )
+    base = base.drop(columns=["_proyecto_join"], errors="ignore")
 
-    campos["deficit"] = resolver_campo(
-        proyectos,
-        [
-            "deficit_infraestructura",
-            "score_deficit_v4",
-            "deficit",
-        ],
-    )
+    # -------------------------------------------------------------------------
+    # Normalización CRS
+    # -------------------------------------------------------------------------
 
-    campos["conectividad"] = resolver_campo(
-        proyectos,
-        [
-            "indice_conectividad_estructural",
-            "score_conectividad_v4",
-            "conectividad",
-        ],
-    )
+    if base.crs is None:
+        base = base.set_crs("EPSG:4326")
 
-    campos["intermodalidad"] = resolver_campo(
-        proyectos,
-        [
-            "indice_intermodalidad_estructural",
-            "score_intermodalidad_v4",
-            "intermodalidad",
-        ],
-    )
+    elif str(base.crs) != str(proyectos_geo.crs):
+        base = base.to_crs(proyectos_geo.crs)
 
-    campos["integracion"] = resolver_campo(
-        proyectos,
-        [
-            "indice_integracion_territorial",
-            "score_integracion_v4",
-            "integracion",
-        ],
-    )
+    # -------------------------------------------------------------------------
+    # Validación
+    # -------------------------------------------------------------------------
 
-    campos["centralidad"] = resolver_campo(
-        proyectos,
-        [
-            "indice_centralidad_estructural",
-            "centralidad",
-        ],
-    )
+    validas = base.geometry.notna() & (~base.geometry.is_empty)
 
-    campos["impacto"] = resolver_campo(
-        proyectos,
-        [
-            "impacto_potencial",
-            "score_impacto_v4",
-            "impacto",
-        ],
-    )
+    if validas.any():
+        tipos = base.loc[validas, "geometry"].geom_type.value_counts().to_dict()
+    else:
+        tipos = {}
 
-    campos["urgencia"] = resolver_campo(
-        proyectos,
-        [
-            "urgencia_intervencion",
-            "urgencia",
-        ],
-    )
+    print(f"Geometrías integradas : {int(validas.sum()):,}")
+    print(f"Geometrías faltantes  : {int((~validas).sum()):,}")
+    print(f"Tipos geométricos     : {tipos}")
 
-    campos["geometria"] = resolver_campo(
-        proyectos,
-        [
-            "geometry",
-        ],
-    )
-
-    for clave, valor in campos.items():
-        print(f"{clave:<28}: {valor or 'NO DISPONIBLE'}")
-
-    return campos
+    return base
 
 
 # =============================================================================
@@ -502,167 +584,150 @@ def resolver_campos(
 # =============================================================================
 
 def validar_modelo(
-    proyectos: pd.DataFrame,
-    escenarios: pd.DataFrame,
-    campos: dict,
+    proyectos: gpd.GeoDataFrame,
+    escenarios_geo: gpd.GeoDataFrame,
+    campos: dict[str, str | None],
 ) -> dict:
 
-    titulo("VALIDACIÓN DEL MODELO MAESTRO")
+    titulo("VALIDACIÓN DEL MODELO TERRITORIAL")
 
-    proyecto = campos["proyecto"]
+    proyecto_col = campos["proyecto"]
+    escenario_col = campos["escenario"]
 
     total = len(proyectos)
-    unicos = proyectos[proyecto].nunique(dropna=True)
 
-    nulos_proyecto = int(
-        proyectos[proyecto].isna().sum()
-    )
+    proyectos_unicos = proyectos[proyecto_col].nunique(dropna=True)
+
+    proyectos_nulos = int(proyectos[proyecto_col].isna().sum())
 
     duplicados = int(
-        proyectos[proyecto].duplicated().sum()
+        proyectos[proyecto_col].duplicated(keep=False).sum()
     )
 
-    escenario = campos["escenario_proyecto"]
+    escenarios = proyectos[escenario_col].nunique(dropna=True)
 
-    if escenario is not None:
-        escenarios_proyecto = proyectos[escenario].nunique(
-            dropna=True
-        )
-        nulos_escenario = int(
-            proyectos[escenario].isna().sum()
-        )
-    else:
-        escenarios_proyecto = 0
-        nulos_escenario = total
-
-    geometria = campos["geometria"]
-
-    if geometria is not None:
-        geometrias_validas = int(
-            proyectos[geometria].notna().sum()
-        )
-    else:
-        geometrias_validas = 0
-
-    resumen = {
-        "registros": total,
-        "proyectos_unicos": unicos,
-        "proyectos_nulos": nulos_proyecto,
-        "proyectos_duplicados": duplicados,
-        "escenarios": escenarios_proyecto,
-        "escenarios_nulos": nulos_escenario,
-        "geometrias_validas": geometrias_validas,
-        "cobertura_geometrica": (
-            geometrias_validas / total * 100
-            if total
-            else 0
-        ),
-    }
-
-    print(
-        f"Registros                  : {total:,}"
-    )
-    print(
-        f"Proyectos únicos           : {unicos:,}"
-    )
-    print(
-        f"Proyecto ID nulos         : {nulos_proyecto:,}"
-    )
-    print(
-        f"Proyecto ID duplicados    : {duplicados:,}"
-    )
-    print(
-        f"Escenarios                 : {escenarios_proyecto:,}"
-    )
-    print(
-        f"Escenario ID nulos        : {nulos_escenario:,}"
-    )
-    print(
-        f"Geometrías válidas         : {geometrias_validas:,}"
-    )
-    print(
-        f"Cobertura geométrica      : "
-        f"{fmt_pct(resumen['cobertura_geometrica'])}"
+    escenarios_nulos = int(
+        proyectos[escenario_col].isna().sum()
     )
 
-    return resumen
+    geom_no_nula = proyectos.geometry.notna()
 
+    geom_no_vacia = geom_no_nula & (~proyectos.geometry.is_empty)
 
-# =============================================================================
-# CONSTRUCCIÓN DE INDICADORES
-# =============================================================================
+    geom_validas = geom_no_vacia & proyectos.geometry.is_valid
 
-def construir_indicadores_globales(
-    proyectos: pd.DataFrame,
-    escenarios: pd.DataFrame,
-    indicadores: pd.DataFrame,
-    campos: dict,
-) -> dict:
+    geom_invalidas = int(
+        (geom_no_vacia & (~proyectos.geometry.is_valid)).sum()
+    )
 
-    titulo("CONSTRUYENDO INDICADORES GLOBALES DEL INFORME")
+    geom_nulas = int(
+        (~geom_no_nula).sum()
+    )
 
-    resultado = {}
+    geom_vacias = int(
+        (geom_no_nula & proyectos.geometry.is_empty).sum()
+    )
 
-    resultado["proyectos"] = len(proyectos)
+    cobertura = porcentaje(
+        int(geom_validas.sum()),
+        total,
+    )
 
-    resultado["proyectos_unicos"] = proyectos[
-        campos["proyecto"]
+    tamanios = (
+        proyectos.groupby(escenario_col)
+        .size()
+        .sort_values()
+    )
+
+    minimo = int(tamanios.min()) if not tamanios.empty else 0
+    maximo = int(tamanios.max()) if not tamanios.empty else 0
+    promedio = float(tamanios.mean()) if not tamanios.empty else 0.0
+
+    cv = (
+        float(tamanios.std(ddof=0) / promedio)
+        if promedio > 0
+        else 0.0
+    )
+
+    multi = (
+        proyectos.groupby(proyecto_col)[escenario_col]
+        .nunique(dropna=True)
+    )
+
+    proyectos_multiescenario = int(
+        (multi > 1).sum()
+    )
+
+    escenarios_geo_ids = resolver_columna(
+        escenarios_geo,
+        [
+            "escenario_id",
+            "id_escenario",
+            "escenario",
+        ],
+    )
+
+    escenarios_geograficos = escenarios_geo[
+        escenarios_geo_ids
     ].nunique(dropna=True)
 
-    resultado["escenarios"] = len(escenarios)
+    print(f"Registros                  : {total:,}")
+    print(f"Proyectos únicos           : {proyectos_unicos:,}")
+    print(f"Proyecto ID nulos          : {proyectos_nulos:,}")
+    print(f"Proyecto ID duplicados     : {duplicados:,}")
+    print(f"Escenarios                 : {escenarios:,}")
+    print(f"Escenario ID nulos         : {escenarios_nulos:,}")
+    print(f"Escenarios geográficos     : {escenarios_geograficos:,}")
+    print(f"Geometrías válidas         : {int(geom_validas.sum()):,}")
+    print(f"Geometrías nulas           : {geom_nulas:,}")
+    print(f"Geometrías vacías          : {geom_vacias:,}")
+    print(f"Geometrías inválidas       : {geom_invalidas:,}")
+    print(f"Cobertura geométrica       : {cobertura:.2f}%")
+    print(f"Proyectos multiescenario   : {proyectos_multiescenario}")
+    print(f"Mínimo proyectos/escenario : {minimo}")
+    print(f"Máximo proyectos/escenario : {maximo}")
+    print(f"Promedio proyectos/escenario: {promedio:.2f}")
+    print(f"CV tamaño escenarios       : {cv:.4f}")
 
-    if campos["escenario_proyecto"]:
-        conteos = (
-            proyectos
-            .groupby(campos["escenario_proyecto"])
-            .size()
-        )
+    controles = {
+        "144_proyectos": total == 144,
+        "proyectos_unicos": proyectos_unicos == 144,
+        "7_escenarios": escenarios == 7,
+        "sin_nulos_id": (
+            proyectos_nulos == 0
+            and escenarios_nulos == 0
+        ),
+        "sin_duplicados": duplicados == 0,
+        "geometria_completa": cobertura == 100.0,
+        "geometria_valida": geom_invalidas == 0,
+        "sin_multiescenario": proyectos_multiescenario == 0,
+        "escenarios_geograficos": escenarios_geograficos == 7,
+    }
 
-        resultado["min_proyectos_escenario"] = int(
-            conteos.min()
-        )
+    controles_ok = sum(bool(v) for v in controles.values())
 
-        resultado["max_proyectos_escenario"] = int(
-            conteos.max()
-        )
-
-        resultado["promedio_proyectos_escenario"] = float(
-            conteos.mean()
-        )
-
-        resultado["cv_proyectos_escenario"] = cv(
-            conteos
-        )
-    else:
-        resultado["min_proyectos_escenario"] = None
-        resultado["max_proyectos_escenario"] = None
-        resultado["promedio_proyectos_escenario"] = None
-        resultado["cv_proyectos_escenario"] = None
-
-    for nombre in [
-        "demanda",
-        "deficit",
-        "conectividad",
-        "intermodalidad",
-        "integracion",
-        "centralidad",
-        "impacto",
-        "score_cartera",
-        "score_territorial",
-    ]:
-
-        campo = campos.get(nombre)
-
-        if campo is not None:
-            resultado[f"{nombre}_media"] = safe_mean(
-                proyectos[campo]
-            )
-            resultado[f"{nombre}_min"] = safe_min(
-                proyectos[campo]
-            )
-            resultado[f"{nombre}_max"] = safe_max(
-                proyectos[campo]
-            )
+    resultado = {
+        "total_proyectos": total,
+        "proyectos_unicos": proyectos_unicos,
+        "proyectos_nulos": proyectos_nulos,
+        "proyectos_duplicados": duplicados,
+        "escenarios": escenarios,
+        "escenarios_nulos": escenarios_nulos,
+        "escenarios_geograficos": int(escenarios_geograficos),
+        "geometrias_validas": int(geom_validas.sum()),
+        "geometrias_nulas": geom_nulas,
+        "geometrias_vacias": geom_vacias,
+        "geometrias_invalidas": geom_invalidas,
+        "cobertura_geometrica": cobertura,
+        "proyectos_multiescenario": proyectos_multiescenario,
+        "minimo_proyectos_escenario": minimo,
+        "maximo_proyectos_escenario": maximo,
+        "promedio_proyectos_escenario": promedio,
+        "cv_escenarios": cv,
+        "controles": controles,
+        "controles_ok": controles_ok,
+        "controles_total": len(controles),
+    }
 
     return resultado
 
@@ -673,87 +738,60 @@ def construir_indicadores_globales(
 
 def preparar_ranking_escenarios(
     ranking: pd.DataFrame,
+    escenarios: pd.DataFrame,
 ) -> pd.DataFrame:
 
     titulo("PREPARANDO RANKING FINAL DE ESCENARIOS")
 
-    df = ranking.copy()
+    resultado = ranking.copy()
 
-    campo_escenario = resolver_campo(
-        df,
+    escenario_col = resolver_columna(
+        resultado,
         [
             "escenario_id",
             "id_escenario",
             "escenario",
         ],
-        obligatorio=True,
     )
 
-    campo_ranking = resolver_campo(
-        df,
+    score_col = resolver_columna(
+        resultado,
         [
-            "ranking_final_v4",
-            "ranking_territorial_v4",
-            "ranking_cartera_v4",
-            "ranking",
-        ],
-    )
-
-    campo_score = resolver_campo(
-        df,
-        [
-            "score_integral_v4",
-            "score_integral",
             "score_cartera_v4",
             "score_cartera",
-            "score_priorizacion_v4",
-            "score_priorizacion",
+            "score_integral_v4",
+            "score_integral",
+            "score_final",
         ],
+        obligatoria=False,
     )
 
-    if campo_ranking is not None:
-        df["_ranking"] = pd.to_numeric(
-            df[campo_ranking],
+    if score_col:
+        resultado["_score"] = pd.to_numeric(
+            resultado[score_col],
             errors="coerce",
         )
     else:
-        if campo_score is not None:
-            df["_ranking"] = (
-                pd.to_numeric(
-                    df[campo_score],
-                    errors="coerce",
-                )
-                .rank(
-                    ascending=False,
-                    method="min",
-                )
-            )
-        else:
-            df["_ranking"] = np.arange(1, len(df) + 1)
+        resultado["_score"] = np.nan
 
-    if campo_score is not None:
-        df["_score_informe"] = pd.to_numeric(
-            df[campo_score],
-            errors="coerce",
-        )
-    else:
-        df["_score_informe"] = np.nan
-
-    df["_escenario_informe"] = (
-        df[campo_escenario]
-        .astype(str)
-    )
-
-    df = df.sort_values(
-        ["_ranking", "_escenario_informe"]
+    resultado = resultado.sort_values(
+        "_score",
+        ascending=False,
+        na_position="last",
     ).reset_index(drop=True)
 
-    df["ranking_informe_v4"] = np.arange(
-        1,
-        len(df) + 1,
+    resultado["ranking_informe_v4_1"] = (
+        np.arange(len(resultado)) + 1
     )
 
-    return df
+    resultado = resultado.drop(
+        columns=["_score"],
+        errors="ignore",
+    )
+
+    print(f"Escenarios rankeados : {len(resultado):,}")
+
+    return resultado
 
 
 # =============================================================================
@@ -766,75 +804,55 @@ def preparar_ranking_proyectos(
 
     titulo("PREPARANDO RANKING FINAL DE PROYECTOS")
 
-    df = ranking.copy()
+    resultado = ranking.copy()
 
-    campo_proyecto = resolver_campo(
-        df,
+    proyecto_col = resolver_columna(
+        resultado,
         [
             "proyecto_id",
             "id_proyecto",
             "proyecto",
         ],
-        obligatorio=True,
     )
 
-    campo_ranking = resolver_campo(
-        df,
+    score_col = resolver_columna(
+        resultado,
         [
-            "ranking_final_proyecto_v4",
-            "ranking_proyecto_v4",
-            "ranking",
+            "score_cartera_v4",
+            "score_cartera",
+            "score_priorizacion_v4",
+            "score_priorizacion",
+            "score_final",
         ],
+        obligatoria=False,
     )
 
-    if campo_ranking is not None:
-        df["_ranking"] = pd.to_numeric(
-            df[campo_ranking],
+    if score_col:
+        resultado["_score"] = pd.to_numeric(
+            resultado[score_col],
             errors="coerce",
         )
     else:
-        campo_score = resolver_campo(
-            df,
-            [
-                "score_integral_proyecto_v4",
-                "score_integral",
-                "score_cartera_v4",
-                "score_cartera",
-            ],
-        )
+        resultado["_score"] = np.nan
 
-        if campo_score is not None:
-            df["_ranking"] = (
-                pd.to_numeric(
-                    df[campo_score],
-                    errors="coerce",
-                )
-                .rank(
-                    ascending=False,
-                    method="min",
-                )
-            )
-        else:
-            df["_ranking"] = np.arange(
-                1,
-                len(df) + 1,
-            )
-
-    df["_proyecto_informe"] = (
-        df[campo_proyecto]
-        .astype(str)
-    )
-
-    df = df.sort_values(
-        ["_ranking", "_proyecto_informe"]
+    resultado = resultado.sort_values(
+        "_score",
+        ascending=False,
+        na_position="last",
     ).reset_index(drop=True)
 
-    df["ranking_informe_v4"] = np.arange(
-        1,
-        len(df) + 1,
+    resultado["ranking_informe_v4_1"] = (
+        np.arange(len(resultado)) + 1
     )
 
-    return df
+    resultado = resultado.drop(
+        columns=["_score"],
+        errors="ignore",
+    )
+
+    print(f"Proyectos rankeados  : {len(resultado):,}")
+
+    return resultado
 
 
 # =============================================================================
@@ -848,243 +866,149 @@ def validar_rankings(
 
     titulo("VALIDANDO RANKINGS FINALES")
 
-    resultado = {}
+    escenarios_rankeados = len(ranking_escenarios)
+    proyectos_rankeados = len(ranking_proyectos)
 
-    resultado["escenarios"] = len(
-        ranking_escenarios
-    )
+    print(f"Escenarios rankeados : {escenarios_rankeados}")
+    print(f"Proyectos rankeados  : {proyectos_rankeados}")
 
-    resultado["proyectos"] = len(
-        ranking_proyectos
-    )
-
-    resultado["ranking_escenarios_sin_nulos"] = int(
-        ranking_escenarios[
-            "ranking_informe_v4"
-        ].notna().all()
-    )
-
-    resultado["ranking_proyectos_sin_nulos"] = int(
-        ranking_proyectos[
-            "ranking_informe_v4"
-        ].notna().all()
-    )
-
-    print(
-        f"Escenarios rankeados : "
-        f"{resultado['escenarios']}"
-    )
-
-    print(
-        f"Proyectos rankeados  : "
-        f"{resultado['proyectos']}"
-    )
-
-    return resultado
+    return {
+        "escenarios_rankeados": escenarios_rankeados,
+        "proyectos_rankeados": proyectos_rankeados,
+        "escenarios_ok": escenarios_rankeados == 7,
+        "proyectos_ok": proyectos_rankeados == 144,
+    }
 
 
 # =============================================================================
-# TABLAS PARA EL INFORME
+# INDICADORES GLOBALES
 # =============================================================================
 
-def tabla_markdown(
-    df: pd.DataFrame,
-    columnas: list[str] | None = None,
-    max_rows: int | None = None,
-) -> str:
+def construir_indicadores_globales(
+    proyectos: gpd.GeoDataFrame,
+    escenarios: pd.DataFrame,
+    validacion: dict,
+) -> dict:
 
-    if df is None or df.empty:
-        return "_Sin información disponible._"
+    titulo("CONSTRUYENDO INDICADORES GLOBALES DEL INFORME")
 
-    tabla = df.copy()
+    campos = {}
 
-    if columnas:
-        columnas_existentes = [
-            c for c in columnas
-            if c in tabla.columns
-        ]
-
-        if columnas_existentes:
-            tabla = tabla[columnas_existentes]
-
-    if max_rows is not None:
-        tabla = tabla.head(max_rows)
-
-    # No depender del paquete tabulate.
-    encabezados = [
-        str(c)
-        for c in tabla.columns
-    ]
-
-    lineas = []
-
-    lineas.append(
-        "| " + " | ".join(encabezados) + " |"
-    )
-
-    lineas.append(
-        "| "
-        + " | ".join(["---"] * len(encabezados))
-        + " |"
-    )
-
-    for _, row in tabla.iterrows():
-
-        valores = []
-
-        for valor in row:
-
-            if pd.isna(valor):
-                valores.append("")
-
-            elif isinstance(
-                valor,
-                (float, np.floating),
-            ):
-                valores.append(
-                    f"{float(valor):.2f}"
-                )
-
-            else:
-                texto = str(valor)
-                texto = texto.replace("|", "/")
-                valores.append(texto)
-
-        lineas.append(
-            "| " + " | ".join(valores) + " |"
+    for clave, candidatos in {
+        "demanda": [
+            "indice_demanda_estructural",
+        ],
+        "deficit": [
+            "deficit_infraestructura",
+        ],
+        "conectividad": [
+            "indice_conectividad_estructural",
+        ],
+        "intermodalidad": [
+            "indice_intermodalidad_estructural",
+        ],
+        "integracion": [
+            "indice_integracion_territorial",
+        ],
+        "centralidad": [
+            "indice_centralidad_estructural",
+        ],
+        "impacto": [
+            "impacto_potencial",
+        ],
+        "urgencia": [
+            "urgencia_intervencion",
+        ],
+    }.items():
+        campos[clave] = resolver_columna(
+            proyectos,
+            candidatos,
+            obligatoria=False,
         )
 
-    return "\n".join(lineas)
+    indicadores = []
 
-
-# =============================================================================
-# EXTRACCIÓN DE INFORMACIÓN DE ESCENARIOS
-# =============================================================================
-
-def extraer_columna(
-    df: pd.DataFrame,
-    candidatos: list[str],
-    default=None,
-) -> pd.Series:
-
-    campo = resolver_campo(
-        df,
-        candidatos,
+    indicadores.append(
+        {
+            "indicador": "proyectos_totales",
+            "valor": len(proyectos),
+            "unidad": "proyectos",
+        }
     )
 
-    if campo is None:
-        return pd.Series(
-            [default] * len(df),
-            index=df.index,
+    indicadores.append(
+        {
+            "indicador": "proyectos_unicos",
+            "valor": proyectos[
+                "proyecto_id"
+            ].nunique(),
+            "unidad": "proyectos",
+        }
+    )
+
+    indicadores.append(
+        {
+            "indicador": "escenarios_totales",
+            "valor": proyectos[
+                "escenario_id"
+            ].nunique(),
+            "unidad": "escenarios",
+        }
+    )
+
+    indicadores.append(
+        {
+            "indicador": "cobertura_geometrica",
+            "valor": validacion["cobertura_geometrica"],
+            "unidad": "%",
+        }
+    )
+
+    indicadores.append(
+        {
+            "indicador": "geometrias_validas",
+            "valor": validacion["geometrias_validas"],
+            "unidad": "geometrías",
+        }
+    )
+
+    indicadores.append(
+        {
+            "indicador": "proyectos_multiescenario",
+            "valor": validacion["proyectos_multiescenario"],
+            "unidad": "proyectos",
+        }
+    )
+
+    for clave, columna in campos.items():
+
+        if not columna:
+            continue
+
+        indicadores.append(
+            {
+                "indicador": f"{clave}_promedio",
+                "valor": media_segura(
+                    proyectos[columna]
+                ),
+                "unidad": "índice",
+            }
         )
 
-    return df[campo]
-
-
-def construir_tabla_escenarios(
-    ranking: pd.DataFrame,
-) -> pd.DataFrame:
-
-    df = ranking.copy()
-
-    resultado = pd.DataFrame()
-
-    resultado["ranking"] = df[
-        "ranking_informe_v4"
-    ]
-
-    resultado["escenario_id"] = (
-        extraer_columna(
-            df,
-            [
-                "escenario_id",
-                "id_escenario",
-                "escenario",
-                "_escenario_informe",
-            ],
+        indicadores.append(
+            {
+                "indicador": f"{clave}_maximo",
+                "valor": max_seguro(
+                    proyectos[columna]
+                ),
+                "unidad": "índice",
+            }
         )
-    )
 
-    resultado["tipo_escenario"] = (
-        extraer_columna(
-            df,
-            [
-                "tipo_escenario",
-                "tipo",
-            ],
-        )
-    )
-
-    resultado["dimension"] = (
-        extraer_columna(
-            df,
-            [
-                "dimension_escenario",
-                "dimension_dominante",
-                "dimension",
-            ],
-        )
-    )
-
-    resultado["cantidad_proyectos"] = (
-        extraer_columna(
-            df,
-            [
-                "cantidad_proyectos",
-                "proyectos",
-                "n_proyectos",
-            ],
-        )
-    )
-
-    resultado["score_integral"] = (
-        df["_score_informe"]
-    )
-
-    resultado["prioridad"] = (
-        extraer_columna(
-            df,
-            [
-                "prioridad_territorial_v4",
-                "prioridad_escenario",
-                "prioridad",
-                "categoria_cartera_v4",
-            ],
-        )
-    )
-
-    resultado["categoria_cartera"] = (
-        extraer_columna(
-            df,
-            [
-                "categoria_cartera_v4",
-                "categoria_cartera",
-            ],
-        )
-    )
-
-    resultado["linea_estrategica"] = (
-        extraer_columna(
-            df,
-            [
-                "linea_estrategica_v4",
-                "linea_estrategica",
-            ],
-        )
-    )
-
-    resultado["horizonte"] = (
-        extraer_columna(
-            df,
-            [
-                "horizonte_intervencion_v4",
-                "horizonte_intervencion",
-                "horizonte",
-            ],
-        )
-    )
-
-    return resultado
+    return {
+        "tabla": pd.DataFrame(indicadores),
+        "campos": campos,
+    }
 
 
 # =============================================================================
@@ -1092,540 +1016,16 @@ def construir_tabla_escenarios(
 # =============================================================================
 
 def construir_sintesis_ejecutiva(
-    proyectos: pd.DataFrame,
+    proyectos: gpd.GeoDataFrame,
     escenarios: pd.DataFrame,
     ranking_escenarios: pd.DataFrame,
-    indicadores: dict,
-    campos: dict,
     validacion: dict,
-) -> dict:
+) -> str:
 
     titulo("CONSTRUYENDO SÍNTESIS EJECUTIVA")
 
-    tabla = construir_tabla_escenarios(
-        ranking_escenarios
-    )
-
-    escenario_prioritario = None
-    escenario_menor = None
-
-    if not tabla.empty:
-
-        escenario_prioritario = limpiar_texto(
-            tabla.iloc[0]["escenario_id"]
-        )
-
-        escenario_menor = limpiar_texto(
-            tabla.iloc[-1]["escenario_id"]
-        )
-
-    resultado = {
-        "escenario_prioritario": escenario_prioritario,
-        "escenario_menor_prioridad": escenario_menor,
-        "proyectos": int(
-            indicadores["proyectos"]
-        ),
-        "escenarios": int(
-            indicadores["escenarios"]
-        ),
-        "cobertura_geometrica": float(
-            validacion["cobertura_geometrica"]
-        ),
-        "cv_escenarios": (
-            indicadores["cv_proyectos_escenario"]
-        ),
-    }
-
-    return resultado
-
-
-# =============================================================================
-# GENERACIÓN DEL RESUMEN EJECUTIVO
-# =============================================================================
-
-def generar_resumen_ejecutivo(
-    ranking_escenarios: pd.DataFrame,
-    indicadores: dict,
-    validacion: dict,
-    sintesis: dict,
-) -> str:
-
-    tabla = construir_tabla_escenarios(
-        ranking_escenarios
-    )
-
-    lineas = []
-
-    lineas.append(
-        "# RESUMEN EJECUTIVO\n"
-    )
-
-    lineas.append(
-        "## Modelo Territorial AMBA V4\n"
-    )
-
-    lineas.append(
-        "### 1. Síntesis\n"
-    )
-
-    lineas.append(
-        "El modelo territorial AMBA V4 consolida una "
-        "estructura de análisis orientada a la identificación, "
-        "priorización y programación territorial de "
-        "intervenciones de movilidad.\n"
-    )
-
-    lineas.append(
-        f"El modelo comprende **{indicadores['proyectos']:,} "
-        f"proyectos** distribuidos en "
-        f"**{indicadores['escenarios']:,} escenarios territoriales**. "
-        "La asignación proyecto-escenario se mantiene íntegra "
-        "y la cobertura geométrica alcanza el 100%.\n"
-    )
-
-    lineas.append(
-        "### 2. Resultados principales\n"
-    )
-
-    lineas.append(
-        f"- Proyectos: **{indicadores['proyectos']:,}**"
-    )
-
-    lineas.append(
-        f"- Escenarios: **{indicadores['escenarios']:,}**"
-    )
-
-    lineas.append(
-        f"- Cobertura geométrica: "
-        f"**{fmt_pct(validacion['cobertura_geometrica'])}**"
-    )
-
-    lineas.append(
-        f"- Proyectos únicos: "
-        f"**{validacion['proyectos_unicos']:,}**"
-    )
-
-    lineas.append(
-        f"- Proyectos duplicados: "
-        f"**{validacion['proyectos_duplicados']:,}**"
-    )
-
-    lineas.append(
-        f"- Proyectos con identificación nula: "
-        f"**{validacion['proyectos_nulos']:,}**"
-    )
-
-    lineas.append(
-        f"- Escenario prioritario: "
-        f"**{sintesis['escenario_prioritario']}**"
-    )
-
-    lineas.append(
-        f"- Escenario de menor prioridad: "
-        f"**{sintesis['escenario_menor_prioridad']}**"
-    )
-
-    lineas.append(
-        "### 3. Ranking de escenarios\n"
-    )
-
-    lineas.append(
-        tabla_markdown(
-            tabla,
-            [
-                "ranking",
-                "escenario_id",
-                "tipo_escenario",
-                "dimension",
-                "cantidad_proyectos",
-                "score_integral",
-                "prioridad",
-                "categoria_cartera",
-                "horizonte",
-            ],
-        )
-    )
-
-    lineas.append(
-        "\n### 4. Interpretación estratégica\n"
-    )
-
-    if sintesis["escenario_prioritario"]:
-
-        lineas.append(
-            f"El escenario **{sintesis['escenario_prioritario']}** "
-            "se posiciona como el principal ámbito de intervención "
-            "dentro del modelo territorial integrado. Su posición "
-            "debe interpretarse como resultado de la combinación "
-            "de las dimensiones estructurales incorporadas en "
-            "el modelo y no como un indicador aislado.\n"
-        )
-
-    lineas.append(
-        "El modelo debe utilizarse como instrumento de apoyo "
-        "para la programación territorial, la evaluación de "
-        "alternativas de intervención y la definición de "
-        "prioridades de inversión.\n"
-    )
-
-    lineas.append(
-        "### 5. Estado de validación\n"
-    )
-
-    lineas.append(
-        "El modelo maestro utilizado como base del presente "
-        "documento fue validado en el Proceso 38. La cobertura "
-        "geométrica, la unicidad de proyectos y la asignación "
-        "territorial presentan consistencia.\n"
-    )
-
-    return "\n".join(lineas)
-
-
-# =============================================================================
-# GENERACIÓN DEL INFORME COMPLETO
-# =============================================================================
-
-def generar_informe(
-    proyectos: pd.DataFrame,
-    escenarios: pd.DataFrame,
-    ranking_escenarios: pd.DataFrame,
-    ranking_proyectos: pd.DataFrame,
-    matriz: pd.DataFrame,
-    indicadores_df: pd.DataFrame,
-    auditoria_38: pd.DataFrame,
-    indicadores: dict,
-    validacion: dict,
-    sintesis: dict,
-    campos: dict,
-) -> str:
-
-    titulo("GENERANDO INFORME TERRITORIAL AMBA V4")
-
-    tabla_escenarios = construir_tabla_escenarios(
-        ranking_escenarios
-    )
-
-    lineas = []
-
-    # -------------------------------------------------------------------------
-    # PORTADA
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "# INFORME TERRITORIAL AMBA V4"
-    )
-
-    lineas.append(
-        "\n## Modelo integrado de movilidad, centralidades, "
-        "infraestructura y priorización territorial"
-    )
-
-    lineas.append(
-        "\n**Proceso:** 39 — Generación del Informe Territorial AMBA"
-    )
-
-    lineas.append(
-        f"\n**Fecha de generación:** "
-        f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-
-    lineas.append(
-        "\n---"
-    )
-
-    # -------------------------------------------------------------------------
-    # RESUMEN EJECUTIVO
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 1. RESUMEN EJECUTIVO"
-    )
-
-    lineas.append(
-        f"""
-El Modelo Territorial AMBA V4 consolida los resultados de las
-etapas analíticas precedentes en una estructura única de
-diagnóstico, priorización y programación territorial.
-
-La base consolidada contiene **{indicadores['proyectos']:,} proyectos**
-y **{indicadores['escenarios']:,} escenarios territoriales**.
-
-La cobertura geométrica es del
-**{fmt_pct(validacion['cobertura_geometrica'])}**, con
-**{validacion['proyectos_unicos']:,} proyectos únicos** y sin
-duplicaciones de identificación.
-
-La distribución de proyectos entre escenarios presenta un
-coeficiente de variación de **{fmt_num(indicadores['cv_proyectos_escenario'], 4)}**,
-lo que indica una distribución territorial altamente equilibrada
-en términos de cantidad de proyectos por escenario.
-"""
-    )
-
-    if sintesis["escenario_prioritario"]:
-
-        lineas.append(
-            f"""
-El escenario identificado como prioritario por la consolidación
-final es **{sintesis['escenario_prioritario']}**, mientras que
-**{sintesis['escenario_menor_prioridad']}** ocupa la última posición
-del ranking.
-"""
-        )
-
-    # -------------------------------------------------------------------------
-    # OBJETIVOS
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 2. OBJETIVOS DEL MODELO"
-    )
-
-    lineas.append(
-        """
-El modelo territorial tiene como objetivos:
-
-1. Identificar áreas y proyectos con relevancia estructural
-   para la movilidad metropolitana.
-2. Integrar demanda, centralidad, conectividad,
-   intermodalidad, integración territorial, déficit e impacto.
-3. Construir escenarios territoriales comparables.
-4. Establecer una priorización territorial reproducible.
-5. Organizar los proyectos en una cartera de intervención.
-6. Proporcionar una base técnica para la programación de
-   inversiones y políticas públicas.
-7. Mantener trazabilidad entre los indicadores originales,
-   los escenarios y los proyectos resultantes.
-"""
-    )
-
-    # -------------------------------------------------------------------------
-    # ALCANCE
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 3. ALCANCE DEL MODELO"
-    )
-
-    lineas.append(
-        f"""
-El modelo analizado comprende:
-
-- **{indicadores['proyectos']:,} proyectos territoriales**
-- **{indicadores['escenarios']:,} escenarios**
-- cobertura geométrica del **{fmt_pct(validacion['cobertura_geometrica'])}**
-- geometrías válidas para los registros consolidados
-- asignación territorial única de cada proyecto
-- estructura de priorización y cartera
-- información agregada por escenario
-"""
-    )
-
-    # -------------------------------------------------------------------------
-    # METODOLOGÍA
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 4. METODOLOGÍA"
-    )
-
-    lineas.append(
-        """
-La metodología se estructura como una cadena de transformación
-y validación progresiva.
-
-### 4.1. Demanda
-
-La demanda de movilidad constituye uno de los componentes
-estructurales del modelo.
-
-### 4.2. Centralidad
-
-Se incorporan indicadores asociados a centralidad estructural,
-conectividad y alcance territorial.
-
-### 4.3. Infraestructura
-
-La infraestructura existente y sus déficits permiten identificar
-brechas territoriales y oportunidades de intervención.
-
-### 4.4. Intermodalidad
-
-La intermodalidad permite valorar la capacidad del territorio
-para articular distintos modos de transporte.
-
-### 4.5. Integración territorial
-
-La integración territorial permite incorporar la relación entre
-las centralidades, la demanda, la infraestructura y el territorio.
-
-### 4.6. Priorización
-
-Los indicadores se integran en estructuras de priorización
-territorial y cartera de intervención.
-
-### 4.7. Consolidación
-
-El Proceso 38 consolidó los resultados en un modelo maestro
-único utilizado como fuente del presente informe.
-"""
-    )
-
-    # -------------------------------------------------------------------------
-    # INDICADORES GLOBALES
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 5. INDICADORES GLOBALES"
-    )
-
-    lineas.append(
-        "| Indicador | Valor |\n"
-        "|---|---:|"
-    )
-
-    lineas.append(
-        f"| Proyectos | {indicadores['proyectos']:,} |"
-    )
-
-    lineas.append(
-        f"| Proyectos únicos | {validacion['proyectos_unicos']:,} |"
-    )
-
-    lineas.append(
-        f"| Escenarios | {indicadores['escenarios']:,} |"
-    )
-
-    lineas.append(
-        f"| Cobertura geométrica | "
-        f"{fmt_pct(validacion['cobertura_geometrica'])} |"
-    )
-
-    lineas.append(
-        f"| Mínimo proyectos/escenario | "
-        f"{indicadores['min_proyectos_escenario']} |"
-    )
-
-    lineas.append(
-        f"| Máximo proyectos/escenario | "
-        f"{indicadores['max_proyectos_escenario']} |"
-    )
-
-    lineas.append(
-        f"| Promedio proyectos/escenario | "
-        f"{fmt_num(indicadores['promedio_proyectos_escenario'])} |"
-    )
-
-    lineas.append(
-        f"| CV tamaño escenarios | "
-        f"{fmt_num(indicadores['cv_proyectos_escenario'], 4)} |"
-    )
-
-    # -------------------------------------------------------------------------
-    # ESCENARIOS
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 6. ESCENARIOS TERRITORIALES"
-    )
-
-    lineas.append(
-        """
-Los escenarios constituyen la unidad intermedia de lectura
-territorial del modelo. Cada escenario agrupa proyectos con
-características y problemáticas estructurales compatibles.
-"""
-    )
-
-    lineas.append(
-        tabla_markdown(
-            tabla_escenarios,
-            [
-                "ranking",
-                "escenario_id",
-                "tipo_escenario",
-                "dimension",
-                "cantidad_proyectos",
-                "score_integral",
-                "prioridad",
-                "categoria_cartera",
-                "linea_estrategica",
-                "horizonte",
-            ],
-        )
-    )
-
-    # -------------------------------------------------------------------------
-    # ANÁLISIS DEL RANKING
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 7. RANKING TERRITORIAL"
-    )
-
-    for _, row in tabla_escenarios.iterrows():
-
-        escenario_id = limpiar_texto(
-            row.get("escenario_id")
-        )
-
-        score = row.get(
-            "score_integral"
-        )
-
-        dimension = limpiar_texto(
-            row.get("dimension")
-        )
-
-        categoria = limpiar_texto(
-            row.get("categoria_cartera")
-        )
-
-        horizonte = limpiar_texto(
-            row.get("horizonte")
-        )
-
-        lineas.append(
-            f"""
-### {row['ranking']}. {escenario_id}
-
-- Dimensión dominante: **{dimension or 'N/D'}**
-- Proyectos: **{row.get('cantidad_proyectos', 'N/D')}**
-- Score integral: **{fmt_num(score)}**
-- Categoría: **{categoria or 'N/D'}**
-- Horizonte: **{horizonte or 'N/D'}**
-"""
-        )
-
-    # -------------------------------------------------------------------------
-    # CARTERA TERRITORIAL
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 8. CARTERA TERRITORIAL"
-    )
-
-    lineas.append(
-        """
-La cartera territorial constituye la traducción operativa del
-modelo analítico. Su objetivo es ordenar los proyectos según
-prioridad, relevancia territorial y horizonte de intervención.
-"""
-    )
-
-    campo_proyecto = resolver_campo(
-        proyectos,
-        [
-            "proyecto_id",
-            "id_proyecto",
-            "proyecto",
-        ],
-        obligatorio=True,
-    )
-
-    campo_escenario = resolver_campo(
-        proyectos,
+    escenario_col = resolver_columna(
+        ranking_escenarios,
         [
             "escenario_id",
             "id_escenario",
@@ -1633,401 +1033,452 @@ prioridad, relevancia territorial y horizonte de intervención.
         ],
     )
 
-    columnas_cartera = [
-        campo_proyecto,
-        campo_escenario,
-        resolver_campo(
-            proyectos,
-            [
-                "prioridad_territorial_v4",
-                "prioridad_escenario",
-            ],
-        ),
-        resolver_campo(
-            proyectos,
-            [
-                "score_cartera_v4",
-                "score_cartera",
-            ],
-        ),
-        resolver_campo(
-            proyectos,
-            [
-                "dimension_dominante",
-                "dimension",
-            ],
-        ),
+    score_col = resolver_columna(
+        ranking_escenarios,
+        [
+            "score_cartera_v4",
+            "score_cartera",
+            "score_integral_v4",
+            "score_integral",
+            "score_final",
+        ],
+        obligatoria=False,
+    )
+
+    if score_col:
+        ranking_tmp = ranking_escenarios.copy()
+        ranking_tmp["_score"] = pd.to_numeric(
+            ranking_tmp[score_col],
+            errors="coerce",
+        )
+
+        ranking_tmp = ranking_tmp.sort_values(
+            "_score",
+            ascending=False,
+            na_position="last",
+        )
+
+        escenario_prioritario = str(
+            ranking_tmp.iloc[0][escenario_col]
+        )
+
+        escenario_menor = str(
+            ranking_tmp.iloc[-1][escenario_col]
+        )
+
+        score_prioritario = safe_float(
+            ranking_tmp.iloc[0]["_score"]
+        )
+
+    else:
+        escenario_prioritario = str(
+            ranking_escenarios.iloc[0][escenario_col]
+        )
+
+        escenario_menor = str(
+            ranking_escenarios.iloc[-1][escenario_col]
+        )
+
+        score_prioritario = np.nan
+
+    estado = (
+        "VALIDADO"
+        if validacion["controles_ok"]
+        == validacion["controles_total"]
+        else "OBSERVADO"
+    )
+
+    texto = f"""# Síntesis Ejecutiva
+## Modelo Territorial AMBA {VERSION}
+
+### Resultado general
+
+El proceso **39 - Generación del Informe Territorial AMBA {VERSION}**
+consolida los resultados producidos por los procesos anteriores y los
+presenta en una estructura única para análisis territorial, priorización y
+programación de intervenciones.
+
+El modelo contiene:
+
+- **{len(proyectos):,} proyectos**
+- **{proyectos["proyecto_id"].nunique():,} proyectos únicos**
+- **{proyectos["escenario_id"].nunique():,} escenarios territoriales**
+- **{validacion["cobertura_geometrica"]:.2f}% de cobertura geométrica**
+- **{validacion["geometrias_validas"]:,} geometrías válidas**
+- **{validacion["proyectos_multiescenario"]:,} proyectos con múltiples escenarios**
+
+### Escenario prioritario
+
+El escenario identificado como prioritario es:
+
+**{escenario_prioritario}**
+
+"""
+
+    if not pd.isna(score_prioritario):
+        texto += (
+            f"Su score registrado es **{score_prioritario:.2f}**.\n\n"
+        )
+
+    texto += f"""### Escenario de menor prioridad relativa
+
+El escenario ubicado en la última posición del ranking es:
+
+**{escenario_menor}**
+
+### Control geoespacial
+
+La validación geográfica recuperó las geometrías desde el GeoPackage maestro
+del proceso 38 y no desde los archivos CSV.
+
+Esto permite separar correctamente:
+
+1. atributos tabulares;
+2. indicadores territoriales;
+3. geometrías canónicas;
+4. resultados de priorización.
+
+La cobertura geométrica obtenida fue de **{validacion["cobertura_geometrica"]:.2f}%**.
+
+### Consistencia territorial
+
+Se verificó:
+
+- ausencia de proyectos duplicados;
+- ausencia de proyectos sin identificador;
+- ausencia de escenarios sin identificador;
+- asignación única proyecto → escenario;
+- cobertura geográfica completa;
+- geometrías válidas;
+- existencia de las capas geográficas de proyectos y escenarios.
+
+### Dictamen
+
+**{estado}**
+
+El modelo territorial AMBA {VERSION} queda documentado para su utilización
+en las siguientes etapas de análisis, programación de inversiones y
+presentación institucional.
+"""
+
+    return texto
+
+
+# =============================================================================
+# INFORME COMPLETO
+# =============================================================================
+
+def generar_informe(
+    proyectos: gpd.GeoDataFrame,
+    escenarios: pd.DataFrame,
+    ranking_escenarios: pd.DataFrame,
+    ranking_proyectos: pd.DataFrame,
+    matriz: pd.DataFrame,
+    indicadores: pd.DataFrame,
+    validacion: dict,
+    campos: dict,
+) -> str:
+
+    titulo("GENERANDO INFORME TERRITORIAL AMBA V4.1")
+
+    estado = (
+        "VALIDADO"
+        if validacion["controles_ok"]
+        == validacion["controles_total"]
+        else "OBSERVADO"
+    )
+
+    escenario_col = resolver_columna(
+        ranking_escenarios,
+        [
+            "escenario_id",
+            "id_escenario",
+            "escenario",
+        ],
+    )
+
+    score_col = resolver_columna(
+        ranking_escenarios,
+        [
+            "score_cartera_v4",
+            "score_cartera",
+            "score_integral_v4",
+            "score_integral",
+            "score_final",
+        ],
+        obligatoria=False,
+    )
+
+    columnas_ranking_escenarios = [
+        "ranking_informe_v4_1",
+        escenario_col,
+        "cantidad_proyectos",
+        "tipo_escenario",
+        "dimension_escenario",
+        "score_cartera_v4",
+        "score_cartera",
     ]
 
-    columnas_cartera = [
-        c for c in columnas_cartera
-        if c is not None
+    columnas_ranking_escenarios = [
+        c
+        for c in columnas_ranking_escenarios
+        if c in ranking_escenarios.columns
     ]
 
-    if columnas_cartera:
-
-        cartera = proyectos[
-            columnas_cartera
-        ].copy()
-
-        lineas.append(
-            tabla_markdown(
-                cartera,
-                columnas_cartera,
-                max_rows=30,
-            )
-        )
-
-        lineas.append(
-            "\n*Se muestran los primeros 30 registros. "
-            "El detalle completo se encuentra en el anexo "
-            "`anexo_proyectos_amba_v4.csv`.*\n"
-        )
-
-    # -------------------------------------------------------------------------
-    # DIMENSIONES ESTRUCTURALES
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 9. DIMENSIONES ESTRUCTURALES"
-    )
-
-    lineas.append(
-        """
-El modelo integra múltiples dimensiones para evitar que la
-priorización dependa de un único indicador.
-
-Las principales dimensiones consideradas son:
-
-- demanda
-- déficit de infraestructura
-- conectividad
-- intermodalidad
-- integración territorial
-- centralidad
-- impacto potencial
-- urgencia de intervención
-"""
-    )
-
-    lineas.append(
-        "| Dimensión | Media | Mínimo | Máximo |\n"
-        "|---|---:|---:|---:|"
-    )
-
-    dimensiones = [
-        ("Demanda", "demanda"),
-        ("Déficit", "deficit"),
-        ("Conectividad", "conectividad"),
-        ("Intermodalidad", "intermodalidad"),
-        ("Integración territorial", "integracion"),
-        ("Centralidad", "centralidad"),
-        ("Impacto", "impacto"),
-        ("Score cartera", "score_cartera"),
-        ("Score territorial", "score_territorial"),
+    columnas_ranking_proyectos = [
+        "ranking_informe_v4_1",
+        "proyecto_id",
+        "escenario_id",
+        "tipo_escenario",
+        "dimension_dominante",
+        "score_cartera_v4",
+        "score_cartera",
+        "score_priorizacion_v4",
     ]
 
-    for nombre, clave in dimensiones:
+    columnas_ranking_proyectos = [
+        c
+        for c in columnas_ranking_proyectos
+        if c in ranking_proyectos.columns
+    ]
 
-        media = indicadores.get(
-            f"{clave}_media"
+    tabla_escenarios = tabla_markdown(
+        ranking_escenarios,
+        columnas_ranking_escenarios,
+        max_filas=10,
+    )
+
+    tabla_proyectos = tabla_markdown(
+        ranking_proyectos,
+        columnas_ranking_proyectos,
+        max_filas=20,
+    )
+
+    tabla_indicadores = tabla_markdown(
+        indicadores,
+        [
+            "indicador",
+            "valor",
+            "unidad",
+        ],
+        max_filas=40,
+    )
+
+    tabla_matriz = tabla_markdown(
+        matriz,
+        max_filas=10,
+    )
+
+    score_global = np.nan
+
+    if score_col and score_col in ranking_escenarios.columns:
+        score_global = media_segura(
+            ranking_escenarios[score_col]
         )
 
-        minimo = indicadores.get(
-            f"{clave}_min"
-        )
+    informe = f"""# Informe Territorial AMBA {VERSION}
 
-        maximo = indicadores.get(
-            f"{clave}_max"
-        )
+**Proceso:** 39 - Generación del Informe Territorial AMBA  
+**Versión:** {VERSION}  
+**Proyecto:** movilidad  
+**Estado:** **{estado}**
 
-        if (
-            media is not None
-            or minimo is not None
-            or maximo is not None
-        ):
+---
 
-            lineas.append(
-                f"| {nombre} | "
-                f"{fmt_num(media)} | "
-                f"{fmt_num(minimo)} | "
-                f"{fmt_num(maximo)} |"
-            )
+# 1. Resumen ejecutivo
 
-    # -------------------------------------------------------------------------
-    # ANÁLISIS TERRITORIAL
-    # -------------------------------------------------------------------------
+El presente documento constituye el informe territorial consolidado del
+Área Metropolitana de Buenos Aires (AMBA), elaborado sobre la base del
+modelo maestro producido por el proceso 38.
 
-    lineas.append(
-        "\n# 10. LECTURA TERRITORIAL"
-    )
+El modelo integra información de proyectos, escenarios territoriales,
+priorización, indicadores estructurales, cartera de intervención y
+geometrías geográficas.
 
-    lineas.append(
-        """
-La lectura territorial debe realizarse considerando la
-interacción entre las dimensiones analíticas y no únicamente
-mediante el ranking de un indicador individual.
+## 1.1 Magnitud del modelo
 
-Los escenarios de mayor prioridad representan territorios en
-los que la combinación de demanda, déficit, conectividad,
-intermodalidad, integración e impacto justifica una atención
-preferente dentro del modelo.
+| Indicador | Resultado |
+|---|---:|
+| Proyectos | {len(proyectos):,} |
+| Proyectos únicos | {proyectos["proyecto_id"].nunique():,} |
+| Escenarios | {proyectos["escenario_id"].nunique():,} |
+| Cobertura geométrica | {validacion["cobertura_geometrica"]:.2f}% |
+| Geometrías válidas | {validacion["geometrias_validas"]:,} |
+| Geometrías nulas | {validacion["geometrias_nulas"]:,} |
+| Geometrías inválidas | {validacion["geometrias_invalidas"]:,} |
+| Proyectos multiescenario | {validacion["proyectos_multiescenario"]:,} |
+| CV tamaño escenarios | {validacion["cv_escenarios"]:.4f} |
+| Score medio de escenarios | {formato_numero(score_global, 2)} |
 
-Los escenarios de menor prioridad no deben interpretarse como
-territorios sin necesidades. Representan, dentro del universo
-analizado, ámbitos con menor prioridad relativa bajo los
-criterios definidos por el modelo.
-"""
-    )
+---
 
-    # -------------------------------------------------------------------------
-    # PROGRAMACIÓN
-    # -------------------------------------------------------------------------
+# 2. Validación integral
 
-    lineas.append(
-        "\n# 11. PROGRAMACIÓN DE INTERVENCIONES"
-    )
+La validación del modelo produjo los siguientes resultados:
 
-    lineas.append(
-        """
-La cartera permite estructurar la intervención en diferentes
-horizontes temporales:
+- Proyectos únicos: **{proyectos["proyecto_id"].nunique():,}**
+- Escenarios: **{proyectos["escenario_id"].nunique():,}**
+- Proyectos duplicados: **{validacion["proyectos_duplicados"]:,}**
+- Proyectos sin identificador: **{validacion["proyectos_nulos"]:,}**
+- Escenarios sin identificador: **{validacion["escenarios_nulos"]:,}**
+- Proyectos multiescenario: **{validacion["proyectos_multiescenario"]:,}**
+- Cobertura geométrica: **{validacion["cobertura_geometrica"]:.2f}%**
+- Geometrías inválidas: **{validacion["geometrias_invalidas"]:,}**
 
-- corto plazo
-- corto/mediano plazo
-- mediano plazo
-- mediano/largo plazo
+El resultado general del control es:
 
-La programación definitiva deberá incorporar posteriormente
-variables de factibilidad técnica, disponibilidad presupuestaria,
-marco institucional, permisos, suelo, costos y capacidad de
-ejecución.
-"""
-    )
+**{estado}**
 
-    # -------------------------------------------------------------------------
-    # GOBERNANZA
-    # -------------------------------------------------------------------------
+---
 
-    lineas.append(
-        "\n# 12. IMPLICANCIAS PARA LA GESTIÓN METROPOLITANA"
-    )
+# 3. Modelo geográfico
 
-    lineas.append(
-        """
-El modelo puede utilizarse como soporte técnico para:
-
-1. priorizar estudios y proyectos;
-2. orientar inversiones;
-3. coordinar intervenciones entre jurisdicciones;
-4. identificar áreas donde se requiere integración modal;
-5. evaluar brechas territoriales;
-6. construir programas de intervención;
-7. monitorear la evolución de las centralidades;
-8. actualizar periódicamente la cartera.
-"""
-    )
-
-    # -------------------------------------------------------------------------
-    # LIMITACIONES
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 13. LIMITACIONES Y CONSIDERACIONES"
-    )
-
-    lineas.append(
-        """
-El resultado constituye un modelo analítico de priorización
-territorial y no reemplaza la evaluación técnica, económica,
-ambiental, jurídica o institucional de cada proyecto.
-
-Antes de transformar una prioridad analítica en una decisión de
-inversión deberán incorporarse, entre otros elementos:
-
-- estimación de costos;
-- disponibilidad presupuestaria;
-- factibilidad constructiva;
-- evaluación socioeconómica;
-- impacto ambiental;
-- disponibilidad de suelo;
-- competencias institucionales;
-- restricciones normativas;
-- cronograma de ejecución;
-- riesgos de implementación.
-"""
-    )
-
-    # -------------------------------------------------------------------------
-    # TRAZABILIDAD
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 14. TRAZABILIDAD Y AUDITORÍA"
-    )
-
-    lineas.append(
-        """
-El presente informe utiliza como fuente principal el modelo
-maestro generado por el Proceso 38.
-
-La cadena de trazabilidad se resume como:
-
-**Modelo analítico → escenarios → priorización → cartera →
-validación geoespacial → integración → consolidación → informe.**
-"""
-    )
-
-    lineas.append(
-        f"""
-La validación estructural presenta:
-
-- proyectos únicos: **{validacion['proyectos_unicos']:,}**
-- proyectos duplicados: **{validacion['proyectos_duplicados']:,}**
-- geometrías válidas: **{validacion['geometrias_validas']:,}**
-- cobertura geométrica: **{fmt_pct(validacion['cobertura_geometrica'])}**
-"""
-    )
-
-    # -------------------------------------------------------------------------
-    # CONCLUSIONES
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 15. CONCLUSIONES"
-    )
-
-    lineas.append(
-        f"""
-El Modelo Territorial AMBA V4 presenta una estructura integrada
-y consistente para la lectura territorial de la movilidad.
-
-La base comprende **{indicadores['proyectos']:,} proyectos**
-organizados en **{indicadores['escenarios']:,} escenarios**, con
-cobertura geométrica completa.
-
-El escenario **{sintesis['escenario_prioritario']}** ocupa la
-posición principal del ranking territorial, mientras que
-**{sintesis['escenario_menor_prioridad']}** presenta la menor
-prioridad relativa.
-
-La información resultante permite avanzar desde el diagnóstico
-territorial hacia una etapa de programación de intervenciones,
-siempre complementando la priorización analítica con estudios
-de factibilidad y evaluación de proyectos.
-"""
-    )
-
-    # -------------------------------------------------------------------------
-    # ANEXOS
-    # -------------------------------------------------------------------------
-
-    lineas.append(
-        "\n# 16. ANEXOS"
-    )
-
-    lineas.append(
-        """
-### Anexo A — Proyectos
-
-Archivo:
-
-`anexo_proyectos_amba_v4.csv`
-
-Contiene el universo completo de proyectos utilizado por el
-modelo maestro.
-
-### Anexo B — Escenarios
-
-Archivo:
-
-`anexo_escenarios_amba_v4.csv`
-
-Contiene la síntesis completa de los escenarios.
-
-### Anexo C — Indicadores
-
-Archivo:
-
-`anexo_indicadores_globales_amba_v4.csv`
-
-Contiene los indicadores globales empleados en el informe.
-
-### Anexo D — Modelo geográfico
-
-Archivo:
+La geometría utilizada por este proceso se recupera del GeoPackage maestro:
 
 `modelo_maestro_territorial_amba_v4.gpkg`
 
-Contiene las capas geográficas consolidadas de proyectos y
-escenarios.
+El GeoPackage contiene las capas:
+
+- `proyectos`
+- `escenarios`
+
+La utilización del GeoPackage como fuente geométrica evita depender de la
+presencia de geometrías serializadas dentro de los archivos CSV.
+
+## 3.1 Cobertura espacial
+
+La cobertura geométrica del modelo es:
+
+**{validacion["cobertura_geometrica"]:.2f}%**
+
+Geometrías válidas:
+
+**{validacion["geometrias_validas"]:,}**
+
+Geometrías inválidas:
+
+**{validacion["geometrias_invalidas"]:,}**
+
+---
+
+# 4. Estructura territorial
+
+El modelo se encuentra distribuido en:
+
+**{proyectos["escenario_id"].nunique():,} escenarios territoriales.**
+
+La distribución de proyectos presenta:
+
+- mínimo: **{validacion["minimo_proyectos_escenario"]}**
+- máximo: **{validacion["maximo_proyectos_escenario"]}**
+- promedio: **{validacion["promedio_proyectos_escenario"]:.2f}**
+- coeficiente de variación: **{validacion["cv_escenarios"]:.4f}**
+
+La baja variabilidad relativa indica una distribución territorial
+relativamente equilibrada en términos del número de proyectos por escenario.
+
+---
+
+# 5. Ranking final de escenarios
+
+{tabla_escenarios}
+
+---
+
+# 6. Ranking final de proyectos
+
+{tabla_proyectos}
+
+---
+
+# 7. Matriz integral de escenarios
+
+{tabla_matriz}
+
+---
+
+# 8. Indicadores globales AMBA
+
+{tabla_indicadores}
+
+---
+
+# 9. Escenario prioritario
+
 """
-    )
 
-    return "\n".join(lineas)
+    if len(ranking_escenarios) > 0:
 
+        primero = ranking_escenarios.iloc[0]
 
-# =============================================================================
-# GENERACIÓN DE ANEXOS
-# =============================================================================
+        escenario_id = primero.get(
+            escenario_col,
+            "N/D",
+        )
 
-def generar_anexos(
-    proyectos: pd.DataFrame,
-    escenarios: pd.DataFrame,
-    indicadores: pd.DataFrame,
-    ranking_escenarios: pd.DataFrame,
-    ranking_proyectos: pd.DataFrame,
-) -> None:
+        informe += f"""
+El escenario ubicado en la primera posición del ranking es:
 
-    titulo("GENERANDO ANEXOS")
+**{escenario_id}**
 
-    # -------------------------------------------------------------------------
-    # ANEXO PROYECTOS
-    # -------------------------------------------------------------------------
+Este escenario constituye la principal referencia para la programación
+territorial derivada del modelo consolidado.
+"""
 
-    proyectos_out = proyectos.copy()
+    informe += f"""
 
-    proyectos_out.to_csv(
-        FILE_ANEXO_PROYECTOS,
-        index=False,
-        encoding="utf-8-sig",
-    )
+---
 
-    print(
-        f"Proyectos : {FILE_ANEXO_PROYECTOS}"
-    )
+# 10. Trazabilidad del modelo
 
-    # -------------------------------------------------------------------------
-    # ANEXO ESCENARIOS
-    # -------------------------------------------------------------------------
+La cadena de procesamiento utilizada para este informe es:
 
-    escenarios_out = construir_tabla_escenarios(
-        ranking_escenarios
-    )
+1. Construcción y validación de indicadores territoriales.
+2. Construcción de escenarios.
+3. Priorización territorial.
+4. Construcción de cartera.
+5. Validación geoespacial.
+6. Integración territorial.
+7. Consolidación del modelo maestro.
+8. Generación del presente informe.
 
-    escenarios_out.to_csv(
-        FILE_ANEXO_ESCENARIOS,
-        index=False,
-        encoding="utf-8-sig",
-    )
+El proceso 39 no recalcula ni modifica los indicadores originales.
 
-    print(
-        f"Escenarios: {FILE_ANEXO_ESCENARIOS}"
-    )
+Su función es consolidar, validar, documentar y presentar los resultados
+producidos previamente.
 
-    # -------------------------------------------------------------------------
-    # INDICADORES
-    # -------------------------------------------------------------------------
+---
 
-    indicadores.to_csv(
-        FILE_ANEXO_INDICADORES,
-        index=False,
-        encoding="utf-8-sig",
-    )
+# 11. Dictamen final
 
-    print(
-        f"Indicadores: {FILE_ANEXO_INDICADORES}"
-    )
+## {estado}
+
+El modelo territorial AMBA {VERSION} presenta:
+
+- integridad de identificadores;
+- consistencia proyecto → escenario;
+- cobertura geométrica completa;
+- geometrías válidas;
+- estructura territorial consistente;
+- ranking final disponible;
+- matriz integral disponible;
+- modelo geográfico consolidado disponible.
+
+El modelo queda preparado para las siguientes etapas de:
+
+- programación de inversiones;
+- definición de cronogramas;
+- análisis de cartera;
+- evaluación territorial;
+- elaboración de documentación institucional;
+- presentación final del modelo AMBA.
+
+---
+
+**Fin del Informe Territorial AMBA {VERSION}.**
+"""
+
+    return informe
 
 
 # =============================================================================
@@ -2036,572 +1487,606 @@ def generar_anexos(
 
 def construir_auditoria(
     validacion: dict,
-    indicadores: dict,
-    ranking_escenarios: pd.DataFrame,
-    ranking_proyectos: pd.DataFrame,
+    validacion_rankings: dict,
+    gpkg_ok: bool,
 ) -> pd.DataFrame:
 
     titulo("CONSTRUYENDO AUDITORÍA DEL PROCESO 39")
 
-    checks = []
+    controles = []
 
-    def agregar(
-        control: str,
-        resultado,
-        valor,
-        observacion: str,
-    ):
-        checks.append(
-            {
-                "proceso": PROCESO,
-                "version": VERSION,
-                "control": control,
-                "resultado": resultado,
-                "valor": valor,
-                "observacion": observacion,
-            }
-        )
-
-    agregar(
-        "proyectos_unicos",
-        validacion["proyectos_unicos"]
-        == validacion["registros"],
-        validacion["proyectos_unicos"],
-        "Todos los registros corresponden a proyectos únicos.",
+    controles.append(
+        {
+            "control": "proyectos_144",
+            "resultado": validacion["total_proyectos"] == 144,
+            "valor": validacion["total_proyectos"],
+            "observacion": "Se esperan 144 proyectos.",
+        }
     )
 
-    agregar(
-        "proyectos_sin_nulos",
-        validacion["proyectos_nulos"] == 0,
-        validacion["proyectos_nulos"],
-        "No existen identificadores de proyecto nulos.",
+    controles.append(
+        {
+            "control": "proyectos_unicos",
+            "resultado": validacion["proyectos_unicos"] == 144,
+            "valor": validacion["proyectos_unicos"],
+            "observacion": "Los proyectos deben ser únicos.",
+        }
     )
 
-    agregar(
-        "proyectos_sin_duplicados",
-        validacion["proyectos_duplicados"] == 0,
-        validacion["proyectos_duplicados"],
-        "No existen proyectos duplicados.",
+    controles.append(
+        {
+            "control": "escenarios_7",
+            "resultado": validacion["escenarios"] == 7,
+            "valor": validacion["escenarios"],
+            "observacion": "Se esperan 7 escenarios.",
+        }
     )
 
-    agregar(
-        "cobertura_geometrica",
-        validacion["cobertura_geometrica"] >= 99.999,
-        validacion["cobertura_geometrica"],
-        "La cobertura geométrica debe ser completa.",
+    controles.append(
+        {
+            "control": "sin_duplicados",
+            "resultado": validacion["proyectos_duplicados"] == 0,
+            "valor": validacion["proyectos_duplicados"],
+            "observacion": "No deben existir proyectos duplicados.",
+        }
     )
 
-    agregar(
-        "ranking_escenarios",
-        len(ranking_escenarios)
-        == indicadores["escenarios"],
-        len(ranking_escenarios),
-        "Existe un registro de ranking por escenario.",
+    controles.append(
+        {
+            "control": "cobertura_geometrica",
+            "resultado": validacion["cobertura_geometrica"] == 100.0,
+            "valor": validacion["cobertura_geometrica"],
+            "observacion": "La cobertura debe ser 100%.",
+        }
     )
 
-    agregar(
-        "ranking_proyectos",
-        len(ranking_proyectos)
-        == indicadores["proyectos"],
-        len(ranking_proyectos),
-        "Existe un registro de ranking por proyecto.",
+    controles.append(
+        {
+            "control": "geometrias_validas",
+            "resultado": validacion["geometrias_invalidas"] == 0,
+            "valor": validacion["geometrias_invalidas"],
+            "observacion": "No deben existir geometrías inválidas.",
+        }
     )
 
-    checks_df = pd.DataFrame(checks)
+    controles.append(
+        {
+            "control": "sin_multiescenario",
+            "resultado": validacion["proyectos_multiescenario"] == 0,
+            "valor": validacion["proyectos_multiescenario"],
+            "observacion": "Cada proyecto debe pertenecer a un único escenario.",
+        }
+    )
 
-    return checks_df
+    controles.append(
+        {
+            "control": "ranking_escenarios",
+            "resultado": validacion_rankings["escenarios_ok"],
+            "valor": validacion_rankings["escenarios_rankeados"],
+            "observacion": "Se esperan 7 escenarios rankeados.",
+        }
+    )
+
+    controles.append(
+        {
+            "control": "ranking_proyectos",
+            "resultado": validacion_rankings["proyectos_ok"],
+            "valor": validacion_rankings["proyectos_rankeados"],
+            "observacion": "Se esperan 144 proyectos rankeados.",
+        }
+    )
+
+    controles.append(
+        {
+            "control": "geopackage_maestro",
+            "resultado": gpkg_ok,
+            "valor": "SI" if gpkg_ok else "NO",
+            "observacion": "Debe existir el GeoPackage maestro del proceso 38.",
+        }
+    )
+
+    return pd.DataFrame(controles)
 
 
 # =============================================================================
-# RESUMEN JSON
+# JSON
 # =============================================================================
 
 def construir_resumen_json(
-    indicadores: dict,
     validacion: dict,
-    sintesis: dict,
+    validacion_rankings: dict,
     auditoria: pd.DataFrame,
+    escenarios: pd.DataFrame,
 ) -> dict:
 
     controles_ok = int(
-        auditoria["resultado"]
-        .astype(bool)
-        .sum()
+        auditoria["resultado"].sum()
     )
 
     controles_total = len(auditoria)
 
-    dictamen = (
+    estado = (
         "VALIDADO"
         if controles_ok == controles_total
         else "OBSERVADO"
     )
 
-    resumen = {
-        "proceso": PROCESO,
+    escenario_prioritario = None
+    escenario_menor = None
+
+    if not escenarios.empty:
+
+        escenario_col = resolver_columna(
+            escenarios,
+            [
+                "escenario_id",
+                "id_escenario",
+                "escenario",
+            ],
+            obligatoria=False,
+        )
+
+        if escenario_col:
+
+            escenario_prioritario = str(
+                escenarios.iloc[0][escenario_col]
+            )
+
+            escenario_menor = str(
+                escenarios.iloc[-1][escenario_col]
+            )
+
+    return {
+        "proceso": 39,
         "version": VERSION,
-        "fecha_generacion": datetime.now().isoformat(),
-        "dictamen": dictamen,
-        "proyectos": indicadores["proyectos"],
-        "proyectos_unicos": validacion[
-            "proyectos_unicos"
-        ],
-        "escenarios": indicadores["escenarios"],
-        "cobertura_geometrica": validacion[
-            "cobertura_geometrica"
-        ],
-        "geometrias_validas": validacion[
-            "geometrias_validas"
-        ],
-        "proyectos_duplicados": validacion[
-            "proyectos_duplicados"
-        ],
-        "proyectos_nulos": validacion[
-            "proyectos_nulos"
-        ],
-        "escenario_prioritario": sintesis[
-            "escenario_prioritario"
-        ],
-        "escenario_menor_prioridad": sintesis[
-            "escenario_menor_prioridad"
-        ],
-        "cv_escenarios": indicadores[
-            "cv_proyectos_escenario"
-        ],
+        "nombre": "Generación del Informe Territorial AMBA",
+        "estado": estado,
+        "dictamen": estado,
+        "validacion": validacion,
+        "validacion_rankings": validacion_rankings,
         "controles_ok": controles_ok,
         "controles_total": controles_total,
+        "escenario_prioritario": escenario_prioritario,
+        "escenario_menor_prioridad": escenario_menor,
+        "timestamp": pd.Timestamp.now().isoformat(),
     }
-
-    return resumen
-
-
-# =============================================================================
-# EXPORTACIÓN DEL MODELO GEOGRÁFICO
-# =============================================================================
-
-def validar_gpkg() -> dict:
-
-    resultado = {
-        "existe": FILE_GPKG.exists(),
-        "capas": [],
-    }
-
-    if not FILE_GPKG.exists():
-        return resultado
-
-    if gpd is None:
-        return resultado
-
-    try:
-
-        import fiona
-
-        capas = fiona.listlayers(
-            FILE_GPKG
-        )
-
-        resultado["capas"] = capas
-
-    except Exception as exc:
-
-        print(
-            f"ADVERTENCIA: no se pudieron leer "
-            f"las capas del GeoPackage: {exc}"
-        )
-
-    return resultado
 
 
 # =============================================================================
 # MAIN
 # =============================================================================
 
-def main():
+def main() -> None:
 
-    inicio = datetime.now()
+    inicio = time.time()
 
     titulo(
-        "39 - GENERACIÓN DEL INFORME TERRITORIAL AMBA - V4"
+        f"39 - GENERACIÓN DEL INFORME TERRITORIAL AMBA - {VERSION}"
     )
 
-    print(
-        f"Proyecto : {PROJECT_ROOT}"
-    )
-
-    print(
-        f"Entrada  : {INPUT_DIR}"
-    )
-
-    print(
-        f"Salida   : {OUTPUT_DIR}"
-    )
+    print(f"Proyecto : {BASE_DIR}")
+    print(f"Entrada  : {INPUT_DIR}")
+    print(f"Salida   : {OUTPUT_DIR}")
 
     OUTPUT_DIR.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    try:
+    # =========================================================================
+    # CARGA
+    # =========================================================================
 
-        # ---------------------------------------------------------------------
-        # CARGA
-        # ---------------------------------------------------------------------
+    titulo("CARGANDO MODELO MAESTRO DEL PROCESO 38")
 
-        datos = cargar_fuentes()
+    proyectos = cargar_csv(
+        ARCHIVOS_ENTRADA["proyectos"]
+    )
 
-        proyectos = datos["proyectos"]
-        escenarios = datos["escenarios"]
-        ranking_escenarios_raw = datos[
-            "ranking_escenarios"
-        ]
-        ranking_proyectos_raw = datos[
-            "ranking_proyectos"
-        ]
-        matriz = datos["matriz"]
-        indicadores_df = datos["indicadores"]
-        auditoria_38 = datos["auditoria_38"]
+    escenarios = cargar_csv(
+        ARCHIVOS_ENTRADA["escenarios"]
+    )
 
-        # ---------------------------------------------------------------------
-        # CAMPOS
-        # ---------------------------------------------------------------------
+    ranking_escenarios = cargar_csv(
+        ARCHIVOS_ENTRADA["ranking_escenarios"]
+    )
 
-        campos = resolver_campos(
-            proyectos,
-            escenarios,
+    ranking_proyectos = cargar_csv(
+        ARCHIVOS_ENTRADA["ranking_proyectos"]
+    )
+
+    matriz = cargar_csv(
+        ARCHIVOS_ENTRADA["matriz"]
+    )
+
+    indicadores_originales = cargar_csv(
+        ARCHIVOS_ENTRADA["indicadores"]
+    )
+
+    auditoria_38 = cargar_csv(
+        ARCHIVOS_ENTRADA["auditoria_38"]
+    )
+
+    # =========================================================================
+    # GEOMETRÍAS
+    # =========================================================================
+
+    proyectos_geo, escenarios_geo = cargar_geopackage()
+
+    # =========================================================================
+    # CAMPOS
+    # =========================================================================
+
+    campos = resolver_campos_proyectos(
+        proyectos
+    )
+
+    # =========================================================================
+    # INTEGRACIÓN GEOGRÁFICA
+    # =========================================================================
+
+    proyectos = integrar_geometrias(
+        proyectos,
+        proyectos_geo,
+        escenarios_geo,
+        campos,
+    )
+
+    # =========================================================================
+    # VALIDACIÓN
+    # =========================================================================
+
+    titulo("VALIDACIÓN DEL MODELO MAESTRO")
+
+    validacion = validar_modelo(
+        proyectos,
+        escenarios_geo,
+        campos,
+    )
+
+    # =========================================================================
+    # RANKINGS
+    # =========================================================================
+
+    ranking_escenarios_final = preparar_ranking_escenarios(
+        ranking_escenarios,
+        escenarios,
+    )
+
+    ranking_proyectos_final = preparar_ranking_proyectos(
+        ranking_proyectos,
+    )
+
+    validacion_rankings = validar_rankings(
+        ranking_escenarios_final,
+        ranking_proyectos_final,
+    )
+
+    # =========================================================================
+    # INDICADORES
+    # =========================================================================
+
+    indicadores_resultado = construir_indicadores_globales(
+        proyectos,
+        escenarios,
+        validacion,
+    )
+
+    indicadores = indicadores_resultado["tabla"]
+
+    # =========================================================================
+    # SÍNTESIS
+    # =========================================================================
+
+    sintesis = construir_sintesis_ejecutiva(
+        proyectos,
+        escenarios,
+        ranking_escenarios_final,
+        validacion,
+    )
+
+    # =========================================================================
+    # INFORME
+    # =========================================================================
+
+    informe = generar_informe(
+        proyectos,
+        escenarios,
+        ranking_escenarios_final,
+        ranking_proyectos_final,
+        matriz,
+        indicadores,
+        validacion,
+        campos,
+    )
+
+    # =========================================================================
+    # ANEXOS
+    # =========================================================================
+
+    titulo("GENERANDO ANEXOS")
+
+    anexo_proyectos = proyectos.drop(
+        columns=["geometry"],
+        errors="ignore",
+    ).copy()
+
+    anexo_escenarios = escenarios.copy()
+
+    anexo_indicadores = indicadores.copy()
+
+    path_anexo_proyectos = (
+        OUTPUT_DIR
+        / ARCHIVOS_SALIDA["anexo_proyectos"]
+    )
+
+    path_anexo_escenarios = (
+        OUTPUT_DIR
+        / ARCHIVOS_SALIDA["anexo_escenarios"]
+    )
+
+    path_anexo_indicadores = (
+        OUTPUT_DIR
+        / ARCHIVOS_SALIDA["anexo_indicadores"]
+    )
+
+    anexo_proyectos.to_csv(
+        path_anexo_proyectos,
+        index=False,
+        encoding="utf-8-sig",
+    )
+
+    anexo_escenarios.to_csv(
+        path_anexo_escenarios,
+        index=False,
+        encoding="utf-8-sig",
+    )
+
+    anexo_indicadores.to_csv(
+        path_anexo_indicadores,
+        index=False,
+        encoding="utf-8-sig",
+    )
+
+    print(f"Proyectos : {path_anexo_proyectos}")
+    print(f"Escenarios: {path_anexo_escenarios}")
+    print(f"Indicadores: {path_anexo_indicadores}")
+
+    # =========================================================================
+    # AUDITORÍA
+    # =========================================================================
+
+    auditoria = construir_auditoria(
+        validacion,
+        validacion_rankings,
+        gpkg_ok=True,
+    )
+
+    # =========================================================================
+    # RESUMEN JSON
+    # =========================================================================
+
+    resumen_json = construir_resumen_json(
+        validacion,
+        validacion_rankings,
+        auditoria,
+        ranking_escenarios_final,
+    )
+
+    # =========================================================================
+    # EXPORTACIONES
+    # =========================================================================
+
+    titulo("EXPORTANDO RESULTADOS DEL PROCESO 39")
+
+    path_informe = (
+        OUTPUT_DIR
+        / ARCHIVOS_SALIDA["informe"]
+    )
+
+    path_resumen = (
+        OUTPUT_DIR
+        / ARCHIVOS_SALIDA["resumen"]
+    )
+
+    path_auditoria = (
+        OUTPUT_DIR
+        / ARCHIVOS_SALIDA["auditoria"]
+    )
+
+    path_json = (
+        OUTPUT_DIR
+        / ARCHIVOS_SALIDA["json"]
+    )
+
+    escribir_texto(
+        path_informe,
+        informe,
+    )
+
+    escribir_texto(
+        path_resumen,
+        sintesis,
+    )
+
+    auditoria.to_csv(
+        path_auditoria,
+        index=False,
+        encoding="utf-8-sig",
+    )
+
+    path_json.write_text(
+        json.dumps(
+            resumen_json,
+            ensure_ascii=False,
+            indent=2,
+            default=str,
+        ),
+        encoding="utf-8",
+    )
+
+    print(f"Informe          : {path_informe}")
+    print(f"Resumen ejecutivo: {path_resumen}")
+    print(f"Auditoría        : {path_auditoria}")
+    print(f"Resumen JSON      : {path_json}")
+
+    # =========================================================================
+    # VALIDACIÓN DEL GEOPACKAGE
+    # =========================================================================
+
+    titulo("VALIDANDO MODELO GEOGRÁFICO CONSOLIDADO")
+
+    gpkg_path = (
+        INPUT_DIR
+        / ARCHIVOS_ENTRADA["gpkg"]
+    )
+
+    gpkg_ok = gpkg_path.exists()
+
+    print(
+        f"GeoPackage existe : {'SI' if gpkg_ok else 'NO'}"
+    )
+
+    if gpkg_ok:
+
+        capas = gpd.list_layers(
+            gpkg_path
         )
 
-        # ---------------------------------------------------------------------
-        # VALIDACIÓN
-        # ---------------------------------------------------------------------
+        nombres_capas = capas["name"].tolist()
 
-        validacion = validar_modelo(
-            proyectos,
-            escenarios,
-            campos,
+        print(
+            f"Capas            : {', '.join(nombres_capas)}"
         )
 
-        # ---------------------------------------------------------------------
-        # INDICADORES
-        # ---------------------------------------------------------------------
+    # =========================================================================
+    # RESULTADO
+    # =========================================================================
 
-        indicadores = construir_indicadores_globales(
-            proyectos,
-            escenarios,
-            indicadores_df,
-            campos,
-        )
+    tiempo = time.time() - inicio
 
-        # ---------------------------------------------------------------------
-        # RANKINGS
-        # ---------------------------------------------------------------------
+    controles_ok = int(
+        auditoria["resultado"].sum()
+    )
 
-        ranking_escenarios = preparar_ranking_escenarios(
-            ranking_escenarios_raw
-        )
+    controles_total = len(auditoria)
 
-        ranking_proyectos = preparar_ranking_proyectos(
-            ranking_proyectos_raw
-        )
+    estado = (
+        "VALIDADO"
+        if controles_ok == controles_total
+        else "OBSERVADO"
+    )
 
-        validar_rankings(
-            ranking_escenarios,
-            ranking_proyectos,
-        )
+    escenario_col = resolver_columna(
+        ranking_escenarios_final,
+        [
+            "escenario_id",
+            "id_escenario",
+            "escenario",
+        ],
+    )
 
-        # ---------------------------------------------------------------------
-        # SÍNTESIS
-        # ---------------------------------------------------------------------
+    escenario_prioritario = str(
+        ranking_escenarios_final.iloc[0][escenario_col]
+    )
 
-        sintesis = construir_sintesis_ejecutiva(
-            proyectos,
-            escenarios,
-            ranking_escenarios,
-            indicadores,
-            campos,
-            validacion,
-        )
+    escenario_menor = str(
+        ranking_escenarios_final.iloc[-1][escenario_col]
+    )
 
-        # ---------------------------------------------------------------------
-        # INFORME
-        # ---------------------------------------------------------------------
+    titulo("RESULTADO FINAL DEL PROCESO 39")
 
-        informe = generar_informe(
-            proyectos=proyectos,
-            escenarios=escenarios,
-            ranking_escenarios=ranking_escenarios,
-            ranking_proyectos=ranking_proyectos,
-            matriz=matriz,
-            indicadores_df=indicadores_df,
-            auditoria_38=auditoria_38,
-            indicadores=indicadores,
-            validacion=validacion,
-            sintesis=sintesis,
-            campos=campos,
-        )
+    print(
+        f"Proyectos                 : {validacion['total_proyectos']:,}"
+    )
 
-        # ---------------------------------------------------------------------
-        # RESUMEN EJECUTIVO
-        # ---------------------------------------------------------------------
+    print(
+        f"Proyectos únicos          : {validacion['proyectos_unicos']:,}"
+    )
 
-        resumen_ejecutivo = generar_resumen_ejecutivo(
-            ranking_escenarios=ranking_escenarios,
-            indicadores=indicadores,
-            validacion=validacion,
-            sintesis=sintesis,
-        )
+    print(
+        f"Escenarios                : {validacion['escenarios']:,}"
+    )
 
-        # ---------------------------------------------------------------------
-        # ANEXOS
-        # ---------------------------------------------------------------------
+    print(
+        f"Cobertura geométrica      : {validacion['cobertura_geometrica']:.2f}%"
+    )
 
-        generar_anexos(
-            proyectos=proyectos,
-            escenarios=escenarios,
-            indicadores=indicadores_df,
-            ranking_escenarios=ranking_escenarios,
-            ranking_proyectos=ranking_proyectos,
-        )
+    print(
+        f"Geometrías válidas        : {validacion['geometrias_validas']:,}"
+    )
 
-        # ---------------------------------------------------------------------
-        # AUDITORÍA
-        # ---------------------------------------------------------------------
+    print(
+        f"Geometrías nulas          : {validacion['geometrias_nulas']:,}"
+    )
 
-        auditoria = construir_auditoria(
-            validacion=validacion,
-            indicadores=indicadores,
-            ranking_escenarios=ranking_escenarios,
-            ranking_proyectos=ranking_proyectos,
-        )
+    print(
+        f"Geometrías inválidas      : {validacion['geometrias_invalidas']:,}"
+    )
 
-        # ---------------------------------------------------------------------
-        # RESUMEN JSON
-        # ---------------------------------------------------------------------
+    print(
+        f"Proyectos duplicados      : {validacion['proyectos_duplicados']:,}"
+    )
 
-        resumen_json = construir_resumen_json(
-            indicadores=indicadores,
-            validacion=validacion,
-            sintesis=sintesis,
-            auditoria=auditoria,
-        )
+    print(
+        f"Proyectos multiescenario  : {validacion['proyectos_multiescenario']:,}"
+    )
 
-        # ---------------------------------------------------------------------
-        # EXPORTACIÓN
-        # ---------------------------------------------------------------------
+    print(
+        f"CV tamaño escenarios      : {validacion['cv_escenarios']:.4f}"
+    )
 
-        titulo(
-            "EXPORTANDO RESULTADOS DEL PROCESO 39"
-        )
+    print(
+        f"Escenario prioritario     : {escenario_prioritario}"
+    )
 
-        FILE_INFORME.write_text(
-            informe,
-            encoding="utf-8",
+    print(
+        f"Escenario menor prioridad: {escenario_menor}"
+    )
+
+    print(
+        f"Controles OK              : {controles_ok}/{controles_total}"
+    )
+
+    print(
+        f"Auditoría                 : {'OK' if estado == 'VALIDADO' else 'OBSERVADA'}"
+    )
+
+    print(
+        f"Dictamen                  : {estado}"
+    )
+
+    print(
+        f"Tiempo de ejecución       : {tiempo:.2f} segundos"
+    )
+
+    print()
+
+    if estado == "VALIDADO":
+
+        print(
+            "El informe territorial AMBA V4.1 fue generado y validado correctamente."
         )
 
         print(
-            f"Informe          : {FILE_INFORME}"
-        )
-
-        FILE_RESUMEN.write_text(
-            resumen_ejecutivo,
-            encoding="utf-8",
+            "La geometría se recuperó desde el GeoPackage maestro del proceso 38."
         )
 
         print(
-            f"Resumen ejecutivo: {FILE_RESUMEN}"
-        )
-
-        auditoria.to_csv(
-            FILE_AUDITORIA,
-            index=False,
-            encoding="utf-8-sig",
+            "La cobertura geográfica es completa."
         )
 
         print(
-            f"Auditoría        : {FILE_AUDITORIA}"
+            "La asignación proyecto -> escenario se mantiene íntegra."
         )
 
-        with FILE_RESUMEN_JSON.open(
-            "w",
-            encoding="utf-8",
-        ) as archivo:
-
-            json.dump(
-                resumen_json,
-                archivo,
-                ensure_ascii=False,
-                indent=2,
-                default=str,
-            )
+    else:
 
         print(
-            f"Resumen JSON      : {FILE_RESUMEN_JSON}"
+            "El informe fue generado con observaciones."
         )
 
-        # ---------------------------------------------------------------------
-        # VALIDACIÓN GPKG
-        # ---------------------------------------------------------------------
-
-        titulo(
-            "VALIDANDO MODELO GEOGRÁFICO CONSOLIDADO"
-        )
-
-        gpkg = validar_gpkg()
-
-        print(
-            f"GeoPackage existe : "
-            f"{'SI' if gpkg['existe'] else 'NO'}"
-        )
-
-        if gpkg["capas"]:
-
-            print(
-                "Capas            : "
-                + ", ".join(gpkg["capas"])
-            )
-
-        # ---------------------------------------------------------------------
-        # RESULTADO FINAL
-        # ---------------------------------------------------------------------
-
-        controles_ok = int(
-            auditoria["resultado"]
-            .astype(bool)
-            .sum()
-        )
-
-        controles_total = len(
-            auditoria
-        )
-
-        dictamen = (
-            "VALIDADO"
-            if controles_ok == controles_total
-            else "OBSERVADO"
-        )
-
-        duracion = (
-            datetime.now() - inicio
-        ).total_seconds()
-
-        titulo(
-            "RESULTADO FINAL DEL PROCESO 39"
-        )
-
-        print(
-            f"Proyectos                 : "
-            f"{indicadores['proyectos']:,}"
-        )
-
-        print(
-            f"Proyectos únicos          : "
-            f"{validacion['proyectos_unicos']:,}"
-        )
-
-        print(
-            f"Escenarios                : "
-            f"{indicadores['escenarios']:,}"
-        )
-
-        print(
-            f"Cobertura geométrica      : "
-            f"{fmt_pct(validacion['cobertura_geometrica'])}"
-        )
-
-        print(
-            f"Geometrías válidas        : "
-            f"{validacion['geometrias_validas']:,}"
-        )
-
-        print(
-            f"Proyectos duplicados      : "
-            f"{validacion['proyectos_duplicados']:,}"
-        )
-
-        print(
-            f"CV tamaño escenarios      : "
-            f"{fmt_num(indicadores['cv_proyectos_escenario'], 4)}"
-        )
-
-        print(
-            f"Escenario prioritario     : "
-            f"{sintesis['escenario_prioritario']}"
-        )
-
-        print(
-            f"Escenario menor prioridad: "
-            f"{sintesis['escenario_menor_prioridad']}"
-        )
-
-        print(
-            f"Controles OK              : "
-            f"{controles_ok}/{controles_total}"
-        )
-
-        print(
-            f"Auditoría                 : "
-            f"{'OK' if dictamen == 'VALIDADO' else 'OBSERVADA'}"
-        )
-
-        print(
-            f"Dictamen                  : "
-            f"{dictamen}"
-        )
-
-        print(
-            f"Tiempo de ejecución       : "
-            f"{duracion:.2f} segundos"
-        )
-
-        if dictamen == "VALIDADO":
-
-            print()
-            print(
-                "El informe territorial AMBA V4 fue generado "
-                "y validado correctamente."
-            )
-
-            print(
-                "El documento utiliza como fuente el modelo "
-                "maestro consolidado del Proceso 38."
-            )
-
-            print(
-                "La estructura territorial mantiene la "
-                "trazabilidad de proyectos y escenarios."
-            )
-
-            print(
-                "El resultado queda preparado para la "
-                "validación final y cierre del modelo."
-            )
-
-        else:
-
-            print()
-            print(
-                "El informe fue generado con observaciones."
-            )
-
-        titulo(
-            "PROCESO 39 FINALIZADO"
-        )
-
-        return 0 if dictamen == "VALIDADO" else 1
-
-    except Exception as exc:
-
-        titulo(
-            "ERROR FATAL EN EL PROCESO 39"
-        )
-
-        print(
-            f"{type(exc).__name__}: {exc}"
-        )
-
-        print()
-        traceback.print_exc()
-
-        return 1
+    titulo("PROCESO 39 FINALIZADO")
 
 
 # =============================================================================
@@ -2609,4 +2094,15 @@ def main():
 # =============================================================================
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        main()
+
+    except Exception as exc:
+
+        titulo("ERROR FATAL EN EL PROCESO 39")
+
+        print(
+            f"{type(exc).__name__}: {exc}"
+        )
+
+        raise

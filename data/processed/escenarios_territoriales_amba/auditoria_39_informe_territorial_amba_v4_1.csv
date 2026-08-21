@@ -1,0 +1,11 @@
+﻿control,resultado,valor,observacion
+proyectos_144,True,144,Se esperan 144 proyectos.
+proyectos_unicos,True,144,Los proyectos deben ser únicos.
+escenarios_7,True,7,Se esperan 7 escenarios.
+sin_duplicados,True,0,No deben existir proyectos duplicados.
+cobertura_geometrica,True,100.0,La cobertura debe ser 100%.
+geometrias_validas,True,0,No deben existir geometrías inválidas.
+sin_multiescenario,True,0,Cada proyecto debe pertenecer a un único escenario.
+ranking_escenarios,True,7,Se esperan 7 escenarios rankeados.
+ranking_proyectos,True,144,Se esperan 144 proyectos rankeados.
+geopackage_maestro,True,SI,Debe existir el GeoPackage maestro del proceso 38.

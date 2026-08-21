@@ -1,0 +1,50 @@
+{
+  "proceso": 39,
+  "version": "V4.1",
+  "nombre": "Generación del Informe Territorial AMBA",
+  "estado": "VALIDADO",
+  "dictamen": "VALIDADO",
+  "validacion": {
+    "total_proyectos": 144,
+    "proyectos_unicos": 144,
+    "proyectos_nulos": 0,
+    "proyectos_duplicados": 0,
+    "escenarios": 7,
+    "escenarios_nulos": 0,
+    "escenarios_geograficos": 7,
+    "geometrias_validas": 144,
+    "geometrias_nulas": 0,
+    "geometrias_vacias": 0,
+    "geometrias_invalidas": 0,
+    "cobertura_geometrica": 100.0,
+    "proyectos_multiescenario": 0,
+    "minimo_proyectos_escenario": 20,
+    "maximo_proyectos_escenario": 21,
+    "promedio_proyectos_escenario": 20.571428571428573,
+    "cv_escenarios": 0.024056261216234404,
+    "controles": {
+      "144_proyectos": true,
+      "proyectos_unicos": true,
+      "7_escenarios": true,
+      "sin_nulos_id": true,
+      "sin_duplicados": true,
+      "geometria_completa": true,
+      "geometria_valida": true,
+      "sin_multiescenario": true,
+      "escenarios_geograficos": true
+    },
+    "controles_ok": 9,
+    "controles_total": 9
+  },
+  "validacion_rankings": {
+    "escenarios_rankeados": 7,
+    "proyectos_rankeados": 144,
+    "escenarios_ok": true,
+    "proyectos_ok": true
+  },
+  "controles_ok": 10,
+  "controles_total": 10,
+  "escenario_prioritario": "AMBA-E001",
+  "escenario_menor_prioridad": "AMBA-E007",
+  "timestamp": "2026-08-21T16:17:54.379870"
+}
