@@ -1,0 +1,14 @@
+﻿control,resultado,critico,detalle
+Cierre proceso 42,OK,SI,Dictamen=GO Score=100.0
+Cantidad de proyectos,OK,SI,Encontrados=144
+Cantidad de escenarios,OK,SI,Encontrados=7
+Proyectos únicos,OK,SI,Registros=144
+Ranking proyectos completo,OK,SI,Campo=ranking_final_proyecto_v4
+Ranking proyectos ordenado,OK,NO,Secuencia 1..N
+Ranking escenarios completo,OK,SI,Campo=ranking_integral_v4
+Ranking escenarios ordenado,OK,NO,Secuencia 1..N
+Tabla ejecutiva proyectos,OK,SI,Registros=144
+Tabla ejecutiva escenarios,OK,SI,Registros=7
+Ranking final proyectos presente,OK,SI,
+Ranking final escenarios presente,OK,SI,
+Archivos ejecutivos generados,OK,SI,Archivos=7

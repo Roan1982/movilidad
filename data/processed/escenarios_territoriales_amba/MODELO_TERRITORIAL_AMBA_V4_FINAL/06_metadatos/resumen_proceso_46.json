@@ -1,0 +1,25 @@
+{
+  "proceso": "46",
+  "version": "V4.1",
+  "proyecto": "Modelo Territorial AMBA",
+  "estado": "FINAL",
+  "dictamen": "GO",
+  "auditorias": {
+    "proceso_42": "GO",
+    "proceso_43": "GO",
+    "proceso_44": "GO",
+    "proceso_45": "GO"
+  },
+  "archivos": 26,
+  "zip": "MODELO_TERRITORIAL_AMBA_V4_FINAL.zip",
+  "zip_sha256": "01344e299b7ec388d9da5f2b4025515f6cd6e2dc8c6dfb6e96d7bbc8ae7834b4",
+  "estructura": [
+    "01_modelo",
+    "02_informes",
+    "03_atlas",
+    "04_datos",
+    "05_auditoria",
+    "06_metadatos"
+  ],
+  "generado": "2026-08-21T17:50:41"
+}

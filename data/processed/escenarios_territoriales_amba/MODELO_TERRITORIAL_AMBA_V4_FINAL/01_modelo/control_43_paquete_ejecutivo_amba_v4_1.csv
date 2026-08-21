@@ -1,0 +1,13 @@
+﻿control,resultado,detalle
+Modelo maestro de proyectos disponible,OK,144 registros
+Modelo maestro de escenarios disponible,OK,7 registros
+Campo proyecto identificado,OK,proyecto_id
+Campo escenario identificado,OK,escenario_id
+Proyectos únicos,OK,144/144
+Proyectos sin nulos,OK,0 nulos
+Escenarios completos,OK,modelo=7; maestro=7
+Asignación completa proyecto -> escenario,OK,0 nulos
+Proyectos sin múltiples escenarios,OK,0 casos
+Distribución territorial equilibrada,OK,20-21
+Ranking de escenarios completo,OK,ranking_integral_v4
+Ranking de proyectos completo,OK,ranking_final_proyecto_v4
